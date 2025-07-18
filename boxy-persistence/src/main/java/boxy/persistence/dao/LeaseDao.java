@@ -13,8 +13,6 @@ import java.util.Optional;
 @RegisterConstructorMapper(Lease.class)
 public interface LeaseDao {
 
-    long DEFAULT_LEASE_DURATION_SECONDS = 300;
-
     @SqlQuery("SELECT * FROM leases WHERE subscription_offset_id = :subscriptionOffsetId")
     Optional<Lease> find(@Bind("subscriptionOffsetId") long subscriptionOffsetId);
 
