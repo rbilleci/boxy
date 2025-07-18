@@ -1,5 +1,6 @@
 package boxy.persistence.it;
 
+import boxy.persistence.DataSourceProvider;
 import liquibase.Liquibase;
 import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
@@ -15,14 +16,13 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
 
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Map;
 
 public abstract class BaseIT {
 
     @Container
-    private static final MySQLContainer<?> MYSQL_CONTAINER =
+    private static final MySQLContainer<?> MYSQL =
             new MySQLContainer<>(DockerImageName.parse("mysql:8.0.33"))
                     .withDatabaseName("events_db")
                     // FOR PERFORMANCE USE IN-MEMORY TMP-FS
@@ -40,27 +40,28 @@ public abstract class BaseIT {
 
     protected Jdbi jdbi;
 
+
     @BeforeAll
     static void setupDB() throws SQLException, LiquibaseException {
-        final var connection = DriverManager.getConnection(
-                MYSQL_CONTAINER.getJdbcUrl(),
-                MYSQL_CONTAINER.getUsername(),
-                MYSQL_CONTAINER.getPassword());
-        final var db = DatabaseFactory.getInstance()
-                .findCorrectDatabaseImplementation(new JdbcConnection(connection));
+        // Configure JDBC connections settings
+        System.setProperty("DB_HOST", MYSQL.getHost());
+        System.setProperty("DB_PORT", MYSQL.getMappedPort(MySQLContainer.MYSQL_PORT).toString());
+        System.setProperty("DB_NAME", MYSQL.getDatabaseName());
+        System.setProperty("DB_USER", MYSQL.getUsername());
+        System.setProperty("DB_PASSWORD", MYSQL.getPassword());
+        final var db = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(
+                new JdbcConnection(DataSourceProvider.dataSource().getConnection()));
         final var liquibase = new Liquibase(
                 "db/changelog/db.changelog-master.xml",
-                new ClassLoaderResourceAccessor(), db);
+                new ClassLoaderResourceAccessor(),
+                db);
         liquibase.dropAll();
         liquibase.update();
     }
 
     @BeforeEach
     void setupJDBI() {
-        jdbi = Jdbi.create(
-                MYSQL_CONTAINER.getJdbcUrl() + "?useAffectedRows=true",
-                MYSQL_CONTAINER.getUsername(),
-                MYSQL_CONTAINER.getPassword());
+        jdbi = Jdbi.create(DataSourceProvider.dataSource());
         jdbi.installPlugin(new SqlObjectPlugin());
     }
 
@@ -78,6 +79,7 @@ public abstract class BaseIT {
                 throw new UnsupportedOperationException(String.format("Database %s is not supported", productName));
             }
         });
+        DataSourceProvider.close();
     }
 
     void teardownPGSQL(final Handle handle) {
@@ -96,7 +98,7 @@ public abstract class BaseIT {
                 .mapTo(String.class)
                 .list();
         final var batch = handle.createBatch();
-        tables.forEach(table -> batch.add("TRUNCATE TABLE `" + table + "`;"));
+        tables.forEach(table -> batch.add("TRUNCATE TABLE `" + table + "`"));
         batch.execute();
         handle.execute("SET FOREIGN_KEY_CHECKS = 1;");
     }

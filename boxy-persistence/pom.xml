@@ -40,6 +40,12 @@
             <artifactId>jdbi3-sqlobject</artifactId>
         </dependency>
 
+        <!-- DATABASE CONNECTION POOLING -->
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+        </dependency>
+
         <!-- MYSQL -->
         <dependency>
             <groupId>com.mysql</groupId>
@@ -70,6 +76,12 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- RUNTIME METRICS -->
+        <dependency>
+            <groupId>org.hdrhistogram</groupId>
+            <artifactId>HdrHistogram</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 </project>
