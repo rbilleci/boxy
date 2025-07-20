@@ -38,6 +38,9 @@ public interface TopicDao extends SqlObject {
         return topicId;
     }
 
+    @SqlQuery("SELECT * FROM topics WHERE id = :id")
+    Optional<Topic> find(@Bind("id") long id);
+
     @SqlQuery("SELECT * FROM topics WHERE tenant = :tenant AND name = :name")
     Optional<Topic> find(@Bind("tenant") String tenant, @Bind("name") String name);
 

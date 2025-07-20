@@ -6,8 +6,10 @@ CREATE TABLE topics (
     partitions  INT NOT NULL DEFAULT 16,
     INDEX idx_topics__name (name),
     CONSTRAINT u_topics__1 UNIQUE (tenant, name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin
-  COMMENT='Stores logical topics (namespaces) per tenant, each with a configurable number of partitions';
+) ENGINE=InnoDB
+    DEFAULT CHARSET=utf8mb4
+    COLLATE=utf8mb4_bin
+    COMMENT='Stores logical topics (namespaces) per tenant, each with a configurable number of partitions';
 
 
 CREATE TABLE partitions (
@@ -17,8 +19,10 @@ CREATE TABLE partitions (
     high_watermark      BIGINT DEFAULT 0 NOT NULL,
     FOREIGN KEY (topic_id) REFERENCES topics (id) ON DELETE CASCADE,
     CONSTRAINT u_partitions__1 UNIQUE (topic_id, partition_number)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin
-  COMMENT='Tracks individual partitions for each topic, including the current high-watermark offset';
+) ENGINE=InnoDB
+    DEFAULT CHARSET=utf8mb4
+    COLLATE=utf8mb4_bin
+    COMMENT='Tracks individual partitions for each topic, including the current high-watermark offset';
 
 
 CREATE TABLE consumer_groups (
@@ -26,8 +30,10 @@ CREATE TABLE consumer_groups (
     tenant  VARCHAR(255) NOT NULL,
     name    VARCHAR(255) NOT NULL,
     CONSTRAINT u_consumer_groups__1 UNIQUE (tenant, name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin
-  COMMENT='Defines consumer groups per tenant, which will track offsets independently';
+) ENGINE=InnoDB
+    DEFAULT CHARSET=utf8mb4
+    COLLATE=utf8mb4_bin
+    COMMENT='Defines consumer groups per tenant, which will track offsets independently';
 
 
 CREATE TABLE subscriptions (
@@ -37,8 +43,10 @@ CREATE TABLE subscriptions (
     FOREIGN KEY (consumer_group_id) REFERENCES consumer_groups (id) ON DELETE CASCADE,
     FOREIGN KEY (topic_id) REFERENCES topics (id) ON DELETE CASCADE,
     CONSTRAINT u_subscriptions__1 UNIQUE (consumer_group_id, topic_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin
-  COMMENT='Joins consumer groups to the topics they subscribe to';
+) ENGINE=InnoDB
+    DEFAULT CHARSET=utf8mb4
+    COLLATE=utf8mb4_bin
+    COMMENT='Joins consumer groups to the topics they subscribe to';
 
 
 CREATE TABLE subscription_offsets (
@@ -49,22 +57,56 @@ CREATE TABLE subscription_offsets (
     FOREIGN KEY (subscription_id)   REFERENCES subscriptions (id) ON DELETE CASCADE,
     FOREIGN KEY (partition_id)      REFERENCES partitions (id) ON DELETE CASCADE,
     CONSTRAINT u_subscription_offsets__1 UNIQUE (subscription_id, partition_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin
-  COMMENT='Maintains the last committed offset per partition for each subscription';
+) ENGINE=InnoDB
+    DEFAULT CHARSET=utf8mb4
+    COLLATE=utf8mb4_bin
+    COMMENT='Maintains the last committed offset per partition for each subscription';
+
+
+CREATE TABLE workers (
+    id                   BIGINT AUTO_INCREMENT PRIMARY KEY,
+    node_id              VARCHAR(255) NOT NULL,
+    consumer_group_id    BIGINT       NOT NULL,
+    weight               INT          NOT NULL DEFAULT 1,
+    last_heartbeat       DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    INDEX idx_workers__consumer_group (consumer_group_id),
+    INDEX idx_workers___last_heartbeat (last_heartbeat),
+    CONSTRAINT u_workers__1         UNIQUE (node_id, consumer_group_id),
+    FOREIGN KEY (consumer_group_id) REFERENCES consumer_groups(id) ON DELETE CASCADE
+) ENGINE=InnoDB
+    DEFAULT CHARSET=utf8mb4
+    COLLATE=utf8mb4_bin
+    COMMENT='Registered worker nodes per consumer-group, with capacity weight and heartbeat timestamp';
+
+
+CREATE TABLE worker_rendezvous_scores (
+    worker_id               BIGINT NOT NULL,
+    subscription_offset_id  BIGINT NOT NULL,
+    score                   INT,
+    PRIMARY KEY (worker_id, subscription_offset_id),
+    FOREIGN KEY (worker_id) REFERENCES workers(id) ON DELETE CASCADE,
+    FOREIGN KEY (subscription_offset_id) REFERENCES subscription_offsets(id) ON DELETE CASCADE
+)  ENGINE=InnoDB
+    DEFAULT CHARSET=utf8mb4
+    COLLATE=utf8mb4_bin
+    COMMENT='Caches normalized & weighted rendezvous-hash scores per for each (subscription_offset, worker), to avoid full hash+pow re-computation on re-balance';
 
 
 CREATE TABLE leases (
     subscription_offset_id  BIGINT PRIMARY KEY,
-    owner                   VARCHAR(255) NOT NULL,
+    worker_id               BIGINT NOT NULL,
     version                 BIGINT NOT NULL DEFAULT 1,
     acquired_at             DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     updated_at              DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     expires_at              DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     INDEX idx_leases__expires_at (expires_at),
-    INDEX idx_leases__owner (owner),
-    FOREIGN KEY (subscription_offset_id) REFERENCES subscription_offsets(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin
-  COMMENT='Implements distributed locking for processing offsets—tracks owner, version, and expiration';
+    INDEX idx_leases__worker (worker_id),
+    FOREIGN KEY (subscription_offset_id) REFERENCES subscription_offsets(id) ON DELETE CASCADE,
+    FOREIGN KEY (worker_id) REFERENCES workers(id) ON DELETE CASCADE
+) ENGINE=InnoDB
+    DEFAULT CHARSET=utf8mb4
+    COLLATE=utf8mb4_bin
+    COMMENT='Implements distributed locking for processing offsets—tracks worker, version, and expiration';
 
 
 CREATE TABLE events (
@@ -73,9 +115,11 @@ CREATE TABLE events (
     partition_id    BIGINT NOT NULL,
     data            JSON    NOT NULL,
     INDEX idx_events__partition (partition_id, id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin
-  ROW_FORMAT = DYNAMIC
-  COMMENT='Append-only event store per partition; JSON payloads in sequence order';
+) ENGINE=InnoDB
+    DEFAULT CHARSET=utf8mb4
+    COLLATE=utf8mb4_bin
+    ROW_FORMAT = DYNAMIC
+    COMMENT='Append-only event store per partition; JSON payloads in sequence order';
 
 
 -- ========================================================

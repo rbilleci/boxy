@@ -23,16 +23,16 @@ public interface LeaseDao {
 
 
     @SqlUpdate("""
-            INSERT INTO leases (subscription_offset_id, owner, expires_at)
-            VALUES (:subscriptionOffsetId, :owner, CURRENT_TIMESTAMP(3) + INTERVAL :expiresAfter SECOND)
+            INSERT INTO leases (subscription_offset_id, worker_id, expires_at)
+            VALUES (:subscriptionOffsetId, :workerId, CURRENT_TIMESTAMP(3) + INTERVAL :expiresAfter SECOND)
             ON DUPLICATE KEY UPDATE
-                owner       = IF (leases.expires_at < CURRENT_TIMESTAMP(3), VALUES(owner), leases.owner),
+                worker_id    = IF (leases.expires_at < CURRENT_TIMESTAMP(3), VALUES(worker_id), leases.worker_id),
                 version     = IF (leases.expires_at < CURRENT_TIMESTAMP(3), leases.version + 1, leases.version),
                 expires_at  = IF (leases.expires_at < CURRENT_TIMESTAMP(3), VALUES(expires_at), leases.expires_at)
             """
     )
     boolean acquire(@Bind("subscriptionOffsetId") long subscriptionOffsetId,
-                    @Bind("owner") String owner,
+                    @Bind("workerId") long workerId,
                     @Bind("expiresAfter") long expiresAfter);
 
     @SqlUpdate("""
@@ -41,15 +41,15 @@ public interface LeaseDao {
                 expires_at = CURRENT_TIMESTAMP(3) + INTERVAL :expiresAfter SECOND
             WHERE
                 subscription_offset_id = :subscriptionOffsetId AND
-                owner = :owner
+                worker_id = :workerId
             """)
     boolean renew(@Bind("subscriptionOffsetId") long subscriptionOffsetId,
-                  @Bind("owner") String owner,
+                  @Bind("workerId") long workerId,
                   @Bind("expiresAfter") long expiresAfter);
 
-    @SqlUpdate("DELETE FROM leases WHERE subscription_offset_id = :subscriptionOffsetId AND owner = :owner")
+    @SqlUpdate("DELETE FROM leases WHERE subscription_offset_id = :subscriptionOffsetId AND worker_id = :workerId")
     void release(@Bind("subscriptionOffsetId") long subscriptionOffsetId,
-                 @Bind("owner") String owner);
+                 @Bind("workerId") long workerId);
 
 
 }

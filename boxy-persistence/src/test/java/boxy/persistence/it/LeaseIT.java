@@ -26,6 +26,7 @@ public class LeaseIT extends BaseIT {
     private SubscriptionOffsetDao subscriptionOffsetDao;
     private TopicDao topicDao;
     private LeaseDao leaseDao;
+    private WorkerDao workerDao;
 
     @BeforeEach
     void setup() {
@@ -34,6 +35,26 @@ public class LeaseIT extends BaseIT {
         subscriptionOffsetDao = jdbi.onDemand(SubscriptionOffsetDao.class);
         topicDao = jdbi.onDemand(TopicDao.class);
         leaseDao = jdbi.onDemand(LeaseDao.class);
+        workerDao = jdbi.onDemand(WorkerDao.class);
+    }
+
+    private TestingData seedTestingData() {
+        final var topic = topicDao.find(topicDao.create(TENANT, TOPIC, DEFAULT_PARTITIONS)).orElseThrow();
+        final var consumerGroup = consumerGroupDao.find(consumerGroupDao.create(TENANT, CONSUMER_GROUP_A)).orElseThrow();
+        final var subscription = subscriptionDao.find(subscriptionDao.subscribe(TENANT, CONSUMER_GROUP_A, TOPIC)).orElseThrow();
+        final var partitionId = resolveAnySubscriptionOffset(subscription.id()).partitionId();
+        final var subscriptionOffset = subscriptionOffsetDao.find(
+                subscription.id(),
+                partitionId).orElseThrow();
+        final var worker1 = workerDao.find(workerDao.register(PARTY_1, consumerGroup.id(), 1)).orElseThrow();
+        final var worker2 = workerDao.find(workerDao.register(PARTY_2, consumerGroup.id(), 1)).orElseThrow();
+        return new TestingData(
+                topic,
+                consumerGroup,
+                subscription,
+                subscriptionOffset,
+                worker1,
+                worker2);
     }
 
     @Test
@@ -41,139 +62,111 @@ public class LeaseIT extends BaseIT {
         // Attempt to acquire a lease for 10 seconds
         // check the return value is equal to tru (a successful lease)
         // then verify the owner
-        topicDao.create(TENANT, TOPIC, DEFAULT_PARTITIONS);
-        consumerGroupDao.create(TENANT, CONSUMER_GROUP_A);
-        final var subscriptionId = subscriptionDao.subscribe(TENANT, CONSUMER_GROUP_A, TOPIC);
-        final var partitionId = resolveAnySubscriptionOffset(subscriptionId).partitionId();
-        final var subscriptionOffset = subscriptionOffsetDao.find(subscriptionId, partitionId).orElseThrow();
-        assertThat(leaseDao.acquire(subscriptionOffset.id(), PARTY_1, 10)).isTrue();
-        assertThat(leaseDao.find(subscriptionOffset.id()))
+        final var data = seedTestingData();
+        assertThat(leaseDao.acquire(data.subscriptionOffset().id(), data.worker1().id(), 10)).isTrue();
+        assertThat(leaseDao.find(data.subscriptionOffset().id()))
                 .isPresent()
                 .get()
-                .extracting(Lease::owner).isEqualTo(PARTY_1);
+                .extracting(Lease::workerId).isEqualTo(data.worker1().id());
     }
 
     @Test
     void acquire_whenActiveLeaseExists_returnsAndDoesNotChangeLease() {
         // Attempt to acquire a lease for 10 seconds
-        // check the return value is equal to tru (a successful lease)
+        // check the return value is equal to true (a successful lease)
         // then verify the owner
-        topicDao.create(TENANT, TOPIC, DEFAULT_PARTITIONS);
-        consumerGroupDao.create(TENANT, CONSUMER_GROUP_A);
-        final var subscriptionId = subscriptionDao.subscribe(TENANT, CONSUMER_GROUP_A, TOPIC);
-        final var partitionId = resolveAnySubscriptionOffset(subscriptionId).partitionId();
-        final var subscriptionOffset = subscriptionOffsetDao.find(subscriptionId, partitionId).orElseThrow();
-        assertThat(leaseDao.acquire(subscriptionOffset.id(), PARTY_1, 10)).isTrue();
-        assertThat(leaseDao.find(subscriptionOffset.id()))
+        final var data = seedTestingData();
+        assertThat(leaseDao.acquire(data.subscriptionOffset().id(), data.worker1().id(), 10)).isTrue();
+        assertThat(leaseDao.find(data.subscriptionOffset().id()))
                 .isPresent()
                 .get()
-                .extracting(Lease::owner).isEqualTo(PARTY_1);
+                .extracting(Lease::workerId).isEqualTo(data.worker1().id());
 
-        // Then, another party attempts to acquire the lease
-        assertThat(leaseDao.acquire(subscriptionOffset.id(), PARTY_2, 10)).isFalse();
-        assertThat(leaseDao.find(subscriptionOffset.id()))
+        // Then, another party attempts to acquire the lease,
+        // the lease must be unchanged.
+        assertThat(leaseDao.acquire(data.subscriptionOffset().id(), data.worker2().id(), 10)).isTrue();
+        assertThat(leaseDao.find(data.subscriptionOffset().id()))
                 .isPresent()
                 .get()
-                .extracting(Lease::owner).isEqualTo(PARTY_1);
+                .extracting(Lease::workerId).isEqualTo(data.worker1().id());
     }
 
     @Test
     void acquire_whenExpiredLeaseExists_returnsTrueAndChangesOwner() throws InterruptedException {
+        final var data = seedTestingData();
         // Attempt to acquire a lease for **1** second
-        topicDao.create(TENANT, TOPIC, DEFAULT_PARTITIONS);
-        consumerGroupDao.create(TENANT, CONSUMER_GROUP_A);
-        final var subscriptionId = subscriptionDao.subscribe(TENANT, CONSUMER_GROUP_A, TOPIC);
-        final var partitionId = resolveAnySubscriptionOffset(subscriptionId).partitionId();
-        final var subscriptionOffset = subscriptionOffsetDao.find(subscriptionId, partitionId).orElseThrow();
-        assertThat(leaseDao.acquire(subscriptionOffset.id(), PARTY_1, 0)).isTrue();
-        assertThat(leaseDao.find(subscriptionOffset.id()))
+        assertThat(leaseDao.acquire(data.subscriptionOffset().id(), data.worker1().id(), 0)).isTrue();
+        assertThat(leaseDao.find(data.subscriptionOffset().id()))
                 .isPresent()
                 .get()
-                .extracting(Lease::owner).isEqualTo(PARTY_1);
+                .extracting(Lease::workerId).isEqualTo(data.worker1().id());
         Thread.sleep(1000);
-
         // Then, another party attempts to acquire the lease
-        assertThat(leaseDao.acquire(subscriptionOffset.id(), PARTY_2, 10)).isTrue();
-        assertThat(leaseDao.find(subscriptionOffset.id()))
+        assertThat(leaseDao.acquire(data.subscriptionOffset().id(), data.worker2().id(), 10)).isTrue();
+        assertThat(leaseDao.find(data.subscriptionOffset().id()))
                 .isPresent()
                 .get()
-                .extracting(Lease::owner).isEqualTo(PARTY_2);
+                .extracting(Lease::workerId).isEqualTo(data.worker2().id());
     }
 
     @Test
     void renew_whenCallerIsOwner_returnsTrue() {
+        final var data = seedTestingData();
         // Attempt to acquire a lease
-        topicDao.create(TENANT, TOPIC, DEFAULT_PARTITIONS);
-        consumerGroupDao.create(TENANT, CONSUMER_GROUP_A);
-        final var subscriptionId = subscriptionDao.subscribe(TENANT, CONSUMER_GROUP_A, TOPIC);
-        final var partitionId = resolveAnySubscriptionOffset(subscriptionId).partitionId();
-        final var subscriptionOffset = subscriptionOffsetDao.find(subscriptionId, partitionId).orElseThrow();
-        assertThat(leaseDao.acquire(subscriptionOffset.id(), PARTY_1, 10)).isTrue();
-        assertThat(leaseDao.find(subscriptionOffset.id()))
+        assertThat(leaseDao.acquire(data.subscriptionOffset().id(), data.worker1().id(), 10)).isTrue();
+        assertThat(leaseDao.find(data.subscriptionOffset().id()))
                 .isPresent()
                 .get()
-                .extracting(Lease::owner).isEqualTo(PARTY_1);
+                .extracting(Lease::workerId).isEqualTo(data.worker1().id());
         // RENEW FOR 10 SECONDS
-        assertThat(leaseDao.renew(subscriptionOffset.id(), PARTY_1, 10)).isTrue();
+        assertThat(leaseDao.renew(data.subscriptionOffset().id(), data.worker1().id(), 10)).isTrue();
     }
 
     @Test
     void renew_whenCallerIsNotOwner_returnsFalse() {
-        // Attempt to acquire a lease
-        topicDao.create(TENANT, TOPIC, DEFAULT_PARTITIONS);
-        consumerGroupDao.create(TENANT, CONSUMER_GROUP_A);
-        final var subscriptionId = subscriptionDao.subscribe(TENANT, CONSUMER_GROUP_A, TOPIC);
-        final var partitionId = resolveAnySubscriptionOffset(subscriptionId).partitionId();
-        final var subscriptionOffset = subscriptionOffsetDao.find(subscriptionId, partitionId).orElseThrow();
-        assertThat(leaseDao.acquire(subscriptionOffset.id(), PARTY_1, 10)).isTrue();
-        assertThat(leaseDao.find(subscriptionOffset.id()))
+        final var data = seedTestingData();
+        // WORKER 1 ACQUIRES LEASE
+        assertThat(leaseDao.acquire(data.subscriptionOffset().id(), data.worker1().id(), 10)).isTrue();
+        assertThat(leaseDao.find(data.subscriptionOffset().id()))
                 .isPresent()
                 .get()
-                .extracting(Lease::owner).isEqualTo(PARTY_1);
+                .extracting(Lease::workerId).isEqualTo(data.worker1().id());
         // RENEW FOR 10 SECONDS, BY ANOTHER PARTY
-        assertThat(leaseDao.renew(subscriptionOffset.id(), PARTY_2, 10)).isFalse();
+        assertThat(leaseDao.renew(data.subscriptionOffset().id(), data.worker2().id(), 10)).isFalse();
     }
 
 
     @Test
     void delete_whenCallerIsOwner_returnsAndDeletesLease() {
-        // Attempt to acquire a lease
-        topicDao.create(TENANT, TOPIC, DEFAULT_PARTITIONS);
-        consumerGroupDao.create(TENANT, CONSUMER_GROUP_A);
-        final var subscriptionId = subscriptionDao.subscribe(TENANT, CONSUMER_GROUP_A, TOPIC);
-        final var partitionId = resolveAnySubscriptionOffset(subscriptionId).partitionId();
-        final var subscriptionOffset = subscriptionOffsetDao.find(subscriptionId, partitionId).orElseThrow();
-        assertThat(leaseDao.acquire(subscriptionOffset.id(), PARTY_1, 10)).isTrue();
-        assertThat(leaseDao.find(subscriptionOffset.id()))
+        final var data = seedTestingData();
+        // WORKER 1 ACQUIRES LEASE
+        assertThat(leaseDao.acquire(data.subscriptionOffset().id(), data.worker1().id(), 10)).isTrue();
+        assertThat(leaseDao.find(data.subscriptionOffset().id()))
                 .isPresent()
                 .get()
-                .extracting(Lease::owner).isEqualTo(PARTY_1);
+                .extracting(Lease::workerId).isEqualTo(data.worker1().id());
         // RELEASE
-        leaseDao.release(subscriptionOffset.id(), PARTY_1);
-        assertThat(leaseDao.find(subscriptionOffset.id())).isNotPresent();
+        leaseDao.release(data.subscriptionOffset().id(), data.worker1().id());
+        assertThat(leaseDao.find(data.subscriptionOffset().id())).isNotPresent();
     }
 
     @Test
     void delete_whenCallerIsNotOwner_returnsAndLeaseRemains() {
+        final var data = seedTestingData();
         // Attempt to acquire a lease
-        topicDao.create(TENANT, TOPIC, DEFAULT_PARTITIONS);
-        consumerGroupDao.create(TENANT, CONSUMER_GROUP_A);
-        final var subscriptionId = subscriptionDao.subscribe(TENANT, CONSUMER_GROUP_A, TOPIC);
-        final var partitionId = resolveAnySubscriptionOffset(subscriptionId).partitionId();
-        final var subscriptionOffset = subscriptionOffsetDao.find(subscriptionId, partitionId).orElseThrow();
-        assertThat(leaseDao.acquire(subscriptionOffset.id(), PARTY_1, 10)).isTrue();
-        assertThat(leaseDao.find(subscriptionOffset.id()))
+        assertThat(leaseDao.acquire(data.subscriptionOffset().id(), data.worker1().id(), 10)).isTrue();
+        assertThat(leaseDao.find(data.subscriptionOffset().id()))
                 .isPresent()
                 .get()
-                .extracting(Lease::owner).isEqualTo(PARTY_1);
+                .extracting(Lease::workerId).isEqualTo(data.worker1().id());
         // RELEASE BY PARTY 2!!!
-        leaseDao.release(subscriptionOffset.id(), PARTY_2);
+        leaseDao.release(data.subscriptionOffset().id(), data.worker2().id());
         // PARTY 1 STILL OWNS IT!!!
-        assertThat(leaseDao.find(subscriptionOffset.id()))
+        assertThat(leaseDao.find(data.subscriptionOffset().id()))
                 .isPresent()
                 .get()
-                .extracting(Lease::owner)
-                .isEqualTo(PARTY_1);
+                .extracting(Lease::workerId)
+                .isEqualTo(data.worker1().id());
     }
 
     private SubscriptionOffset resolveAnySubscriptionOffset(final long subscriptionId) {
