@@ -2,34 +2,35 @@
 # Boxy
 <img src="docs/images/boxy-logo.png" alt="Boxy Logo" style="width:50%" align="right"/>
 
-Boxy is a multi-tenant event streaming library that exposes Kafka-like semantics directly over a database's transactional outbox. It targets monolithic applications that need event streaming without taking on the operational cost of more complex systems like Kafka or Pulsar. Boxy turns your transactional outbox into an event-stream, and will allow you to build asynchronous workers in your favorite programming language, to consume events from those streams. Boxy is specifically **not** designed to be a central event streaming platform. 
+Boxy is a multi-tenant event streaming library that exposes Kafka-like semantics directly over a database’s transactional outbox. It targets monolithic applications that need event streaming without taking on the operational cost of complex systems like Kafka or Pulsar. Boxy turns your transactional outbox into an event-stream, and allows you to build asynchronous workers in your favorite language to consume events. Boxy is **not** intended as a central event streaming platform.
 
-Boxy is released under the **Apache Software License 2.0 (ASL 2.0)** and remains a work in progress.
+Boxy is released under the **Apache License 2.0** and remains a work in progress.
 
-The design emphasises fairness and scalability:
+## Design Highlights
 
-* Fair work distribution across tenants and across topics
-* Fair scheduling of worker nodes so consumer groups can scale out to **1024** workers with minimal load on the database
-* Boxy is designed to have a p99 consumer lag of <5ms for active partitions, <100ms for recently active partitions, and <200ms for inactive partitions that become active.
-
-Currently the only module in use is **boxy-persistence**, which provides the database schema, DAO interfaces and integration tests. The API modules `boxy-api-consumer`, `boxy-api-producer` and `boxy-api-worker` are placeholders for future functionality. 
+- **Decentralized, Randomized Work-Stealing** for lease distribution
+- **Fair-share Load Balancing** across worker nodes, proportional to capacity weights
+- **Low Consumer Lag**: p99 <5ms for active partitions, <100ms for recently active, <200ms for cold partitions
+- **Scalable Polling**: workers stagger lease grabs to minimize database queries (e.g. ≈10 checks/s instead of hundreds)
 
 ## Roadmap
 
 ### V1 (August 2025)
+
 1. Simple Worker API for Java
 2. Simple Producer API for Java
 
 ### V2 (September 2025)
-1. Worker APIs for Java, Go, Rust, Python, CLI, etc... using https://smithy.io/2.0/
-2. Producer API for Java, Go, Rust, Python, CI, etc... using https://smithy.io/2.0/
+
+1. Multi-language Worker APIs (Java, Go, Rust, Python, CLI) via Smithy
+2. Multi-language Producer APIs via Smithy
 3. Postgres support
 
 ---
 
-## Persistence overview
+## Persistence Overview
 
-Liquibase migrations describing the schema live under `boxy-persistence/src/main/resources/db/changelog`. The schema models Kafka-like topics, partitions and consumer groups as shown below.
+Liquibase migrations for the schema are under `boxy-persistence/src/main/resources/db/changelog`. The schema models:
 
 ```mermaid
 erDiagram
@@ -39,48 +40,30 @@ erDiagram
     consumer_groups ||--o{ subscriptions : owns
     topics ||--o{ subscriptions : referenced_by
     subscriptions ||--o{ subscription_offsets : offsets
-    subscription_offsets ||--|| leases : locks
+    subscription_offsets ||--o{ leases : locks
     workers ||--o{ leases : holds
-    workers ||--o{ worker_rendezvous_scores : scores
-    subscription_offsets ||--o{ worker_rendezvous_scores : scores
+    -- leases_available_view as work queue
 ```
 
-## Domain classes
+### Key Tables and Views
 
-The persistence module uses Java records to model the schema. Their relationships are shown below.
+- **workers**: registers each node’s `consumer_group`, `node_id`, `weight`, and `last_heartbeat`.
+- **subscription_offsets**: tracks the committed offset per (subscription, partition).
+- **leases**: one row per `subscription_offset` when a node holds a lease until `expires_at`.
+- **leases_available_view**: shows active, unleased partitions that can be claimed.
+
+## Domain Classes
+
+The persistence module uses Java records to model the schema. Relevant classes:
 
 ```mermaid
 classDiagram
-    class Tenant {
-        +String id
-    }
-    class Topic {
+    class Worker {
         +long id
-        +String tenant
-        +String name
-        +int partitions
-    }
-    class Partition {
-        +long id
-        +long topicId
-        +int partitionNumber
-        +long highWatermark
-    }
-    class Event {
-        +long id
-        +Instant timestamp
-        +long partitionId
-        +String data
-    }
-    class ConsumerGroup {
-        +long id
-        +String tenant
-        +String name
-    }
-    class Subscription {
-        +long id
+        +String nodeId
         +long consumerGroupId
-        +long topicId
+        +int weight
+        +Instant lastHeartbeat
     }
     class SubscriptionOffset {
         +long id
@@ -89,69 +72,139 @@ classDiagram
         +long committedOffset
         +long highWatermark
     }
-    class Worker {
-        +long id
-        +String nodeId
-        +long consumerGroupId
-        +int weight
-        +Instant lastHeartbeat
-    }
     class Lease {
         +long subscriptionOffsetId
         +long workerId
-        +long version
         +Instant acquiredAt
-        +Instant updatedAt
         +Instant expiresAt
     }
-    Tenant --> "*" Topic
-    Topic --> "*" Partition
-    Partition --> "*" Event
-    ConsumerGroup --> "*" Subscription
-    Subscription --> "*" SubscriptionOffset
-    SubscriptionOffset --> "0..1" Lease
     Worker --> "*" Lease
+    SubscriptionOffset --> "0..1" Lease
 ```
 
-## Typical workflow
 
-Workers acquire leases on `subscription_offsets` to process new events and maintain offsets. The simplified sequence below illustrates publishing an event and a worker acquiring a lease.
+
+## Worker State
+
+Each worker runs in one of three high-level states with respect to a given partition:
+ 
+      [Idle] ──(grab lease)──> [Processing] ──(drain completed)──> [Releasing] ──(confirm release)──> [Idle]
+
+**Idle**
+- No lease held on this partition; not processing.
+- Periodically (per the work-steal loop) it may grab new leases if under-loaded.
+
+**Processing**
+- Lease acquired and an event batch is in-flight.
+- Worker reads events, calls handlers, and updates the offset as it goes.
+- It continues renewing the lease on this partition: once N seconds, 
+  or possibly commit of offsets (to-be-determined). 
+
+**Releasing**
+- Release can occur in two scenarios: 1) all in-flight work is done and the final offset is committed, 2) the worker is determined to have an unfair share of leases.
+  It must finish its current batch and commit offsets, and must then release. This controlled release is intended to prevent
+  reduce occurrence of duplicate message processing.
+- When releasing, a worker deletes (DELETE FROM leases WHERE subscription_offset_id = X AND worker_id = Y) its lease row.
+- It then transitions back to Idle.
+
+This design minimizes leases on cold partitions, to reduce the total number of queries to the database.
+
+## Lease State
+
+Each leases row similarly goes through:
+
+      [Available] ──(INSERT/UPSERT)──> [Held] ──(DELETE)──> [Available]
+
+**Available (leases_available_view)**
+
+- Partition is active (high_watermark > committed_offset) but unleased.
+- Any under-loaded worker can pick it up via a randomized grab.
+
+**Held (leases row exists with current worker_id)**
+- The owning worker keeps it alive by renewing before expires_at.
+- Once the worker finishes and enters Releasing, it deletes this row, making it immediately Available again.
 
 ```mermaid
-sequenceDiagram
-    participant Producer
-    participant EventDao
-    participant DB
-    participant Worker
-    participant LeaseDao
+stateDiagram-v2
+[*] --> Idle
+Idle --> Processing      : grab lease
+Processing --> Releasing : commit final offset
+Releasing --> Idle       : delete lease
 
-    Producer->>EventDao: publish(tenant, topic, key, data)
-    EventDao->>DB: INSERT INTO events
-    DB-->>EventDao: ack
-    EventDao-->>Producer: done
-
-    Worker->>LeaseDao: acquire(offsetId, workerId, ttl)
-    LeaseDao->>DB: upsert lease
-    DB-->>LeaseDao: result
-    LeaseDao-->>Worker: lease result
+    state Processing {
+      [*] --> InFlight
+      InFlight --> InFlight : continue processing events
+      InFlight --> Draining  : no more in-flight
+      Draining  --> [*]      : delete lease (back to Idle)
+    }
 ```
 
-## Building the project
+## State Change Example
 
-Boxy is built with Maven and requires a modern JDK. From the repository root run:
+      t=0s    Worker A grabs lease on P42 → state Idle→Processing, lease created
+      t=0–2s  A processes events 101–105 → in-flight, renew lease at t≈10s
+      t=3s    A commits offset=105, no more in-flight → transition to Releasing
+      t=3s    A issues DELETE FROM leases WHERE X → lease row gone
+      t=4s    New event arrives in P42 → shows up in leases_available_view
+      t=5s    Worker B grabs lease on P42 → begins Processing
+
+
+## Heartbeats
+
+Node-level heartbeat (in the workers table) remains independent of per-partition state.
+
+Rather than each worker writing every X seconds, we define:
+
+- T<sub>cycle</sub>: a fixed “heartbeat cycle” (e.g. 1 s)
+
+- QPS<sub>target</sub>: the desired total heartbeats/sec for the whole cluster (e.g. 10 qps)
+
+On each cycle, each worker flips a weighted coin with probability `p = min(1, QPS_target / N_active)`, 
+and only writes a heartbeat if it “wins” that flip.
+
+Properties
+- When N_active ≤ Q_target, then p = 1 → everyone writes → we get N_active QPS (fine for small clusters).
+- When N_active > Q_target, then p = Q_target / N_active → expected cluster rate ≈ Q_target, irrespective of N.
+- We detect failures in a bounded time: expected per-worker heartbeat interval = 1 s / p = N_active / Q_target seconds; 
+  we pick the dead‐timeout to be a small multiple of that (e.g. 3×).
+
+
+  
+## Work-Stealing Lease Protocol
+
+1. **Fair-Share Calculation**:
+    - Let `Wᵢ` = worker weight, `T` = total active weight, `P` = active partition count.
+    - Ideal share `Sᵢ = (Wᵢ / T) * P` with slack Δ to prevent oscillation.
+3. **Release Excess**: if held leases > ⌊Sᵢ⌋ + Δ, delete the least-backlogged leases.
+4. **Grab More**: if held leases < ⌈Sᵢ⌉ − Δ, pick a random pivot in `leases_available_view` and `SELECT ... LIMIT` to fetch N new `subscription_offset_id`s, then upsert into `leases`.
+5. **Process**: for each held lease, read events > `committed_offset`, process in-order, then update `committed_offset`.
+6. **Renew** leases at \~⅓ TTL (e.g. 10s on a 30s lease) to avoid expiration. A renewal can be packaged with an offset commit. 
+
+This loop ensures:
+
+- **Proportional fairness** by weight
+- **Low churn** via slack Δ and batched grabs/releases
+- **Minimal DB load** through randomized, staggered scans
+- **In-order processing** (one lease-holder per partition)
+- **Duplicate-safety** on failover
+
+
+## Building the Project
+
+Boxy uses Maven and requires Java 17+. From the root:
 
 ```bash
 mvn clean package
 ```
 
-Integration tests start a MySQL container via Testcontainers. Connection parameters are resolved by `DataSourceProvider` using environment variables:
+Integration tests use Testcontainers with MySQL (default) or Postgres. Configure via env vars:
 
-| Variable      | Default    | Description                              |
-|---------------|-----------|------------------------------------------|
-| `DB_TYPE`     | `mysql`   | Database type (`mysql` or `postgres`)    |
-| `DB_HOST`     | `localhost` | Database host                             |
-| `DB_PORT`     | `3306` (mysql) / `5432` (postgres)| Database port |
-| `DB_NAME`     | `events_db` | Schema name                               |
-| `DB_USER`     | `user`      | Database user                             |
-| `DB_PASSWORD` | `password`  | Database password                         |
+| Variable      | Default       | Description           |
+| ------------- | ------------- | --------------------- |
+| `DB_TYPE`     | `mysql`       | `mysql` or `postgres` |
+| `DB_HOST`     | `localhost`   | Database host         |
+| `DB_PORT`     | `3306`/`5432` | Database port         |
+| `DB_NAME`     | `events_db`   | Schema name           |
+| `DB_USER`     | `user`        | Database user         |
+| `DB_PASSWORD` | `password`    | Database password     |
 
