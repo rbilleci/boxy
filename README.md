@@ -42,7 +42,6 @@ erDiagram
     subscriptions ||--o{ subscription_offsets : offsets
     subscription_offsets ||--o{ leases : locks
     workers ||--o{ leases : holds
-    -- leases_available_view as work queue
 ```
 
 ### Key Tables and Views
