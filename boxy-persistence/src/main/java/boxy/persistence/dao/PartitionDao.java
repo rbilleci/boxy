@@ -11,7 +11,7 @@ import java.util.Optional;
 @RegisterConstructorMapper(Partition.class)
 public interface PartitionDao {
 
-    @SqlQuery("SELECT * FROM partitions WHERE id :id")
+    @SqlQuery("SELECT * FROM partitions WHERE id = :id")
     Optional<Partition> find(@Bind("id") long id);
 
     @SqlQuery("SELECT * FROM partitions WHERE topic_id = :topicId AND partition_number = :partitionNumber")
