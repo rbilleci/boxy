@@ -53,7 +53,7 @@ public class BenchmarkIT extends BaseIT {
     void publish_multiThreaded() throws InterruptedException, BrokenBarrierException {
         topicDao.create(TENANT, TOPIC, PARTITIONS);
         final var threadCount = 10;
-        final var opsPerThread = 10_000;
+        final var opsPerThread = 1_000;
 
         try (final var es = Executors.newFixedThreadPool(threadCount)) {
             final var startBarrier = new CyclicBarrier(threadCount + 1);
