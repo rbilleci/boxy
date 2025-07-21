@@ -1,4 +1,9 @@
-![boxy-logo](docs/images/boxy-logo.png)
+
+<div style="text-align:center">
+<picture style="padding:100px;margin-bottom:0px">
+   <img src="docs/images/boxy-logo.png" alt="Boxy Logo" style="width:50%;"/>
+</picture>
+</div>
 
 # Boxy
 
