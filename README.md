@@ -1,14 +1,27 @@
 # Boxy
 
-Boxy is a multi-tenant event streaming library that exposes Kafka-like semantics directly over a database's transactional outbox. It targets monolithic applications that need event streaming without taking on the operational cost of large messaging systems like Kafka or Pulsar. Boxy focuses on high-throughput workers pulling events from the database and is **not** intended to be a central event streaming platform used by many independent services.
+Boxy is a multi-tenant event streaming library that exposes Kafka-like semantics directly over a database's transactional outbox. It targets monolithic applications that need event streaming without taking on the operational cost of more complex systems like Kafka or Pulsar. Boxy turns your transactional outbox into an event-stream, and will allow you to build asynchronous workers in your favorite programming language, to consume events from those streams. Boxy is specifically **not** designed to be a central event streaming platform. 
+
+Boxy is released under the **Apache Software License 2.0 (ASL 2.0)** and remains a work in progress.
 
 The design emphasises fairness and scalability:
 
 * Fair work distribution across tenants and across topics
 * Fair scheduling of worker nodes so consumer groups can scale out to **1024** workers with minimal load on the database
-* Latency is within tens of milliseconds for active partitions and roughly 200&nbsp;ms when an inactive partition becomes active
+* Boxy is designed to have a p99 consumer lag of <5ms for active partitions, <100ms for recently active partitions, and <200ms for inactive partitions that become active.
 
-Currently the only module in use is **boxy-persistence**, which provides the database schema, DAO interfaces and integration tests. The API modules `boxy-api-consumer`, `boxy-api-producer` and `boxy-api-worker` are placeholders for future functionality. Boxy is released under the **Apache Software License 2.0 (ASL 2.0)** and remains a work in progress. The roadmap includes multi-language worker support and a PostgreSQL backend.
+Currently the only module in use is **boxy-persistence**, which provides the database schema, DAO interfaces and integration tests. The API modules `boxy-api-consumer`, `boxy-api-producer` and `boxy-api-worker` are placeholders for future functionality. 
+
+## Roadmap
+
+### V1 (August 2025)
+1. Simple Worker API for Java
+2. Simple Producer API for Java
+
+### V2 (September 2025)
+1. Worker APIs for Java, Go, Rust, Python, CLI, etc... using https://smithy.io/2.0/
+2. Producer API for Java, Go, Rust, Python, CI, etc... using https://smithy.io/2.0/
+3. Postgres support
 
 ---
 
