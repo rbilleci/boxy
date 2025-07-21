@@ -1,4 +1,6 @@
+
 # Boxy
+<img src="docs/images/boxy-logo.png" alt="Boxy Logo" style="width:50%" align="right"/>
 
 Boxy is a multi-tenant event streaming library that exposes Kafka-like semantics directly over a database's transactional outbox. It targets monolithic applications that need event streaming without taking on the operational cost of more complex systems like Kafka or Pulsar. Boxy turns your transactional outbox into an event-stream, and will allow you to build asynchronous workers in your favorite programming language, to consume events from those streams. Boxy is specifically **not** designed to be a central event streaming platform. 
 
