@@ -10,7 +10,7 @@ Boxy is released under the **Apache License 2.0** and remains a work in progress
 
 - **Decentralized, Randomized Work-Stealing** for lease distribution
 - **Fair-share Load Balancing** across worker nodes, proportional to capacity weights
-- **Low Consumer Lag**: p99 <5ms for active partitions, <100ms for recently active, <200ms for cold partitions
+- **Low Consumer Lag**: p99 ~5ms for active partitions, and ~100ms for cold partitions
 - **Scalable Polling**: workers stagger lease grabs to minimize database queries (e.g. ≈10 checks/s instead of hundreds)
 
 ## Roadmap
