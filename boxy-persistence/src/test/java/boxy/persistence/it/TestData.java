@@ -2,6 +2,7 @@ package boxy.persistence.it;
 
 import boxy.persistence.dao.*;
 import boxy.persistence.model.*;
+import boxy.persistence.service.SubscriptionService;
 import org.jdbi.v3.core.Jdbi;
 
 import java.util.ArrayList;
@@ -33,7 +34,7 @@ public record TestData(Topic topic,
         // Initialize JDBI Objects
         final var topicDao = jdbi.onDemand(TopicDao.class);
         final var consumerGroupDao = jdbi.onDemand(ConsumerGroupDao.class);
-        final var subscriptionDao = jdbi.onDemand(SubscriptionDao.class);
+        final var subscriptionService = new SubscriptionService(jdbi);
         final var subscriptionOffsetDao = jdbi.onDemand(SubscriptionOffsetDao.class);
         final var workerDao = jdbi.onDemand(WorkerDao.class);
 
@@ -56,15 +57,15 @@ public record TestData(Topic topic,
         consumerGroups.add(consumerGroupDao.find(consumerGroupDao.create(TENANT_2, CONSUMER_GROUP_D)).orElseThrow());
 
         // SUBSCRIBE TENANT 1
-        subscriptionDao.subscribe(TENANT_1, CONSUMER_GROUP_A, TOPIC_A);
-        subscriptionDao.subscribe(TENANT_1, CONSUMER_GROUP_A, TOPIC_B);
-        subscriptionDao.subscribe(TENANT_1, CONSUMER_GROUP_B, TOPIC_A);
-        subscriptionDao.subscribe(TENANT_1, CONSUMER_GROUP_B, TOPIC_B);
-        subscriptionDao.subscribe(TENANT_2, CONSUMER_GROUP_A, TOPIC_C);
-        subscriptionDao.subscribe(TENANT_2, CONSUMER_GROUP_A, TOPIC_D);
-        subscriptionDao.subscribe(TENANT_2, CONSUMER_GROUP_B, TOPIC_C);
-        subscriptionDao.subscribe(TENANT_2, CONSUMER_GROUP_B, TOPIC_D);
-        final var subscriptions = subscriptionDao.findAll(100, 0);
+        subscriptionService.subscribe(TENANT_1, CONSUMER_GROUP_A, TOPIC_A);
+        subscriptionService.subscribe(TENANT_1, CONSUMER_GROUP_A, TOPIC_B);
+        subscriptionService.subscribe(TENANT_1, CONSUMER_GROUP_B, TOPIC_A);
+        subscriptionService.subscribe(TENANT_1, CONSUMER_GROUP_B, TOPIC_B);
+        subscriptionService.subscribe(TENANT_2, CONSUMER_GROUP_A, TOPIC_C);
+        subscriptionService.subscribe(TENANT_2, CONSUMER_GROUP_A, TOPIC_D);
+        subscriptionService.subscribe(TENANT_2, CONSUMER_GROUP_B, TOPIC_C);
+        subscriptionService.subscribe(TENANT_2, CONSUMER_GROUP_B, TOPIC_D);
+        final var subscriptions = jdbi.onDemand(SubscriptionDao.class).findAll(100, 0);
         final var firstSubscription = subscriptions.getFirst();
         final var subscriptionOffset = subscriptionOffsetDao.findAll(firstSubscription.id()).getFirst();
 

@@ -1,6 +1,7 @@
 package boxy.persistence.it;
 
-import boxy.persistence.dao.*;
+import boxy.persistence.dao.TopicDao;
+import boxy.persistence.service.EventService;
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,12 +23,12 @@ public class BenchmarkIT extends BaseIT {
     private static final String DATA = "{\"key\": \"value\"}\n";
 
     private Recorder recorder;
-    private EventDao eventDao;
+    private EventService eventService;
     private TopicDao topicDao;
 
     @BeforeEach
     void setup() {
-        eventDao = jdbi.onDemand(EventDao.class);
+        eventService = new EventService(jdbi);
         topicDao = jdbi.onDemand(TopicDao.class);
         recorder = new Recorder(TimeUnit.SECONDS.toNanos(1), 3);
     }
@@ -41,7 +42,7 @@ public class BenchmarkIT extends BaseIT {
             histogram.reset();
             for (int i = 0; i < 1_000; i++) {
                 final var start = System.nanoTime();
-                eventDao.publish(TENANT, TOPIC, "k", DATA);
+                eventService.publish(TENANT, TOPIC, "k", DATA);
                 histogram.recordValue(System.nanoTime() - start);
             }
             System.out.printf("Run #%d:%n", run);
@@ -60,13 +61,13 @@ public class BenchmarkIT extends BaseIT {
             final var doneLatch = new CountDownLatch(threadCount);
 
             // submit tasks
-            IntStream.range(0, threadCount).forEach(_ ->
+            IntStream.range(0, threadCount).forEach(thread ->
                     es.submit(() -> {
                         try {
                             startBarrier.await();
                             for (int j = 0; j < opsPerThread; j++) {
                                 final var start = System.nanoTime();
-                                eventDao.publish(TENANT, TOPIC, "k" + j, DATA);
+                                eventService.publish(TENANT, TOPIC, "k" + j, DATA);
                                 recorder.recordValue(System.nanoTime() - start);
                             }
                         } catch (ArrayIndexOutOfBoundsException | BrokenBarrierException | InterruptedException e) {
@@ -106,7 +107,7 @@ public class BenchmarkIT extends BaseIT {
                 for (int x = 0; x < 10; x++) batch.add(DATA);
 
                 final var start = System.nanoTime();
-                eventDao.publish(TENANT, TOPIC, "k", batch);
+                eventService.publish(TENANT, TOPIC, "k", batch);
                 histogram.recordValue(System.nanoTime() - start);
             }
             System.out.printf("Batch run #%d:%n", run);

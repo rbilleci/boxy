@@ -49,4 +49,5 @@ public interface TopicDao extends SqlObject {
 
     @SqlUpdate("DELETE FROM topics WHERE id = :topicId")
     void delete(@Bind("topicId") long topicId);
+    
 }
