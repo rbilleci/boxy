@@ -1,6 +1,8 @@
 package boxy.persistence.it;
 
-import boxy.persistence.dao.*;
+import boxy.persistence.dao.LeaseDao;
+import boxy.persistence.service.EventService;
+import boxy.persistence.service.SubscriptionService;
 import boxy.persistence.model.Subscription;
 import boxy.persistence.model.SubscriptionOffset;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,24 +19,24 @@ public class ProcessorIT extends BaseIT {
             {"key": "value"}
             """;
 
-    private SubscriptionDao subscriptionDao;
-    private EventDao eventDao;
+    private SubscriptionService subscriptionService;
+    private EventService eventService;
     private LeaseDao leaseDao;
     private TestData data;
 
     @BeforeEach
     void setup() {
-        subscriptionDao = jdbi.onDemand(SubscriptionDao.class);
-        eventDao = jdbi.onDemand(EventDao.class);
+        subscriptionService = new SubscriptionService(jdbi);
+        eventService = new EventService(jdbi);
         leaseDao = jdbi.onDemand(LeaseDao.class);
         data = TestData.seed(jdbi);
     }
 
     @Test
     void leasesAvailable_whenViewHasOneItem_returnsListWithOneItem() {
-        final var subscriptionId = subscriptionDao.find(TENANT_1, CONSUMER_GROUP_A, TOPIC_A).orElseThrow().id();
+        final var subscriptionId = subscriptionService.find(TENANT_1, CONSUMER_GROUP_A, TOPIC_A).orElseThrow().id();
         // PUBLISH
-        eventDao.publish(TENANT_1, TOPIC_A, "partitionKey", DATA);
+        eventService.publish(TENANT_1, TOPIC_A, "partitionKey", DATA);
         // VALIDATE
         final var subscriptionOffsets = leaseDao.leasesAvailable(100, 0);
         assertThat(subscriptionOffsets).hasSize(2);
@@ -46,14 +48,14 @@ public class ProcessorIT extends BaseIT {
     @Test
     void leasesAvailable_whenViewHasMultipleItems_returnsAllItems() {
         // PUBLISH
-        eventDao.publish(TENANT_1, TOPIC_A, "pk1", DATA);
-        eventDao.publish(TENANT_1, TOPIC_A, "pk2", DATA);
-        eventDao.publish(TENANT_1, TOPIC_B, "pk3", DATA);
-        eventDao.publish(TENANT_1, TOPIC_B, "pk4", DATA);
-        eventDao.publish(TENANT_2, TOPIC_C, "pk5", DATA);
-        eventDao.publish(TENANT_2, TOPIC_C, "pk6", DATA);
-        eventDao.publish(TENANT_2, TOPIC_D, "pk7", DATA);
-        eventDao.publish(TENANT_2, TOPIC_D, "pk8", DATA);
+        eventService.publish(TENANT_1, TOPIC_A, "pk1", DATA);
+        eventService.publish(TENANT_1, TOPIC_A, "pk2", DATA);
+        eventService.publish(TENANT_1, TOPIC_B, "pk3", DATA);
+        eventService.publish(TENANT_1, TOPIC_B, "pk4", DATA);
+        eventService.publish(TENANT_2, TOPIC_C, "pk5", DATA);
+        eventService.publish(TENANT_2, TOPIC_C, "pk6", DATA);
+        eventService.publish(TENANT_2, TOPIC_D, "pk7", DATA);
+        eventService.publish(TENANT_2, TOPIC_D, "pk8", DATA);
         // VALIDATE
         final var leasable = leaseDao.leasesAvailable(100, 0);
         assertThat(leasable)
