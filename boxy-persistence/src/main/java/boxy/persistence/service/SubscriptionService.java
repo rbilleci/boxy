@@ -29,9 +29,9 @@ public class SubscriptionService {
     }
 
     public long subscribe(String tenant, String consumerGroupName, String topic) {
-        long cgId = consumerGroupId(tenant, consumerGroupName);
-        long topicId = topicId(tenant, topic);
-        return subscriptionDao.subscribe(cgId, topicId);
+        final var consumerGroupId = consumerGroupId(tenant, consumerGroupName);
+        final var topicId = topicId(tenant, topic);
+        return subscriptionDao.subscribe(consumerGroupId, topicId);
     }
 
     public void subscribe(String tenant, String consumerGroupName, String... topics) {
