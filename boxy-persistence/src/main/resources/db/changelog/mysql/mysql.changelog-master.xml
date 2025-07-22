@@ -3,52 +3,71 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
-    <changeSet id="1" author="boxy" dbms="mysql">
-        <sqlFile path="db/changelog/mysql/db.baseline.sql"/>
-    </changeSet>
-    <changeSet id="2" author="boxy" dbms="mysql">
-        <sqlFile path="db/changelog/mysql/stored-procedures/sp_create_consumer_group.sql"/>
-    </changeSet>
-    <changeSet id="3" author="boxy" dbms="mysql">
-        <sqlFile path="db/changelog/mysql/stored-procedures/sp_delete_consumer_group.sql"/>
-    </changeSet>
-    <changeSet id="4" author="boxy" dbms="mysql">
-        <sqlFile path="db/changelog/mysql/stored-procedures/sp_register_worker.sql"/>
-    </changeSet>
-    <changeSet id="5" author="boxy" dbms="mysql">
-        <sqlFile path="db/changelog/mysql/stored-procedures/sp_deregister_worker.sql"/>
-    </changeSet>
-    <changeSet id="6" author="boxy" dbms="mysql">
-        <sqlFile path="db/changelog/mysql/stored-procedures/sp_create_topic.sql"/>
-    </changeSet>
-    <changeSet id="7" author="boxy" dbms="mysql">
-        <sqlFile path="db/changelog/mysql/stored-procedures/sp_delete_topic_by_name.sql"/>
-    </changeSet>
-    <changeSet id="8" author="boxy" dbms="mysql">
-        <sqlFile path="db/changelog/mysql/stored-procedures/sp_delete_topic_by_id.sql"/>
-    </changeSet>
-    <changeSet id="9" author="boxy" dbms="mysql">
-        <sqlFile path="db/changelog/mysql/stored-procedures/sp_publish_events.sql"/>
-    </changeSet>
-    <changeSet id="10" author="boxy" dbms="mysql">
-        <sqlFile path="db/changelog/mysql/stored-procedures/sp_subscribe.sql"/>
-    </changeSet>
-    <changeSet id="11" author="boxy" dbms="mysql">
-        <sqlFile path="db/changelog/mysql/stored-procedures/sp_subscribe_topics.sql"/>
-    </changeSet>
-    <changeSet id="12" author="boxy" dbms="mysql">
-        <sqlFile path="db/changelog/mysql/stored-procedures/sp_unsubscribe.sql"/>
-    </changeSet>
-    <changeSet id="13" author="boxy" dbms="mysql">
-        <sqlFile path="db/changelog/mysql/stored-procedures/sp_commit_offset.sql"/>
-    </changeSet>
-    <changeSet id="14" author="boxy" dbms="mysql">
-        <sqlFile path="db/changelog/mysql/stored-procedures/sp_acquire_lease.sql"/>
-    </changeSet>
-    <changeSet id="15" author="boxy" dbms="mysql">
-        <sqlFile path="db/changelog/mysql/stored-procedures/sp_renew_lease.sql"/>
-    </changeSet>
-    <changeSet id="16" author="boxy" dbms="mysql">
-        <sqlFile path="db/changelog/mysql/stored-procedures/sp_release_lease.sql"/>
+    <changeSet id="1" author="richard.billeci" dbms="mysql">
+        <sqlFile path="mysql.schema.sql" relativeToChangelogFile="true"/>
+        <sqlFile path="sp/sp_create_consumer_group.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_delete_consumer_group.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_register_worker.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_deregister_worker.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_create_topic.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_delete_topic_by_name.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_delete_topic_by_id.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_publish_event.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_publish_events.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_subscribe.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_subscribe_topics.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_unsubscribe.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_commit_offset.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_acquire_lease.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_renew_lease.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_release_lease.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
     </changeSet>
 </databaseChangeLog>

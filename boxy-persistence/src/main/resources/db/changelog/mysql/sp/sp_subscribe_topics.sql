@@ -1,4 +1,3 @@
-DROP PROCEDURE IF EXISTS sp_subscribe_topics;
 CREATE PROCEDURE sp_subscribe_topics(IN p_consumer_group_id BIGINT, IN p_topic_ids JSON)
 BEGIN
     DECLARE idx INT DEFAULT 0;

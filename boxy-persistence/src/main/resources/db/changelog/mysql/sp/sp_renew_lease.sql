@@ -1,4 +1,3 @@
-DROP PROCEDURE IF EXISTS sp_renew_lease;
 CREATE PROCEDURE sp_renew_lease(IN p_subscription_offset_id BIGINT, IN p_worker_id BIGINT, IN p_expires_after BIGINT)
 BEGIN
     UPDATE leases SET

@@ -1,4 +1,3 @@
-DROP PROCEDURE IF EXISTS sp_commit_offset;
 CREATE PROCEDURE sp_commit_offset(IN p_id BIGINT, IN p_offset BIGINT)
 BEGIN
     UPDATE subscription_offsets

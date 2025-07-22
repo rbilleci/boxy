@@ -7,10 +7,9 @@ import java.util.List;
 public interface EventDao extends SqlObject {
 
     default void publish(long partitionId, String data) {
-        final var json = "[" + data + "]";
-        getHandle().createUpdate("CALL sp_publish_events(:pid,:events)")
+        getHandle().createUpdate("CALL sp_publish_event(:pid,:event)")
                 .bind("pid", partitionId)
-                .bind("events", json)
+                .bind("event", data)
                 .execute();
     }
 
