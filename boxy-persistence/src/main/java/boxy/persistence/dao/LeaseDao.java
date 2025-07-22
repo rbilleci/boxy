@@ -51,5 +51,4 @@ public interface LeaseDao {
     void release(@Bind("subscriptionOffsetId") long subscriptionOffsetId,
                  @Bind("workerId") long workerId);
 
-
 }

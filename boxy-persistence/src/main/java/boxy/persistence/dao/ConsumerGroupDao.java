@@ -17,9 +17,6 @@ public interface ConsumerGroupDao {
     @GetGeneratedKeys
     long create(@Bind("tenant") String tenant, @Bind("name") String name);
 
-    @SqlUpdate("UPDATE consumer_groups SET name = :name WHERE id = :id")
-    void update(@Bind("id") long id, @Bind("name") String name);
-
     @SqlUpdate("DELETE FROM consumer_groups WHERE id = :id")
     void delete(@Bind("id") long id);
 

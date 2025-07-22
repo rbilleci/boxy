@@ -14,10 +14,12 @@ public interface EventDao extends SqlObject {
                 .execute();
     }
 
-    default void publish(long partitionId, List<String> data) {
-        final var h = getHandle();
-        final var b = h.prepareBatch("INSERT INTO events (partition_id, data) VALUES (?, ?)");
-        data.forEach(d -> b.bind(0, partitionId).bind(1, d));
-        b.execute();
+    default void publish(long partitionId, final List<String> data) {
+        try (final var h = getHandle()) {
+            final var b = h.prepareBatch("INSERT INTO events (partition_id, data) VALUES (?, ?)");
+            data.forEach(d -> b.bind(0, partitionId).bind(1, d).add());
+            b.execute();
+        }
     }
+
 }

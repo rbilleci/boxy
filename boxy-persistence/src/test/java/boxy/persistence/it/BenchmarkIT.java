@@ -61,7 +61,7 @@ public class BenchmarkIT extends BaseIT {
             final var doneLatch = new CountDownLatch(threadCount);
 
             // submit tasks
-            IntStream.range(0, threadCount).forEach(_ ->
+            IntStream.range(0, threadCount).forEach(thread ->
                     es.submit(() -> {
                         try {
                             startBarrier.await();

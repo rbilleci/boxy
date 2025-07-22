@@ -4,8 +4,8 @@ import boxy.persistence.model.Subscription;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.transaction.Transaction;
 
 import java.util.List;
@@ -42,27 +42,13 @@ public interface SubscriptionDao extends SqlObject {
         return subscriptionId;
     }
 
-    /** Subscribe to multiple topics atomically. */
     @Transaction
-    default void subscribe(long consumerGroupId, long... topicIds) {
-        for (long topicId : topicIds) {
-            subscribe(consumerGroupId, topicId);
-        }
+    default void subscribe(long consumerGroupId, List<Long> topicIds) {
+        topicIds.forEach(topicId -> subscribe(consumerGroupId, topicId));
     }
 
     @Transaction
-    @SqlUpdate("DELETE FROM subscriptions WHERE id = :id")
-    void unsubscribe(@Bind("id") long id);
+    @SqlBatch("DELETE FROM subscriptions WHERE consumer_group_id = :consumerGroupId AND topic_id = :topicId")
+    void unsubscribe(@Bind("consumerGroupId") long consumerGroupId, @Bind("topicId") List<Long> topicIds);
 
-    default void unsubscribe(long consumerGroupId, long topicId) {
-        find(consumerGroupId, topicId).ifPresent(s -> unsubscribe(s.id()));
-    }
-
-    /** Unsubscribe from multiple topics atomically. */
-    @Transaction
-    default void unsubscribe(long consumerGroupId, long... topicIds) {
-        for (long topicId : topicIds) {
-            unsubscribe(consumerGroupId, topicId);
-        }
-    }
 }

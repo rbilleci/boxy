@@ -6,6 +6,7 @@ import boxy.persistence.dao.TopicDao;
 import boxy.persistence.model.Subscription;
 import org.jdbi.v3.core.Jdbi;
 
+import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -22,9 +23,9 @@ public class SubscriptionService {
     }
 
     public Optional<Subscription> find(String tenant, String consumerGroupName, String topic) {
-        long cgId = consumerGroupId(tenant, consumerGroupName);
-        long topicId = topicId(tenant, topic);
-        return subscriptionDao.find(cgId, topicId);
+        final var consumerGroupId = consumerGroupId(tenant, consumerGroupName);
+        final var topicId = topicId(tenant, topic);
+        return subscriptionDao.find(consumerGroupId, topicId);
     }
 
     public long subscribe(String tenant, String consumerGroupName, String topic) {
@@ -34,19 +35,15 @@ public class SubscriptionService {
     }
 
     public void subscribe(String tenant, String consumerGroupName, String... topics) {
-        long cgId = consumerGroupId(tenant, consumerGroupName);
-        long[] topicIds = java.util.Arrays.stream(topics)
-                .mapToLong(t -> topicId(tenant, t))
-                .toArray();
-        subscriptionDao.subscribe(cgId, topicIds);
+        final var consumerGroupId = consumerGroupId(tenant, consumerGroupName);
+        final var topicIds = Arrays.stream(topics).map(topic -> topicId(tenant, topic)).toList();
+        subscriptionDao.subscribe(consumerGroupId, topicIds);
     }
 
     public void unsubscribe(String tenant, String consumerGroupName, String... topics) {
-        long cgId = consumerGroupId(tenant, consumerGroupName);
-        long[] topicIds = java.util.Arrays.stream(topics)
-                .mapToLong(t -> topicId(tenant, t))
-                .toArray();
-        subscriptionDao.unsubscribe(cgId, topicIds);
+        final var consumerGroupId = consumerGroupId(tenant, consumerGroupName);
+        final var topicIds = Arrays.stream(topics).map(topic -> topicId(tenant, topic)).toList();
+        subscriptionDao.unsubscribe(consumerGroupId, topicIds);
     }
 
     private long consumerGroupId(String tenant, String consumerGroupName) {

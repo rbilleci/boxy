@@ -1,6 +1,7 @@
 package boxy.persistence.it;
 
 import boxy.persistence.dao.ConsumerGroupDao;
+import boxy.persistence.dao.SubscriptionDao;
 import boxy.persistence.dao.TopicDao;
 import boxy.persistence.service.SubscriptionService;
 import boxy.persistence.model.Subscription;
@@ -40,8 +41,7 @@ public class SubscriptionIT extends BaseIT {
     @Test
     void created_whenCreatedMultipleTimes_allPresent() {
         // VALIDATE
-        assertThat(jdbi.onDemand(SubscriptionDao.class).findAll(100, 0))
-                .hasSize(8);
+        assertThat(jdbi.onDemand(SubscriptionDao.class).findAll(100, 0)).hasSize(8);
     }
 
     @Test

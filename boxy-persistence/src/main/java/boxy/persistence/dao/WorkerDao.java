@@ -1,7 +1,6 @@
 package boxy.persistence.dao;
 
 import boxy.persistence.model.Worker;
-import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
@@ -12,7 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RegisterConstructorMapper(Worker.class)
-public interface WorkerDao extends SqlObject {
+public interface WorkerDao {
 
 
     @SqlUpdate("INSERT INTO workers (node_id, consumer_group_id, weight) VALUES (:nodeId, :consumerGroupId, :weight)")
