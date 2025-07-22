@@ -110,20 +110,6 @@ CREATE TABLE events (
 
 
 -- ========================================================
--- TRIGGER: tr_events__after_insert
---  After a new event row is appended:
---    • Advance the 'high_watermark' on the corresponding partition
---      to the new event’s auto-increment ID.
---  → Ensures partition.high_watermark is always up-to-date without
---    extra round-trips from the application.
--- ========================================================
-CREATE TRIGGER tr_events__after_insert AFTER INSERT ON events FOR EACH ROW
-BEGIN
-    UPDATE partitions SET high_watermark = NEW.id WHERE id = NEW.partition_id;
-END;
-
-
--- ========================================================
 -- VIEW: subscription_offsets_view
 --  Provides for each subscription-partition pair:
 --    • the last committed offset
