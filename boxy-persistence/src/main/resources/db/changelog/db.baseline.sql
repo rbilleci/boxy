@@ -79,19 +79,6 @@ CREATE TABLE workers (
     COMMENT='Registered worker nodes per consumer-group, with capacity weight and heartbeat timestamp';
 
 
-CREATE TABLE worker_rendezvous_scores (
-    worker_id               BIGINT NOT NULL,
-    subscription_offset_id  BIGINT NOT NULL,
-    score                   INT,
-    PRIMARY KEY (worker_id, subscription_offset_id),
-    FOREIGN KEY (worker_id) REFERENCES workers(id) ON DELETE CASCADE,
-    FOREIGN KEY (subscription_offset_id) REFERENCES subscription_offsets(id) ON DELETE CASCADE
-)  ENGINE=InnoDB
-    DEFAULT CHARSET=utf8mb4
-    COLLATE=utf8mb4_bin
-    COMMENT='Caches normalized & weighted rendezvous-hash scores per for each (subscription_offset, worker), to avoid full hash+pow re-computation on re-balance';
-
-
 CREATE TABLE leases (
     subscription_offset_id  BIGINT PRIMARY KEY,
     worker_id               BIGINT NOT NULL,
