@@ -1,27 +1,31 @@
 package boxy.persistence.dao;
 
 import boxy.persistence.model.Worker;
+import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 import java.util.List;
 import java.util.Optional;
 
 @RegisterConstructorMapper(Worker.class)
-public interface WorkerDao {
+public interface WorkerDao extends SqlObject {
 
+    default long register(String nodeId, long consumerGroupId, int weight) {
+        return getHandle().createQuery("CALL sp_register_worker(:nodeId,:consumerGroupId,:weight)")
+                .bind("nodeId", nodeId)
+                .bind("consumerGroupId", consumerGroupId)
+                .bind("weight", weight)
+                .mapTo(Long.class)
+                .one();
+    }
 
-    @SqlUpdate("INSERT INTO workers (node_id, consumer_group_id, weight) VALUES (:nodeId, :consumerGroupId, :weight)")
-    @GetGeneratedKeys
-    long register(@Bind("nodeId") String nodeId,
-                  @Bind("consumerGroupId") long consumerGroupId,
-                  @Bind("weight") int weight);
-
-    @SqlUpdate("DELETE FROM workers WHERE id = :id")
-    void deregister(@Bind("id") long id);
+    default void deregister(long id) {
+        getHandle().createUpdate("CALL sp_deregister_worker(:id)")
+                .bind("id", id)
+                .execute();
+    }
 
     @SqlQuery("SELECT * FROM workers WHERE id = :id")
     Optional<Worker> find(@Bind("id") long id);
@@ -33,5 +37,4 @@ public interface WorkerDao {
     @SqlQuery("SELECT * FROM workers ORDER BY id LIMIT :limit OFFSET :offset")
     List<Worker> findAll(@Bind("limit") int limit,
                          @Bind("offset") int offset);
-
 }

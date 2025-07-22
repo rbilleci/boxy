@@ -1,24 +1,30 @@
 package boxy.persistence.dao;
 
 import boxy.persistence.model.ConsumerGroup;
+import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 import java.util.List;
 import java.util.Optional;
 
 @RegisterConstructorMapper(ConsumerGroup.class)
-public interface ConsumerGroupDao {
+public interface ConsumerGroupDao extends SqlObject {
 
-    @SqlUpdate("INSERT INTO consumer_groups (tenant, name) VALUES (:tenant, :name)")
-    @GetGeneratedKeys
-    long create(@Bind("tenant") String tenant, @Bind("name") String name);
+    default long create(String tenant, String name) {
+        return getHandle().createQuery("CALL sp_create_consumer_group(:tenant,:name)")
+                .bind("tenant", tenant)
+                .bind("name", name)
+                .mapTo(Long.class)
+                .one();
+    }
 
-    @SqlUpdate("DELETE FROM consumer_groups WHERE id = :id")
-    void delete(@Bind("id") long id);
+    default void delete(long id) {
+        getHandle().createUpdate("CALL sp_delete_consumer_group(:id)")
+                .bind("id", id)
+                .execute();
+    }
 
     @SqlQuery("SELECT * FROM consumer_groups WHERE id = :id")
     Optional<ConsumerGroup> find(@Bind("id") long id);

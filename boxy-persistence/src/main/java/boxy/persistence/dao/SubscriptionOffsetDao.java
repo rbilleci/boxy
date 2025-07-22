@@ -1,19 +1,23 @@
 package boxy.persistence.dao;
 
 import boxy.persistence.model.SubscriptionOffset;
+import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 import java.util.List;
 import java.util.Optional;
 
 @RegisterConstructorMapper(SubscriptionOffset.class)
-public interface SubscriptionOffsetDao {
+public interface SubscriptionOffsetDao extends SqlObject {
 
-    @SqlUpdate("UPDATE subscription_offsets SET committed_offset = :offset WHERE id = :id AND committed_offset < :offset")
-    void commit(@Bind("id") long id, @Bind("offset") long offset);
+    default void commit(long id, long offset) {
+        getHandle().createUpdate("CALL sp_commit_offset(:id,:offset)")
+                .bind("id", id)
+                .bind("offset", offset)
+                .execute();
+    }
 
     @SqlQuery("SELECT * FROM subscription_offsets_view WHERE id = :id")
     Optional<SubscriptionOffset> find(@Bind("id") long id);
