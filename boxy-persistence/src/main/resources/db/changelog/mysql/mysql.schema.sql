@@ -12,12 +12,12 @@ CREATE TABLE topics (
     COMMENT='Stores logical topics (namespaces) per tenant, each with a configurable number of partitions';
 
 CREATE TABLE partitions (
-    id                  BIGINT PRIMARY KEY,
+    id                  BIGINT AS ((topic_id << 16) + partition_number) STORED PRIMARY KEY,
     topic_id            BIGINT NOT NULL,
     partition_number    INT NOT NULL,
     high_watermark      BIGINT DEFAULT 0 NOT NULL,
     INDEX idx_partitions__cover (topic_id, partition_number, id),
-    FOREIGN KEY (topic_id) REFERENCES topics (id) ON DELETE CASCADE,
+    FOREIGN KEY (topic_id) REFERENCES topics (id),
     CONSTRAINT u_partitions UNIQUE (topic_id, partition_number)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
@@ -71,8 +71,7 @@ CREATE TABLE workers (
     last_heartbeat       DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     INDEX idx_workers__consumer_group (consumer_group_id),
     INDEX idx_workers___last_heartbeat (last_heartbeat),
-    CONSTRAINT u_workers         UNIQUE (node_id, consumer_group_id),
-    FOREIGN KEY (consumer_group_id) REFERENCES consumer_groups(id) ON DELETE CASCADE
+    CONSTRAINT u_workers UNIQUE (node_id, consumer_group_id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
@@ -88,8 +87,8 @@ CREATE TABLE leases (
     expires_at              DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     INDEX idx_leases__expires_at (expires_at),
     INDEX idx_leases__worker (worker_id),
-    FOREIGN KEY (subscription_offset_id) REFERENCES subscription_offsets(id) ON DELETE CASCADE,
-    FOREIGN KEY (worker_id) REFERENCES workers(id) ON DELETE CASCADE
+    FOREIGN KEY (subscription_offset_id) REFERENCES subscription_offsets(id),
+    FOREIGN KEY (worker_id) REFERENCES workers(id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
