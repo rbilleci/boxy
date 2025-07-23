@@ -28,9 +28,9 @@ Boxy is released under the **Apache License 2.0** and remains a work in progress
 
 ---
 
-## Persistence Overview
+## Boxy Core and Boxy DB Overview
 
-Liquibase migrations for the schema are under `boxy-persistence/src/main/resources/db/changelog`. The schema models:
+Liquibase migrations for the schema are under `boxy-core/src/main/resources/db/changelog`. The schema models:
 
 ```mermaid
 erDiagram
@@ -53,7 +53,7 @@ erDiagram
 
 ## Domain Classes
 
-The persistence module uses Java records to model the schema. Relevant classes:
+The Boxy Core module uses Java records to model the schema. Relevant classes:
 
 ```mermaid
 classDiagram

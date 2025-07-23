@@ -7,8 +7,10 @@
     <file url="file://$PROJECT_DIR$/boxy-api-producer/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/boxy-api-worker/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/boxy-api-worker/src/main/resources" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/boxy-persistence/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/boxy-persistence/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/boxy-core/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/boxy-core/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/boxy-db/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/boxy-db/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/resources" charset="UTF-8" />
   </component>
