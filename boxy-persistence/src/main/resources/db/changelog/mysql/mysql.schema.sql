@@ -12,7 +12,7 @@ CREATE TABLE topics (
     COMMENT='Stores logical topics (namespaces) per tenant, each with a configurable number of partitions';
 
 CREATE TABLE partitions (
-    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id                  BIGINT PRIMARY KEY,
     topic_id            BIGINT NOT NULL,
     partition_number    INT NOT NULL,
     high_watermark      BIGINT DEFAULT 0 NOT NULL,
@@ -51,7 +51,7 @@ CREATE TABLE subscriptions (
 
 CREATE TABLE subscription_offsets (
     id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
-    subscription_id    BIGINT NOT NULL,
+    subscription_id     BIGINT NOT NULL,
     partition_id        BIGINT NOT NULL,
     committed_offset    BIGINT NOT NULL DEFAULT 0,
     FOREIGN KEY (subscription_id)   REFERENCES subscriptions (id) ON DELETE CASCADE,
@@ -135,15 +135,6 @@ CREATE TABLE topics_cache (
   partitions  INT NOT NULL,
   PRIMARY KEY (tenant, topic)
 ) ENGINE=MEMORY;
-
-
-CREATE TABLE partitions_cache (
-  topic_id          BIGINT  NOT NULL,
-  partition_number  INT     NOT NULL,
-  partition_id      BIGINT  NOT NULL,
-  PRIMARY KEY (topic_id, partition_number)
-) ENGINE=MEMORY;
-
 
 -- ========================================================
 -- VIEW: leases_available_view

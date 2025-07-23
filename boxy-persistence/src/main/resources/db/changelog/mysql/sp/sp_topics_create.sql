@@ -9,12 +9,12 @@ BEGIN
     SET v_topic_id = LAST_INSERT_ID();
 
     -- INSERT THE PARTITIONS
-    INSERT INTO partitions (topic_id, partition_number)
+    INSERT INTO partitions (id, topic_id, partition_number)
     WITH RECURSIVE numbers (n) AS (
         SELECT 0
         UNION ALL
         SELECT n + 1 FROM numbers WHERE n < p_partitions - 1)
-    SELECT v_topic_id, n FROM numbers;
+    SELECT fn_resolve_partition_id(v_topic_id, n), v_topic_id, n FROM numbers;
 
     -- RETURN THE TOPIC ID
     SELECT v_topic_id AS id;

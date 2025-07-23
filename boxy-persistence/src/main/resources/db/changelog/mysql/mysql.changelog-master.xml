@@ -4,7 +4,14 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet id="1" author="richard.billeci" dbms="mysql">
+        <!-- EVENT SCHEMA -->
         <sqlFile path="mysql.schema.sql" relativeToChangelogFile="true"/>
+        <!-- FUNCTION -->
+        <sqlFile path="fn/fn_resolve_partition_id.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <!-- STORED PROCEDURES -->
         <sqlFile path="sp/sp_consumer_groups_create.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
@@ -74,10 +81,6 @@
                  splitStatements="false"
                  stripComments="false"/>
         <sqlFile path="sp/sp_topics_cache_get.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-        <sqlFile path="sp/sp_partitions_cache_get.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
