@@ -12,7 +12,8 @@
     <modules>
         <module>boxy-api-producer</module>
         <module>boxy-api-worker</module>
-        <module>boxy-persistence</module>
+        <module>boxy-core</module>
+        <module>boxy-db</module>
     </modules>
 
     <properties>
@@ -49,13 +50,6 @@
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
                 <version>1.5.18</version>
-            </dependency>
-
-            <!-- CACHING -->
-            <dependency>
-                <groupId>com.github.ben-manes.caffeine</groupId>
-                <artifactId>caffeine</artifactId>
-                <version>3.2.1</version>
             </dependency>
 
             <!-- DATABASE CONNECTION POOLING -->

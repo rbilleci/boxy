@@ -13,6 +13,14 @@ Boxy is released under the **Apache License 2.0** and remains a work in progress
 - **Low Consumer Lag**: p99 ~5ms for active partitions, and ~100ms for cold partitions
 - **Scalable Polling**: workers stagger lease grabs to minimize database queries (e.g. ≈10 checks/s instead of hundreds)
 
+## Architecture Decisions
+- Each topic has a practical limit of 1024 partitions, and a technical limit of 65536 partitions
+- Each consumer group has a practical limit of 1024 workers.
+- Tenant and Topic Names are case-sensitive.
+- For safety: boxy never deletes events. Event deletion is left to be orchestrated by you.
+- For easy portability across programming languages and runtimes, all mutations are strictly performed by stored procedures.
+- All interfaces are kept simple, using tenant ids and topic names as parameters.
+
 ## Roadmap
 
 ### V1 (August 2025)
@@ -22,15 +30,15 @@ Boxy is released under the **Apache License 2.0** and remains a work in progress
 
 ### V2 (September 2025)
 
-1. Multi-language Worker APIs (Java, Go, Rust, Python, CLI) via Smithy
-2. Multi-language Producer APIs via Smithy
+1. Multi-language Worker APIs (Java, Go, Rust, Python, CLI) 
+2. Multi-language Producer APIs
 3. Postgres support
 
 ---
 
-## Persistence Overview
+## Boxy Core and Boxy DB Overview
 
-Liquibase migrations for the schema are under `boxy-persistence/src/main/resources/db/changelog`. The schema models:
+Liquibase migrations for the schema are under `boxy-core/src/main/resources/db/changelog`. The schema models:
 
 ```mermaid
 erDiagram
@@ -53,7 +61,7 @@ erDiagram
 
 ## Domain Classes
 
-The persistence module uses Java records to model the schema. Relevant classes:
+The Boxy Core module uses Java records to model the schema. Relevant classes:
 
 ```mermaid
 classDiagram
