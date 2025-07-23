@@ -14,12 +14,9 @@ CREATE TABLE topics (
 CREATE TABLE partitions (
     id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
     topic_id            BIGINT NOT NULL,
-    tenant_name         VARCHAR(255) NOT NULL,
-    topic_name          VARCHAR(255) NOT NULL,
     partition_number    INT NOT NULL,
-    partitions          INT NOT NULL,
     high_watermark      BIGINT DEFAULT 0 NOT NULL,
-    INDEX idx_partitions__cover (tenant_name, topic_name, partition_number),
+    INDEX idx_partitions__cover (topic_id, partition_number, id),
     FOREIGN KEY (topic_id) REFERENCES topics (id) ON DELETE CASCADE,
     CONSTRAINT u_partitions UNIQUE (topic_id, partition_number)
 ) ENGINE=InnoDB
@@ -129,6 +126,23 @@ SELECT
     p.high_watermark
 FROM subscription_offsets AS so
     INNER JOIN partitions AS p ON p.id = so.partition_id;
+
+
+CREATE TABLE topics_cache (
+  tenant      VARCHAR(255)  NOT NULL,
+  topic       VARCHAR(255)  NOT NULL,
+  topic_id    BIGINT        NOT NULL,
+  partitions  INT NOT NULL,
+  PRIMARY KEY (tenant, topic)
+) ENGINE=MEMORY;
+
+
+CREATE TABLE partitions_cache (
+  topic_id          BIGINT  NOT NULL,
+  partition_number  INT     NOT NULL,
+  partition_id      BIGINT  NOT NULL,
+  PRIMARY KEY (topic_id, partition_number)
+) ENGINE=MEMORY;
 
 
 -- ========================================================

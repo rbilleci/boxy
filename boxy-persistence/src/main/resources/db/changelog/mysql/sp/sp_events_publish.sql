@@ -15,27 +15,16 @@ BEGIN
         RESIGNAL;
     END;
 
-    -- RESOLVE THE TOPIC
-    SELECT id, partitions INTO v_topic_id, v_partitions
-        FROM topics
-        WHERE
-            tenant = p_tenant AND
-            name = p_topic;
-
-    SET v_partition_number = CRC32(p_key) % v_partitions;
-
-    -- RESOLVE THE PARTITION
-    SELECT id INTO v_partition_id FROM partitions
-    WHERE
-        topic_id = v_topic_id AND
-        partition_number = v_partition_number
-    LIMIT 1;
+    -- RESOLVE THE TOPIC AND PARTITION COUNT
+    CALL sp_topics_cache_get(p_tenant, p_topic, @topic_id, @partitions);
+    SET v_partition_number = CRC32(p_key) % @partitions;
+    CALL sp_partitions_cache_get(@topic_id, v_partition_number, @partition_id);
 
     START TRANSACTION;
         -- EVENT PUBLICATION
-        INSERT INTO events(partition_id, data) VALUES (v_partition_id, p_data);
+        INSERT INTO events(partition_id, data) VALUES (@partition_id, p_data);
         -- HWM UPDATE
         SET v_sequence = LAST_INSERT_ID();
-        UPDATE partitions SET high_watermark = v_sequence WHERE id = v_partition_id AND high_watermark < v_sequence;
+        UPDATE partitions SET high_watermark = v_sequence WHERE id = @partition_id AND high_watermark < v_sequence;
     COMMIT;
 END;
