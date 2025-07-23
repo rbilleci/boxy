@@ -2,8 +2,6 @@ package boxy.persistence.dao;
 
 import org.jdbi.v3.sqlobject.SqlObject;
 
-import java.util.List;
-
 public interface EventDao extends SqlObject {
 
     default void publish(String tenant, String topic, String key, String data) {
@@ -19,14 +17,6 @@ public interface EventDao extends SqlObject {
         getHandle().createUpdate("CALL sp_events_publish_advanced(:pid,:event)")
                 .bind("pid", partitionId)
                 .bind("event", data)
-                .execute();
-    }
-
-    default void publishMulti(long partitionId, final List<String> data) {
-        final var json = "[" + String.join(",", data) + "]";
-        getHandle().createUpdate("CALL sp_events_publish_multi(:pid,:events)")
-                .bind("pid", partitionId)
-                .bind("events", json)
                 .execute();
     }
 

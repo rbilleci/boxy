@@ -31,6 +31,7 @@ public abstract class BaseIT {
                             // FOR TRIGGER SUPPORT
                             "mysqld", "--log-bin-trust-function-creators=1",
                             // PERFORMANCE TWEAKS
+                            "--innodb_file_per_table=ON",
                             "--innodb_flush_log_at_trx_commit=0",  // never fsync on each commit
                             "--sync_binlog=0",                     // don’t fsync the binary log
                             "--innodb_doublewrite=0",              // skip double‑write buffer

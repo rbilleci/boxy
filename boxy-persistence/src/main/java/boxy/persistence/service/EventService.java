@@ -9,7 +9,6 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.jdbi.v3.core.Jdbi;
 
-import java.util.List;
 import java.util.NoSuchElementException;
 
 public class EventService {
@@ -41,13 +40,6 @@ public class EventService {
 
     public void publish(String tenant, String topicName, String key, String data) {
         eventDao.publish(tenant, topicName, key, data);
-    }
-
-    public void publishMulti(String tenant, String topicName, String key, List<String> data) {
-        final var topic = resolveTopic(tenant, topicName);
-        final var partitionNumber = Math.floorMod(key.hashCode(), topic.partitions());
-        final var partition = resolvePartition(topic.id(), partitionNumber);
-        eventDao.publishMulti(partition.id(), data);
     }
 
     private Topic resolveTopic(String tenant, String name) {

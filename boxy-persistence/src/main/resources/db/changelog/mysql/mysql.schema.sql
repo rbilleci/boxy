@@ -11,7 +11,6 @@ CREATE TABLE topics (
     COLLATE=utf8mb4_bin
     COMMENT='Stores logical topics (namespaces) per tenant, each with a configurable number of partitions';
 
-
 CREATE TABLE partitions (
     id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
     topic_id            BIGINT NOT NULL,
@@ -20,7 +19,7 @@ CREATE TABLE partitions (
     partition_number    INT NOT NULL,
     partitions          INT NOT NULL,
     high_watermark      BIGINT DEFAULT 0 NOT NULL,
-    INDEX idx_partitions__cover (tenant_name, topic_name, partition_number, partitions, id),
+    INDEX idx_partitions__cover (tenant_name, topic_name, partition_number),
     FOREIGN KEY (topic_id) REFERENCES topics (id) ON DELETE CASCADE,
     CONSTRAINT u_partitions UNIQUE (topic_id, partition_number)
 ) ENGINE=InnoDB
@@ -105,7 +104,7 @@ CREATE TABLE events (
     ts              DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) NOT NULL,
     partition_id    BIGINT NOT NULL,
     data            JSON   NOT NULL,
-    INDEX idx_events__partition (partition_id, id)
+    INDEX idx_events__cover(partition_id, id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin

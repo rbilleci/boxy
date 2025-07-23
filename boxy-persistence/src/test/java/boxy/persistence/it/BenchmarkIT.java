@@ -8,7 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.ArrayList;
+import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.stream.IntStream;
 
@@ -17,8 +17,8 @@ import static org.assertj.core.api.Assertions.fail;
 @Testcontainers
 public class BenchmarkIT extends BaseIT {
 
-    private static final String TENANT = "t1";
-    private static final String TOPIC = "topic-a";
+    private static final String TENANT = UUID.randomUUID().toString();
+    private static final String TOPIC = "this-is-topic-a";
     private static final int PARTITIONS = 16;
     private static final String DATA = "{\"key\": \"value\"}\n";
 
@@ -112,23 +112,4 @@ public class BenchmarkIT extends BaseIT {
         System.out.println("Throughput = " + opsPerSecond + " events inserted per second");
     }
 
-    @Test
-    void publish_batched() {
-        topicDao.create(TENANT, TOPIC, PARTITIONS);
-        final var histogram = new Histogram(TimeUnit.SECONDS.toNanos(1), 3);
-
-        for (int run = 0; run < 4; run++) {
-            histogram.reset();
-            for (int i = 0; i < 1_000; i++) {
-                var batch = new ArrayList<String>(10);
-                for (int x = 0; x < 10; x++) batch.add(DATA);
-
-                final var start = System.nanoTime();
-                eventService.publishMulti(TENANT, TOPIC, "k", batch);
-                histogram.recordValue(System.nanoTime() - start);
-            }
-            System.out.printf("Batch run #%d:%n", run);
-            histogram.outputPercentileDistribution(System.out, 1, 1e6);
-        }
-    }
 }

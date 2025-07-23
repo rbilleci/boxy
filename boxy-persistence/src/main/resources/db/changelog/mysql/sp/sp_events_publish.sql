@@ -1,22 +1,41 @@
 CREATE PROCEDURE sp_events_publish(
-    IN p_tenant_name VARCHAR(255),
-    IN p_topic_name VARCHAR(255),
+    IN p_tenant VARCHAR(255),
+    IN p_topic VARCHAR(255),
     IN p_key VARCHAR(255),
-    IN p_event JSON)
+    IN p_data JSON)
 BEGIN
     DECLARE v_partition_id BIGINT;
-    DECLARE v_key_hash INT UNSIGNED;
+    DECLARE v_partition_number INT;
+    DECLARE v_partitions INT;
+    DECLARE v_topic_id BIGINT;
+    DECLARE v_sequence BIGINT;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+        BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
 
-    SET v_key_hash = CRC32(p_key);
+    -- RESOLVE THE TOPIC
+    SELECT id, partitions INTO v_topic_id, v_partitions
+        FROM topics
+        WHERE
+            tenant = p_tenant AND
+            name = p_topic;
 
+    SET v_partition_number = CRC32(p_key) % v_partitions;
+
+    -- RESOLVE THE PARTITION
     SELECT id INTO v_partition_id FROM partitions
     WHERE
-        tenant_name = p_tenant_name AND
-        topic_name = p_topic_name AND
-        partition_number = (v_key_hash % partitions)
+        topic_id = v_topic_id AND
+        partition_number = v_partition_number
     LIMIT 1;
 
-    INSERT INTO events(partition_id, data) VALUES (v_partition_id, p_event);
-    UPDATE partitions SET high_watermark = GREATEST(high_watermark, LAST_INSERT_ID()) WHERE id = v_partition_id;
-
+    START TRANSACTION;
+        -- EVENT PUBLICATION
+        INSERT INTO events(partition_id, data) VALUES (v_partition_id, p_data);
+        -- HWM UPDATE
+        SET v_sequence = LAST_INSERT_ID();
+        UPDATE partitions SET high_watermark = v_sequence WHERE id = v_partition_id AND high_watermark < v_sequence;
+    COMMIT;
 END;
