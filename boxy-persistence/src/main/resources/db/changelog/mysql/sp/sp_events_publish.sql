@@ -4,10 +4,7 @@ CREATE PROCEDURE sp_events_publish(
     IN p_key VARCHAR(255),
     IN p_data JSON)
 BEGIN
-    DECLARE v_partition_id BIGINT;
     DECLARE v_partition_number INT;
-    DECLARE v_partitions INT;
-    DECLARE v_topic_id BIGINT;
     DECLARE v_sequence BIGINT;
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
         BEGIN
