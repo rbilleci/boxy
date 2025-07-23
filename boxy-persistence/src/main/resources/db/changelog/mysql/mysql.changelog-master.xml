@@ -32,10 +32,6 @@
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_topics_delete_by_name.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
         <sqlFile path="sp/sp_topics_delete.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"

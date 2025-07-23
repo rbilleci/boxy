@@ -1,5 +1,6 @@
 package boxy.persistence.it;
 
+import boxy.persistence.dao.PartitionDao;
 import boxy.persistence.dao.TopicDao;
 import boxy.persistence.service.EventService;
 import org.HdrHistogram.Histogram;
@@ -25,24 +26,28 @@ public class BenchmarkIT extends BaseIT {
     private Recorder recorder;
     private EventService eventService;
     private TopicDao topicDao;
+    private PartitionDao partitionDao;
 
     @BeforeEach
     void setup() {
         eventService = new EventService(jdbi);
         topicDao = jdbi.onDemand(TopicDao.class);
+        partitionDao = jdbi.onDemand(PartitionDao.class);
         recorder = new Recorder(TimeUnit.SECONDS.toNanos(1), 3);
     }
 
     @Test
     void publishAdvanced_singleThreaded() {
-        topicDao.create(TENANT, TOPIC, PARTITIONS);
+        final var topicId = topicDao.create(TENANT, TOPIC, PARTITIONS);
+        final var partitionId = partitionDao.find(topicId, 0).orElseThrow().id();
+
         final var histogram = new Histogram(TimeUnit.SECONDS.toNanos(1), 3);
 
         for (int run = 0; run < 4; run++) {
             histogram.reset();
             for (int i = 0; i < 10_000; i++) {
                 final var start = System.nanoTime();
-                eventService.publishAdvanced(TENANT, TOPIC, "k" + i, DATA);
+                eventService.publishAdvanced(partitionId, DATA);
                 histogram.recordValue(System.nanoTime() - start);
             }
             System.out.printf("Run #%d:%n", run);

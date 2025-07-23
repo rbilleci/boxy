@@ -27,9 +27,6 @@ public interface TopicDao extends SqlObject {
     @SqlQuery("SELECT * FROM topics WHERE tenant = :tenant AND name = :name")
     Optional<Topic> find(@Bind("tenant") String tenant, @Bind("name") String name);
 
-    @SqlUpdate("CALL sp_topics_delete_by_name(:tenant,:name)")
-    void delete(@Bind("tenant") String tenant, @Bind("name") String name);
-
     @SqlUpdate("CALL sp_topics_delete(:topicId)")
     void delete(@Bind("topicId") long topicId);
     

@@ -34,7 +34,4 @@ public interface WorkerDao extends SqlObject {
     Optional<Worker> find(@Bind("nodeId") String nodeId,
                           @Bind("consumerGroupId") long consumerGroupId);
 
-    @SqlQuery("SELECT * FROM workers ORDER BY id LIMIT :limit OFFSET :offset")
-    List<Worker> findAll(@Bind("limit") int limit,
-                         @Bind("offset") int offset);
 }
