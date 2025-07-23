@@ -13,7 +13,7 @@ import java.util.Optional;
 public interface ConsumerGroupDao extends SqlObject {
 
     default long create(String tenant, String name) {
-        return getHandle().createQuery("CALL sp_create_consumer_group(:tenant,:name)")
+        return getHandle().createQuery("CALL sp_consumer_groups_create(:tenant,:name)")
                 .bind("tenant", tenant)
                 .bind("name", name)
                 .mapTo(Long.class)
@@ -21,7 +21,7 @@ public interface ConsumerGroupDao extends SqlObject {
     }
 
     default void delete(long id) {
-        getHandle().createUpdate("CALL sp_delete_consumer_group(:id)")
+        getHandle().createUpdate("CALL sp_consumer_groups_delete(:id)")
                 .bind("id", id)
                 .execute();
     }

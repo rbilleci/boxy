@@ -23,7 +23,7 @@ public interface LeaseDao extends SqlObject {
 
 
     default boolean acquire(long subscriptionOffsetId, long workerId, long expiresAfter) {
-        return getHandle().createQuery("CALL sp_acquire_lease(:so,:worker,:exp)")
+        return getHandle().createQuery("CALL sp_leases_acquire(:so,:worker,:exp)")
                 .bind("so", subscriptionOffsetId)
                 .bind("worker", workerId)
                 .bind("exp", expiresAfter)
@@ -32,7 +32,7 @@ public interface LeaseDao extends SqlObject {
     }
 
     default boolean renew(long subscriptionOffsetId, long workerId, long expiresAfter) {
-        return getHandle().createQuery("CALL sp_renew_lease(:so,:worker,:exp)")
+        return getHandle().createQuery("CALL sp_leases_renew(:so,:worker,:exp)")
                 .bind("so", subscriptionOffsetId)
                 .bind("worker", workerId)
                 .bind("exp", expiresAfter)
@@ -41,7 +41,7 @@ public interface LeaseDao extends SqlObject {
     }
 
     default void release(long subscriptionOffsetId, long workerId) {
-        getHandle().createUpdate("CALL sp_release_lease(:so,:worker)")
+        getHandle().createUpdate("CALL sp_leases_release(:so,:worker)")
                 .bind("so", subscriptionOffsetId)
                 .bind("worker", workerId)
                 .execute();

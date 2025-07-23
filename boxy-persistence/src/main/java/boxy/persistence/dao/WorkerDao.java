@@ -13,7 +13,7 @@ import java.util.Optional;
 public interface WorkerDao extends SqlObject {
 
     default long register(String nodeId, long consumerGroupId, int weight) {
-        return getHandle().createQuery("CALL sp_register_worker(:nodeId,:consumerGroupId,:weight)")
+        return getHandle().createQuery("CALL sp_workers_register(:nodeId,:consumerGroupId,:weight)")
                 .bind("nodeId", nodeId)
                 .bind("consumerGroupId", consumerGroupId)
                 .bind("weight", weight)
@@ -22,7 +22,7 @@ public interface WorkerDao extends SqlObject {
     }
 
     default void deregister(long id) {
-        getHandle().createUpdate("CALL sp_deregister_worker(:id)")
+        getHandle().createUpdate("CALL sp_workers_deregister(:id)")
                 .bind("id", id)
                 .execute();
     }

@@ -34,15 +34,32 @@ public class BenchmarkIT extends BaseIT {
     }
 
     @Test
+    void publishAdvanced_singleThreaded() {
+        topicDao.create(TENANT, TOPIC, PARTITIONS);
+        final var histogram = new Histogram(TimeUnit.SECONDS.toNanos(1), 3);
+
+        for (int run = 0; run < 4; run++) {
+            histogram.reset();
+            for (int i = 0; i < 10_000; i++) {
+                final var start = System.nanoTime();
+                eventService.publishAdvanced(TENANT, TOPIC, "k" + i, DATA);
+                histogram.recordValue(System.nanoTime() - start);
+            }
+            System.out.printf("Run #%d:%n", run);
+            histogram.outputPercentileDistribution(System.out, 1, 1e6);
+        }
+    }
+
+    @Test
     void publish_singleThreaded() {
         topicDao.create(TENANT, TOPIC, PARTITIONS);
         final var histogram = new Histogram(TimeUnit.SECONDS.toNanos(1), 3);
 
         for (int run = 0; run < 4; run++) {
             histogram.reset();
-            for (int i = 0; i < 1_000; i++) {
+            for (int i = 0; i < 10_000; i++) {
                 final var start = System.nanoTime();
-                eventService.publish(TENANT, TOPIC, "k", DATA);
+                eventService.publish(TENANT, TOPIC, "k" + i, DATA);
                 histogram.recordValue(System.nanoTime() - start);
             }
             System.out.printf("Run #%d:%n", run);
@@ -107,7 +124,7 @@ public class BenchmarkIT extends BaseIT {
                 for (int x = 0; x < 10; x++) batch.add(DATA);
 
                 final var start = System.nanoTime();
-                eventService.publish(TENANT, TOPIC, "k", batch);
+                eventService.publishMulti(TENANT, TOPIC, "k", batch);
                 histogram.recordValue(System.nanoTime() - start);
             }
             System.out.printf("Batch run #%d:%n", run);

@@ -4,8 +4,8 @@ CREATE TABLE topics (
     tenant      VARCHAR(255) NOT NULL,
     name        VARCHAR(255) NOT NULL,
     partitions  INT NOT NULL DEFAULT 16,
-    INDEX idx_topics__name (name),
-    CONSTRAINT u_topics__1 UNIQUE (tenant, name)
+    INDEX idx_topics__cover (tenant, name, id, partitions),
+    CONSTRAINT u_topics UNIQUE (tenant, name)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
@@ -15,10 +15,14 @@ CREATE TABLE topics (
 CREATE TABLE partitions (
     id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
     topic_id            BIGINT NOT NULL,
+    tenant_name         VARCHAR(255) NOT NULL,
+    topic_name          VARCHAR(255) NOT NULL,
     partition_number    INT NOT NULL,
+    partitions          INT NOT NULL,
     high_watermark      BIGINT DEFAULT 0 NOT NULL,
+    INDEX idx_partitions__cover (tenant_name, topic_name, partition_number, partitions, id),
     FOREIGN KEY (topic_id) REFERENCES topics (id) ON DELETE CASCADE,
-    CONSTRAINT u_partitions__1 UNIQUE (topic_id, partition_number)
+    CONSTRAINT u_partitions UNIQUE (topic_id, partition_number)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
@@ -29,7 +33,7 @@ CREATE TABLE consumer_groups (
     id      BIGINT AUTO_INCREMENT PRIMARY KEY,
     tenant  VARCHAR(255) NOT NULL,
     name    VARCHAR(255) NOT NULL,
-    CONSTRAINT u_consumer_groups__1 UNIQUE (tenant, name)
+    CONSTRAINT u_consumer_groups UNIQUE (tenant, name)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
@@ -42,7 +46,7 @@ CREATE TABLE subscriptions (
     topic_id            BIGINT NOT NULL,
     FOREIGN KEY (consumer_group_id) REFERENCES consumer_groups (id) ON DELETE CASCADE,
     FOREIGN KEY (topic_id) REFERENCES topics (id) ON DELETE CASCADE,
-    CONSTRAINT u_subscriptions__1 UNIQUE (consumer_group_id, topic_id)
+    CONSTRAINT u_subscriptions UNIQUE (consumer_group_id, topic_id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
@@ -56,7 +60,7 @@ CREATE TABLE subscription_offsets (
     committed_offset    BIGINT NOT NULL DEFAULT 0,
     FOREIGN KEY (subscription_id)   REFERENCES subscriptions (id) ON DELETE CASCADE,
     FOREIGN KEY (partition_id)      REFERENCES partitions (id) ON DELETE CASCADE,
-    CONSTRAINT u_subscription_offsets__1 UNIQUE (subscription_id, partition_id)
+    CONSTRAINT u_subscription_offsets UNIQUE (subscription_id, partition_id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
@@ -71,7 +75,7 @@ CREATE TABLE workers (
     last_heartbeat       DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     INDEX idx_workers__consumer_group (consumer_group_id),
     INDEX idx_workers___last_heartbeat (last_heartbeat),
-    CONSTRAINT u_workers__1         UNIQUE (node_id, consumer_group_id),
+    CONSTRAINT u_workers         UNIQUE (node_id, consumer_group_id),
     FOREIGN KEY (consumer_group_id) REFERENCES consumer_groups(id) ON DELETE CASCADE
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
@@ -100,7 +104,7 @@ CREATE TABLE events (
     id              BIGINT AUTO_INCREMENT PRIMARY KEY,
     ts              DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) NOT NULL,
     partition_id    BIGINT NOT NULL,
-    data            JSON    NOT NULL,
+    data            JSON   NOT NULL,
     INDEX idx_events__partition (partition_id, id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4

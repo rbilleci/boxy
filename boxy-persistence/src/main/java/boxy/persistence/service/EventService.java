@@ -32,18 +32,22 @@ public class EventService {
         this.partitionDao = jdbi.onDemand(PartitionDao.class);
     }
 
-    public void publish(String tenant, String topicName, String key, String data) {
+    public void publishAdvanced(String tenant, String topicName, String key, String data) {
         final var topic = resolveTopic(tenant, topicName);
         final var partitionNumber = Math.floorMod(key.hashCode(), topic.partitions());
         final var partition = resolvePartition(topic.id(), partitionNumber);
-        eventDao.publish(partition.id(), data);
+        eventDao.publishAdvanced(partition.id(), data);
     }
 
-    public void publish(String tenant, String topicName, String key, List<String> data) {
+    public void publish(String tenant, String topicName, String key, String data) {
+        eventDao.publish(tenant, topicName, key, data);
+    }
+
+    public void publishMulti(String tenant, String topicName, String key, List<String> data) {
         final var topic = resolveTopic(tenant, topicName);
         final var partitionNumber = Math.floorMod(key.hashCode(), topic.partitions());
         final var partition = resolvePartition(topic.id(), partitionNumber);
-        eventDao.publish(partition.id(), data);
+        eventDao.publishMulti(partition.id(), data);
     }
 
     private Topic resolveTopic(String tenant, String name) {

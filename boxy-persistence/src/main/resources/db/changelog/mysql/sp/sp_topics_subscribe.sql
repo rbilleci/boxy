@@ -1,4 +1,6 @@
-CREATE PROCEDURE sp_subscribe(IN p_consumer_group_id BIGINT, IN p_topic_id BIGINT)
+CREATE PROCEDURE sp_topics_subscribe(
+    IN p_consumer_group_id BIGINT,
+    IN p_topic_id BIGINT)
 BEGIN
     INSERT INTO subscriptions(consumer_group_id, topic_id) VALUES (p_consumer_group_id, p_topic_id);
     SET @sub_id = LAST_INSERT_ID();

@@ -22,7 +22,7 @@ public interface SubscriptionDao extends SqlObject {
     List<Subscription> findAll(@Bind("limit") int limit, @Bind("offset") int offset);
 
     default long subscribe(long consumerGroupId, long topicId) {
-        return getHandle().createQuery("CALL sp_subscribe(:cg,:topic)")
+        return getHandle().createQuery("CALL sp_topics_subscribe(:cg,:topic)")
                 .bind("cg", consumerGroupId)
                 .bind("topic", topicId)
                 .mapTo(Long.class)
@@ -31,7 +31,7 @@ public interface SubscriptionDao extends SqlObject {
 
     default void subscribe(long consumerGroupId, List<Long> topicIds) {
         final var json = "[" + topicIds.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(",")) + "]";
-        getHandle().createUpdate("CALL sp_subscribe_topics(:cg,:topics)")
+        getHandle().createUpdate("CALL sp_topics_subscribe_multi(:cg,:topics)")
                 .bind("cg", consumerGroupId)
                 .bind("topics", json)
                 .execute();
@@ -39,7 +39,7 @@ public interface SubscriptionDao extends SqlObject {
 
     default void unsubscribe(long consumerGroupId, List<Long> topicIds) {
         final var json = "[" + topicIds.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(",")) + "]";
-        getHandle().createUpdate("CALL sp_unsubscribe(:cg,:topics)")
+        getHandle().createUpdate("CALL sp_topics_unsubscribe_multi(:cg,:topics)")
                 .bind("cg", consumerGroupId)
                 .bind("topics", json)
                 .execute();

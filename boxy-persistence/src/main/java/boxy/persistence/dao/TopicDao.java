@@ -13,7 +13,7 @@ import java.util.Optional;
 public interface TopicDao extends SqlObject {
 
     default long create(String tenant, String name, int partitions) {
-        return getHandle().createQuery("CALL sp_create_topic(:tenant,:name,:parts)")
+        return getHandle().createQuery("CALL sp_topics_create(:tenant,:name,:parts)")
                 .bind("tenant", tenant)
                 .bind("name", name)
                 .bind("parts", partitions)
@@ -27,10 +27,10 @@ public interface TopicDao extends SqlObject {
     @SqlQuery("SELECT * FROM topics WHERE tenant = :tenant AND name = :name")
     Optional<Topic> find(@Bind("tenant") String tenant, @Bind("name") String name);
 
-    @SqlUpdate("CALL sp_delete_topic_by_name(:tenant,:name)")
+    @SqlUpdate("CALL sp_topics_delete_by_name(:tenant,:name)")
     void delete(@Bind("tenant") String tenant, @Bind("name") String name);
 
-    @SqlUpdate("CALL sp_delete_topic_by_id(:topicId)")
+    @SqlUpdate("CALL sp_topics_delete(:topicId)")
     void delete(@Bind("topicId") long topicId);
     
 }
