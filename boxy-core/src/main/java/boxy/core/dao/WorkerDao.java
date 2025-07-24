@@ -1,36 +1,40 @@
 package boxy.core.dao;
 
+import boxy.core.jdbc.BaseDao;
+import boxy.core.jdbc.RowMapper;
 import boxy.core.model.Worker;
-import org.jdbi.v3.sqlobject.SqlObject;
-import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
-import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
+import javax.sql.DataSource;
+import java.sql.SQLException;
 import java.util.Optional;
 
-@RegisterConstructorMapper(Worker.class)
-public interface WorkerDao extends SqlObject {
+public class WorkerDao extends BaseDao {
+    private static final RowMapper<Worker> MAPPER = rs -> new Worker(
+            rs.getLong("id"),
+            rs.getString("node_id"),
+            rs.getLong("consumer_group_id"),
+            rs.getInt("weight"),
+            rs.getTimestamp("last_heartbeat").toInstant()
+    );
 
-    default long register(String nodeId, long consumerGroupId, int weight) {
-        return getHandle().createQuery("CALL sp_workers_register(:nodeId,:consumerGroupId,:weight)")
-                .bind("nodeId", nodeId)
-                .bind("consumerGroupId", consumerGroupId)
-                .bind("weight", weight)
-                .mapTo(Long.class)
-                .one();
+    public WorkerDao(DataSource ds) {
+        super(ds);
     }
 
-    default void deregister(long id) {
-        getHandle().createUpdate("CALL sp_workers_deregister(:id)")
-                .bind("id", id)
-                .execute();
+    public long register(String nodeId, long consumerGroupId, int weight) throws SQLException {
+        return queryOne("CALL sp_workers_register(?,?,?)", rs -> rs.getLong(1), nodeId, consumerGroupId, weight)
+                .orElseThrow();
     }
 
-    @SqlQuery("SELECT * FROM workers WHERE id = :id")
-    Optional<Worker> find(@Bind("id") long id);
+    public void deregister(long id) throws SQLException {
+        update("CALL sp_workers_deregister(?)", id);
+    }
 
-    @SqlQuery("SELECT * FROM workers WHERE node_id = :nodeId AND consumer_group_id = :consumerGroupId")
-    Optional<Worker> find(@Bind("nodeId") String nodeId,
-                          @Bind("consumerGroupId") long consumerGroupId);
+    public Optional<Worker> find(long id) throws SQLException {
+        return queryOne("SELECT * FROM workers WHERE id = ?", MAPPER, id);
+    }
 
+    public Optional<Worker> find(String nodeId, long consumerGroupId) throws SQLException {
+        return queryOne("SELECT * FROM workers WHERE node_id = ? AND consumer_group_id = ?", MAPPER, nodeId, consumerGroupId);
+    }
 }

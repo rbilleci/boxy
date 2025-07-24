@@ -6,9 +6,6 @@ import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.LiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
-import org.jdbi.v3.core.Handle;
-import org.jdbi.v3.core.Jdbi;
-import org.jdbi.v3.sqlobject.SqlObjectPlugin;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +15,7 @@ import org.testcontainers.utility.DockerImageName;
 
 import java.sql.SQLException;
 import java.util.Map;
+import javax.sql.DataSource;
 
 public abstract class BaseIT {
 
@@ -39,7 +37,7 @@ public abstract class BaseIT {
                             "--performance_schema=OFF"             // turn off the perf schema overhead
                     );
 
-    protected Jdbi jdbi;
+    protected DataSource dataSource;
 
 
     @BeforeAll
@@ -61,47 +59,44 @@ public abstract class BaseIT {
     }
 
     @BeforeEach
-    void setupJDBI() {
-        jdbi = Jdbi.create(DataSourceProvider.dataSource());
-        jdbi.installPlugin(new SqlObjectPlugin());
+    void setupDataSource() {
+        dataSource = DataSourceProvider.dataSource();
     }
 
     @AfterEach
     void teardownDB() throws SQLException {
-        jdbi.useHandle(handle -> {
-            final var productName = handle.getConnection()
-                    .getMetaData()
-                    .getDatabaseProductName();
+        try (var conn = dataSource.getConnection()) {
+            final var productName = conn.getMetaData().getDatabaseProductName();
             if ("PostgreSQL".equalsIgnoreCase(productName)) {
-                teardownPGSQL(handle);
+                teardownPGSQL(conn);
             } else if ("MySQL".equalsIgnoreCase(productName)) {
-                teardownMYSQL(handle);
+                teardownMYSQL(conn);
             } else {
-                throw new UnsupportedOperationException(String.format("Database %s is not supported", productName));
+                throw new UnsupportedOperationException("Database " + productName + " is not supported");
             }
-        });
+        }
         DataSourceProvider.close();
     }
-
-    void teardownPGSQL(final Handle handle) {
-        final var query = "SELECT string_agg(quote_ident(tableName), ', ') FROM pg_tables WHERE schemaname = 'public'";
-        handle.execute(String.format(
-                "TRUNCATE TABLE %s RESTART IDENTITY CASCADE;",
-                handle.createQuery(query).mapTo(String.class).one()));
+    void teardownPGSQL(final java.sql.Connection conn) throws SQLException {
+        try (var stmt = conn.createStatement()) {
+            final var rs = stmt.executeQuery("SELECT string_agg(quote_ident(tablename), ', ') FROM pg_tables WHERE schemaname = 'public'");
+            rs.next();
+            final var tables = rs.getString(1);
+            stmt.execute("TRUNCATE TABLE " + tables + " RESTART IDENTITY CASCADE;");
+        }
     }
 
-    void teardownMYSQL(final Handle handle) {
-        handle.execute("SET FOREIGN_KEY_CHECKS = 0;");
-        final var tables = handle.createQuery("""
-                        SELECT table_name FROM information_schema.tables
-                        WHERE table_type = 'BASE TABLE' AND table_schema = DATABASE()
-                        """)
-                .mapTo(String.class)
-                .list();
-        final var batch = handle.createBatch();
-        tables.forEach(table -> batch.add("TRUNCATE TABLE `" + table + "`"));
-        batch.execute();
-        handle.execute("SET FOREIGN_KEY_CHECKS = 1;");
+    void teardownMYSQL(final java.sql.Connection conn) throws SQLException {
+        try (var stmt = conn.createStatement()) {
+            stmt.execute("SET FOREIGN_KEY_CHECKS = 0;");
+            try (var rs = stmt.executeQuery("SELECT table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema = DATABASE()")) {
+                while (rs.next()) {
+                    stmt.addBatch("TRUNCATE TABLE `" + rs.getString(1) + "`");
+                }
+                stmt.executeBatch();
+            }
+            stmt.execute("SET FOREIGN_KEY_CHECKS = 1;");
+        }
     }
 
 }
