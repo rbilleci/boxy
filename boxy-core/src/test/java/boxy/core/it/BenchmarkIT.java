@@ -30,9 +30,9 @@ public class BenchmarkIT extends BaseIT {
 
     @BeforeEach
     void setup() {
-        eventService = new EventService(jdbi);
-        topicDao = jdbi.onDemand(TopicDao.class);
-        partitionDao = jdbi.onDemand(PartitionDao.class);
+        eventService = new EventService(dataSource);
+        topicDao = new TopicDao(dataSource);
+        partitionDao = new PartitionDao(dataSource);
         recorder = new Recorder(TimeUnit.SECONDS.toNanos(1), 3);
     }
 

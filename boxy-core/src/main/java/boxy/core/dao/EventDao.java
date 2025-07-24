@@ -1,23 +1,21 @@
 package boxy.core.dao;
 
-import org.jdbi.v3.sqlobject.SqlObject;
+import boxy.core.jdbc.BaseDao;
 
-public interface EventDao extends SqlObject {
+import javax.sql.DataSource;
+import java.sql.SQLException;
 
-    default void publish(String tenant, String topic, String key, String data) {
-        getHandle().createUpdate("CALL sp_events_publish(:tenant,:topic,:key,:data)")
-                .bind("tenant", tenant)
-                .bind("topic", topic)
-                .bind("key", key)
-                .bind("data", data)
-                .execute();
+public class EventDao extends BaseDao {
+
+    public EventDao(DataSource ds) {
+        super(ds);
     }
 
-    default void publishAdvanced(long partitionId, String data) {
-        getHandle().createUpdate("CALL sp_events_publish_advanced(:pid,:event)")
-                .bind("pid", partitionId)
-                .bind("event", data)
-                .execute();
+    public void publish(String tenant, String topic, String key, String data) throws SQLException {
+        update("CALL sp_events_publish(?,?,?,?)", tenant, topic, key, data);
     }
 
+    public void publishAdvanced(long partitionId, String data) throws SQLException {
+        update("CALL sp_events_publish_advanced(?,?)", partitionId, data);
+    }
 }

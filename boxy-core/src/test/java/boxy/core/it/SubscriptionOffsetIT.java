@@ -17,8 +17,8 @@ public class SubscriptionOffsetIT extends BaseIT {
 
     @BeforeEach
     void setup() {
-        subscriptionOffsetDao = jdbi.onDemand(SubscriptionOffsetDao.class);
-        data = TestData.seed(jdbi);
+        subscriptionOffsetDao = new SubscriptionOffsetDao(dataSource);
+        data = TestData.seed(dataSource);
     }
 
     @Test

@@ -26,10 +26,10 @@ public class ProcessorIT extends BaseIT {
 
     @BeforeEach
     void setup() {
-        subscriptionService = new SubscriptionService(jdbi);
-        eventService = new EventService(jdbi);
-        leaseDao = jdbi.onDemand(LeaseDao.class);
-        data = TestData.seed(jdbi);
+        subscriptionService = new SubscriptionService(dataSource);
+        eventService = new EventService(dataSource);
+        leaseDao = new LeaseDao(dataSource);
+        data = TestData.seed(dataSource);
     }
 
     @Test

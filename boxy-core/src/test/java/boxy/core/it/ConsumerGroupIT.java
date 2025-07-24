@@ -17,8 +17,8 @@ public class ConsumerGroupIT extends BaseIT {
 
     @BeforeEach
     void setup() {
-        consumerGroupDao = jdbi.onDemand(ConsumerGroupDao.class);
-        data = TestData.seed(jdbi);
+        consumerGroupDao = new ConsumerGroupDao(dataSource);
+        data = TestData.seed(dataSource);
     }
 
     @Test
