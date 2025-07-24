@@ -2,7 +2,7 @@ package boxy.core.dao;
 
 import javax.sql.DataSource;
 
-public class EventDao extends BaseDao {
+public final class EventDao extends BaseDao {
 
     public EventDao(DataSource ds) {
         super(ds);

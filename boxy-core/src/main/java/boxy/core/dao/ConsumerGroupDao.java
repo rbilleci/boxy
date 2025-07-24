@@ -6,7 +6,7 @@ import javax.sql.DataSource;
 import java.util.List;
 import java.util.Optional;
 
-public class ConsumerGroupDao extends BaseDao {
+public final class ConsumerGroupDao extends BaseDao {
 
     private static final RowMapper<ConsumerGroup> MAPPER = rs -> new ConsumerGroup(
             rs.getLong("id"),

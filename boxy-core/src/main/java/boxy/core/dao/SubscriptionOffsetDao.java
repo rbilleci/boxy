@@ -6,7 +6,7 @@ import javax.sql.DataSource;
 import java.util.List;
 import java.util.Optional;
 
-public class SubscriptionOffsetDao extends BaseDao {
+public final class SubscriptionOffsetDao extends BaseDao {
 
     private static final RowMapper<SubscriptionOffset> MAPPER = rs -> new SubscriptionOffset(
             rs.getLong("id"),

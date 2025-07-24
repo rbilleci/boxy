@@ -5,7 +5,7 @@ import boxy.core.model.Topic;
 import javax.sql.DataSource;
 import java.util.Optional;
 
-public class TopicDao extends BaseDao {
+public final class TopicDao extends BaseDao {
 
     private static final RowMapper<Topic> MAPPER = rs -> new Topic(
             rs.getLong("id"),

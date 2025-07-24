@@ -5,7 +5,7 @@ import boxy.core.model.Partition;
 import javax.sql.DataSource;
 import java.util.Optional;
 
-public class PartitionDao extends BaseDao {
+public final class PartitionDao extends BaseDao {
 
     private static final RowMapper<Partition> MAPPER = rs -> new Partition(
             rs.getLong("id"),

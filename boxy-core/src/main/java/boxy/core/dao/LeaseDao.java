@@ -5,7 +5,7 @@ import boxy.core.model.Lease;
 import javax.sql.DataSource;
 import java.util.Optional;
 
-public class LeaseDao extends BaseDao {
+public final class LeaseDao extends BaseDao {
 
     private static final RowMapper<Lease> MAPPER = rs -> new Lease(
             rs.getLong("subscription_offset_id"),
