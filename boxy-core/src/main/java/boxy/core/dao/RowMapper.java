@@ -1,4 +1,4 @@
-package boxy.core.jdbc;
+package boxy.core.dao;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

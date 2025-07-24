@@ -76,5 +76,4 @@ public class DataSourceProvider {
         Runtime.getRuntime().addShutdownHook(new Thread(ds::close, "hikari-cp-shutdown"));
     }
 
-
 }

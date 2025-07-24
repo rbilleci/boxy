@@ -14,12 +14,16 @@ Boxy is released under the **Apache License 2.0** and remains a work in progress
 - **Scalable Polling**: workers stagger lease grabs to minimize database queries (e.g. ≈10 checks/s instead of hundreds)
 
 ## Architecture Decisions
-- Each topic has a practical limit of 1024 partitions, and a technical limit of 65536 partitions
-- Each consumer group has a practical limit of 1024 workers.
-- Tenant and Topic Names are case-sensitive.
+- APIs for consumers and producers are kept simple, easy to integrate, and easy to use.
+- Publishing an event should be possible when only knowing the tenant name and topic name.
+- Third-party libraries are minimized to those that are necessary.
 - For safety: boxy never deletes events. Event deletion is left to be orchestrated by you.
 - For easy portability across programming languages and runtimes, all mutations are strictly performed by stored procedures.
-- All interfaces are kept simple, using tenant ids and topic names as parameters.
+- Tenant and Topic Names are case-sensitive.
+
+## Limits
+- Each topic has a practical limit of 1024 partitions, and a technical limit of 65536 partitions
+- Each consumer group has a practical limit of 1024 workers.
 
 ## Roadmap
 

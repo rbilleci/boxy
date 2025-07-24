@@ -1,8 +1,8 @@
 package boxy.core.it;
 
+import boxy.core.dao.EventDao;
 import boxy.core.dao.PartitionDao;
 import boxy.core.dao.TopicDao;
-import boxy.core.service.EventService;
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,13 +24,13 @@ public class BenchmarkIT extends BaseIT {
     private static final String DATA = "{\"key\": \"value\"}\n";
 
     private Recorder recorder;
-    private EventService eventService;
+    private EventDao eventDao;
     private TopicDao topicDao;
     private PartitionDao partitionDao;
 
     @BeforeEach
     void setup() {
-        eventService = new EventService(dataSource);
+        eventDao = new EventDao(dataSource);
         topicDao = new TopicDao(dataSource);
         partitionDao = new PartitionDao(dataSource);
         recorder = new Recorder(TimeUnit.SECONDS.toNanos(1), 3);
@@ -47,7 +47,7 @@ public class BenchmarkIT extends BaseIT {
             histogram.reset();
             for (int i = 0; i < 10_000; i++) {
                 final var start = System.nanoTime();
-                eventService.publishAdvanced(partitionId, DATA);
+                eventDao.publishAdvanced(partitionId, DATA);
                 histogram.recordValue(System.nanoTime() - start);
             }
             System.out.printf("Run #%d:%n", run);
@@ -64,7 +64,7 @@ public class BenchmarkIT extends BaseIT {
             histogram.reset();
             for (int i = 0; i < 10_000; i++) {
                 final var start = System.nanoTime();
-                eventService.publish(TENANT, TOPIC, "k" + i, DATA);
+                eventDao.publish(TENANT, TOPIC, "k" + i, DATA);
                 histogram.recordValue(System.nanoTime() - start);
             }
             System.out.printf("Run #%d:%n", run);
@@ -89,7 +89,7 @@ public class BenchmarkIT extends BaseIT {
                             startBarrier.await();
                             for (int j = 0; j < opsPerThread; j++) {
                                 final var start = System.nanoTime();
-                                eventService.publish(TENANT, TOPIC, "k" + j, DATA);
+                                eventDao.publish(TENANT, TOPIC, "k" + j, DATA);
                                 recorder.recordValue(System.nanoTime() - start);
                             }
                         } catch (ArrayIndexOutOfBoundsException | BrokenBarrierException | InterruptedException e) {
