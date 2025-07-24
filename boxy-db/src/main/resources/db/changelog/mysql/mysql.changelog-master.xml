@@ -40,11 +40,7 @@
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_topics_subscribe_multi.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-        <sqlFile path="sp/sp_topics_unsubscribe_multi.sql"
+        <sqlFile path="sp/sp_topics_unsubscribe.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>

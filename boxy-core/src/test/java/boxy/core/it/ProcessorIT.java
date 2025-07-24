@@ -1,8 +1,8 @@
 package boxy.core.it;
 
 import boxy.core.dao.EventDao;
+import boxy.core.dao.SubscriptionDao;
 import boxy.core.dao.SubscriptionOffsetDao;
-import boxy.core.service.SubscriptionService;
 import boxy.core.model.Subscription;
 import boxy.core.model.SubscriptionOffset;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,18 +15,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers
 public class ProcessorIT extends BaseIT {
 
-    private static final String DATA = """
-            {"key": "value"}
-            """;
+    private static final String DATA = "{\"key\": \"value\"}\n";
 
-    private SubscriptionService subscriptionService;
+    private SubscriptionDao subscriptionDao;
     private SubscriptionOffsetDao SubscriptionOffsetDao;
     private EventDao eventDao;
     private TestData data;
 
     @BeforeEach
     void setup() {
-        subscriptionService = new SubscriptionService(dataSource);
+        subscriptionDao = new SubscriptionDao(dataSource);
         SubscriptionOffsetDao = new SubscriptionOffsetDao(dataSource);
         eventDao = new EventDao(dataSource);
         data = TestData.seed(dataSource);
@@ -34,7 +32,7 @@ public class ProcessorIT extends BaseIT {
 
     @Test
     void leasesAvailable_whenViewHasOneItem_returnsListWithOneItem() {
-        final var subscriptionId = subscriptionService.find(TENANT_1, CONSUMER_GROUP_A, TOPIC_A).orElseThrow().id();
+        final var subscriptionId = subscriptionDao.find(TENANT_1, CONSUMER_GROUP_A, TOPIC_A).orElseThrow().id();
         // PUBLISH
         eventDao.publish(TENANT_1, TOPIC_A, "partitionKey", DATA);
         // VALIDATE

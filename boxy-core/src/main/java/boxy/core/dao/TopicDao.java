@@ -21,15 +21,12 @@ public class TopicDao extends BaseDao {
         return queryOne("CALL sp_topics_create(?,?,?)", rs -> rs.getLong(1), tenant, name, partitions).orElseThrow();
     }
 
-    public Optional<Topic> find(long id) {
-        return queryOne("SELECT * FROM topics WHERE id = ?", MAPPER, id);
-    }
-
     public Optional<Topic> find(String tenant, String name) {
         return queryOne("SELECT * FROM topics WHERE tenant = ? AND name = ?", MAPPER, tenant, name);
     }
 
-    public void delete(long topicId) {
-        update("CALL sp_topics_delete(?)", topicId);
+    public void delete(String tenant, String name) {
+        update("CALL sp_topics_delete(?,?)", tenant, name);
     }
+
 }

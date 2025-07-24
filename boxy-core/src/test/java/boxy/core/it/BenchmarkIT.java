@@ -38,8 +38,8 @@ public class BenchmarkIT extends BaseIT {
 
     @Test
     void publishAdvanced_singleThreaded() {
-        final var topicId = topicDao.create(TENANT, TOPIC, PARTITIONS);
-        final var partitionId = partitionDao.find(topicId, 0).orElseThrow().id();
+        topicDao.create(TENANT, TOPIC, PARTITIONS);
+        final var partitionId = partitionDao.find(TENANT, TOPIC, 0).orElseThrow().id();
 
         final var histogram = new Histogram(TimeUnit.SECONDS.toNanos(1), 3);
 

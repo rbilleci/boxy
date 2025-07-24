@@ -30,9 +30,8 @@ public class ConsumerGroupIT extends BaseIT {
 
     @Test
     void deleted_whenDeleted_isNotPresent() {
-        final var consumerGroup = consumerGroupDao.find(TENANT_1, CONSUMER_GROUP_A).orElseThrow();
-        consumerGroupDao.delete(consumerGroup.id());
-        assertThat(consumerGroupDao.find(consumerGroup.id())).isNotPresent();
+        consumerGroupDao.find(TENANT_1, CONSUMER_GROUP_A).orElseThrow();
+        consumerGroupDao.delete(TENANT_1, CONSUMER_GROUP_A);
         assertThat(consumerGroupDao.find(TENANT_1, CONSUMER_GROUP_A)).isNotPresent();
     }
 
@@ -59,7 +58,7 @@ public class ConsumerGroupIT extends BaseIT {
 
     @Test
     void findAll_whenEmpty() {
-        consumerGroupDao.findAll(100, 0).forEach(cg -> consumerGroupDao.delete(cg.id()));
+        consumerGroupDao.findAll(100, 0).forEach(cg -> consumerGroupDao.delete(cg.tenant(), cg.name()));
         assertThat(consumerGroupDao.findAll(100, 0)).isEmpty();
     }
 }

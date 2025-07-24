@@ -22,12 +22,8 @@ public class ConsumerGroupDao extends BaseDao {
                 .orElseThrow();
     }
 
-    public void delete(long id) {
-        update("CALL sp_consumer_groups_delete(?)", id);
-    }
-
-    public Optional<ConsumerGroup> find(long id) {
-        return queryOne("SELECT * FROM consumer_groups WHERE id = ?", MAPPER, id);
+    public void delete(String tenant, String name) {
+        update("CALL sp_consumer_groups_delete(?, ?)", tenant, name);
     }
 
     public Optional<ConsumerGroup> find(String tenant, String name) {

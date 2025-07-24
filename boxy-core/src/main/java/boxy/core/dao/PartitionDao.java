@@ -17,11 +17,11 @@ public class PartitionDao extends BaseDao {
         super(ds);
     }
 
-    public Optional<Partition> find(long id) {
-        return queryOne("SELECT * FROM partitions WHERE id = ?", MAPPER, id);
+    public Optional<Partition> find(String tenant, String topic, int partitionNumber) {
+        return queryOne("""
+                SELECT * FROM partitions p JOIN topics t ON p.topic_id = t.id
+                WHERE t.tenant = ? AND t.name = ? AND p.partition_number = ?
+                """, MAPPER, tenant, topic, partitionNumber);
     }
 
-    public Optional<Partition> find(long topicId, int partitionNumber) {
-        return queryOne("SELECT * FROM partitions WHERE topic_id = ? AND partition_number = ?", MAPPER, topicId, partitionNumber);
-    }
 }
