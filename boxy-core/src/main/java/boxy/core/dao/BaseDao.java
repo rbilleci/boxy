@@ -10,6 +10,11 @@ import java.util.Optional;
 
 public abstract class BaseDao {
 
+    @FunctionalInterface
+    interface SQLFunction<T, R> {
+        R apply(T t) throws SQLException;
+    }
+
     protected final DataSource ds;
 
     protected BaseDao(DataSource ds) {
@@ -23,9 +28,11 @@ public abstract class BaseDao {
 
     protected <T> List<T> query(String sql, RowMapper<T> mapper, Object... params) {
         return execute(sql, ps -> {
-            try (var rs = ps.executeQuery()) {
-                var result = new ArrayList<T>();
-                while (rs.next()) result.add(mapper.map(rs));
+            try (final var rs = ps.executeQuery()) {
+                final var result = new ArrayList<T>();
+                while (rs.next()) {
+                    result.add(mapper.map(rs));
+                }
                 return result;
             }
         }, params);
@@ -42,11 +49,6 @@ public abstract class BaseDao {
         } catch (SQLException e) {
             throw new DataAccessException(e);
         }
-    }
-
-    @FunctionalInterface
-    interface SQLFunction<T, R> {
-        R apply(T t) throws SQLException;
     }
 
     private static void bind(PreparedStatement ps, Object... params) throws SQLException {
