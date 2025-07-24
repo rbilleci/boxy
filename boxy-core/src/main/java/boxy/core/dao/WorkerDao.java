@@ -5,7 +5,7 @@ import boxy.core.model.Worker;
 import javax.sql.DataSource;
 import java.util.Optional;
 
-public class WorkerDao extends BaseDao {
+public final class WorkerDao extends BaseDao {
 
     private static final RowMapper<Worker> MAPPER = rs -> new Worker(
             rs.getLong("id"),
