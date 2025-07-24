@@ -1,37 +1,40 @@
 package boxy.core.dao;
 
 import boxy.core.model.ConsumerGroup;
-import org.jdbi.v3.sqlobject.SqlObject;
-import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
-import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
+import javax.sql.DataSource;
 import java.util.List;
 import java.util.Optional;
 
-@RegisterConstructorMapper(ConsumerGroup.class)
-public interface ConsumerGroupDao extends SqlObject {
+public class ConsumerGroupDao extends BaseDao {
 
-    default long create(String tenant, String name) {
-        return getHandle().createQuery("CALL sp_consumer_groups_create(:tenant,:name)")
-                .bind("tenant", tenant)
-                .bind("name", name)
-                .mapTo(Long.class)
-                .one();
+    private static final RowMapper<ConsumerGroup> MAPPER = rs -> new ConsumerGroup(
+            rs.getLong("id"),
+            rs.getString("tenant"),
+            rs.getString("name"));
+
+    public ConsumerGroupDao(DataSource ds) {
+        super(ds);
     }
 
-    default void delete(long id) {
-        getHandle().createUpdate("CALL sp_consumer_groups_delete(:id)")
-                .bind("id", id)
-                .execute();
+    public long create(String tenant, String name) {
+        return queryOne("CALL sp_consumer_groups_create(?, ?)", rs -> rs.getLong(1), tenant, name)
+                .orElseThrow();
     }
 
-    @SqlQuery("SELECT * FROM consumer_groups WHERE id = :id")
-    Optional<ConsumerGroup> find(@Bind("id") long id);
+    public void delete(long id) {
+        update("CALL sp_consumer_groups_delete(?)", id);
+    }
 
-    @SqlQuery("SELECT * FROM consumer_groups WHERE tenant = :tenant AND name = :name")
-    Optional<ConsumerGroup> find(@Bind("tenant") String tenant, @Bind("name") String name);
+    public Optional<ConsumerGroup> find(long id) {
+        return queryOne("SELECT * FROM consumer_groups WHERE id = ?", MAPPER, id);
+    }
 
-    @SqlQuery("SELECT * FROM consumer_groups ORDER BY id LIMIT :limit OFFSET :offset")
-    List<ConsumerGroup> findAll(@Bind("limit") int limit, @Bind("offset") int offset);
+    public Optional<ConsumerGroup> find(String tenant, String name) {
+        return queryOne("SELECT * FROM consumer_groups WHERE tenant = ? AND name = ?", MAPPER, tenant, name);
+    }
+
+    public List<ConsumerGroup> findAll(int limit, int offset) {
+        return query("SELECT * FROM consumer_groups ORDER BY id LIMIT ? OFFSET ?", MAPPER, limit, offset);
+    }
 }

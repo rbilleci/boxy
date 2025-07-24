@@ -16,8 +16,8 @@ public class LeaseIT extends BaseIT {
 
     @BeforeEach
     void setup() {
-        leaseDao = jdbi.onDemand(LeaseDao.class);
-        data = TestData.seed(jdbi);
+        leaseDao = new LeaseDao(dataSource);
+        data = TestData.seed(dataSource);
     }
 
 

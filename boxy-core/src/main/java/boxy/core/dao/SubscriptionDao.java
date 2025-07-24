@@ -1,48 +1,46 @@
 package boxy.core.dao;
 
 import boxy.core.model.Subscription;
-import org.jdbi.v3.sqlobject.SqlObject;
-import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
-import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
+import javax.sql.DataSource;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-@RegisterConstructorMapper(Subscription.class)
-public interface SubscriptionDao extends SqlObject {
+public class SubscriptionDao extends BaseDao {
 
-    @SqlQuery("SELECT * FROM subscriptions WHERE id = :id")
-    Optional<Subscription> find(@Bind("id") long id);
+    private static final RowMapper<Subscription> MAPPER = rs -> new Subscription(
+            rs.getLong("id"),
+            rs.getLong("consumer_group_id"),
+            rs.getLong("topic_id"));
 
-    @SqlQuery("SELECT * FROM subscriptions WHERE consumer_group_id = :consumerGroupId AND topic_id = :topicId")
-    Optional<Subscription> find(@Bind("consumerGroupId") long consumerGroupId, @Bind("topicId") long topicId);
-
-    @SqlQuery("SELECT * FROM subscriptions ORDER BY id LIMIT :limit OFFSET :offset")
-    List<Subscription> findAll(@Bind("limit") int limit, @Bind("offset") int offset);
-
-    default long subscribe(long consumerGroupId, long topicId) {
-        return getHandle().createQuery("CALL sp_topics_subscribe(:cg,:topic)")
-                .bind("cg", consumerGroupId)
-                .bind("topic", topicId)
-                .mapTo(Long.class)
-                .one();
+    public SubscriptionDao(DataSource ds) {
+        super(ds);
     }
 
-    default void subscribe(long consumerGroupId, List<Long> topicIds) {
-        final var json = "[" + topicIds.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(",")) + "]";
-        getHandle().createUpdate("CALL sp_topics_subscribe_multi(:cg,:topics)")
-                .bind("cg", consumerGroupId)
-                .bind("topics", json)
-                .execute();
+    public Optional<Subscription> find(long id) {
+        return queryOne("SELECT * FROM subscriptions WHERE id = ?", MAPPER, id);
     }
 
-    default void unsubscribe(long consumerGroupId, List<Long> topicIds) {
-        final var json = "[" + topicIds.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(",")) + "]";
-        getHandle().createUpdate("CALL sp_topics_unsubscribe_multi(:cg,:topics)")
-                .bind("cg", consumerGroupId)
-                .bind("topics", json)
-                .execute();
+    public Optional<Subscription> find(long consumerGroupId, long topicId) {
+        return queryOne("SELECT * FROM subscriptions WHERE consumer_group_id = ? AND topic_id = ?", MAPPER, consumerGroupId, topicId);
     }
 
+    public List<Subscription> findAll(int limit, int offset) {
+        return query("SELECT * FROM subscriptions ORDER BY id LIMIT ? OFFSET ?", MAPPER, limit, offset);
+    }
+
+    public long subscribe(long consumerGroupId, long topicId) {
+        return queryOne("CALL sp_topics_subscribe(?,?)", rs -> rs.getLong(1), consumerGroupId, topicId).orElseThrow();
+    }
+
+    public void subscribe(long consumerGroupId, List<Long> topicIds) {
+        final var json = "[" + topicIds.stream().map(String::valueOf).collect(Collectors.joining(",")) + "]";
+        update("CALL sp_topics_subscribe_multi(?,?)", consumerGroupId, json);
+    }
+
+    public void unsubscribe(long consumerGroupId, List<Long> topicIds) {
+        final var json = "[" + topicIds.stream().map(String::valueOf).collect(Collectors.joining(",")) + "]";
+        update("CALL sp_topics_unsubscribe_multi(?,?)", consumerGroupId, json);
+    }
 }

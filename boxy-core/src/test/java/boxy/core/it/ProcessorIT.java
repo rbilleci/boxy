@@ -1,7 +1,7 @@
 package boxy.core.it;
 
-import boxy.core.dao.LeaseDao;
-import boxy.core.service.EventService;
+import boxy.core.dao.EventDao;
+import boxy.core.dao.SubscriptionOffsetDao;
 import boxy.core.service.SubscriptionService;
 import boxy.core.model.Subscription;
 import boxy.core.model.SubscriptionOffset;
@@ -20,25 +20,25 @@ public class ProcessorIT extends BaseIT {
             """;
 
     private SubscriptionService subscriptionService;
-    private EventService eventService;
-    private LeaseDao leaseDao;
+    private SubscriptionOffsetDao SubscriptionOffsetDao;
+    private EventDao eventDao;
     private TestData data;
 
     @BeforeEach
     void setup() {
-        subscriptionService = new SubscriptionService(jdbi);
-        eventService = new EventService(jdbi);
-        leaseDao = jdbi.onDemand(LeaseDao.class);
-        data = TestData.seed(jdbi);
+        subscriptionService = new SubscriptionService(dataSource);
+        SubscriptionOffsetDao = new SubscriptionOffsetDao(dataSource);
+        eventDao = new EventDao(dataSource);
+        data = TestData.seed(dataSource);
     }
 
     @Test
     void leasesAvailable_whenViewHasOneItem_returnsListWithOneItem() {
         final var subscriptionId = subscriptionService.find(TENANT_1, CONSUMER_GROUP_A, TOPIC_A).orElseThrow().id();
         // PUBLISH
-        eventService.publish(TENANT_1, TOPIC_A, "partitionKey", DATA);
+        eventDao.publish(TENANT_1, TOPIC_A, "partitionKey", DATA);
         // VALIDATE
-        final var subscriptionOffsets = leaseDao.leasesAvailable(100, 0);
+        final var subscriptionOffsets = SubscriptionOffsetDao.leasesAvailable(100, 0);
         assertThat(subscriptionOffsets).hasSize(2);
         final var result = subscriptionOffsets.getFirst();
         assertThat(result.subscriptionId()).isEqualTo(subscriptionId);
@@ -48,16 +48,16 @@ public class ProcessorIT extends BaseIT {
     @Test
     void leasesAvailable_whenViewHasMultipleItems_returnsAllItems() {
         // PUBLISH
-        eventService.publish(TENANT_1, TOPIC_A, "pk1", DATA);
-        eventService.publish(TENANT_1, TOPIC_A, "pk2", DATA);
-        eventService.publish(TENANT_1, TOPIC_B, "pk3", DATA);
-        eventService.publish(TENANT_1, TOPIC_B, "pk4", DATA);
-        eventService.publish(TENANT_2, TOPIC_C, "pk5", DATA);
-        eventService.publish(TENANT_2, TOPIC_C, "pk6", DATA);
-        eventService.publish(TENANT_2, TOPIC_D, "pk7", DATA);
-        eventService.publish(TENANT_2, TOPIC_D, "pk8", DATA);
+        eventDao.publish(TENANT_1, TOPIC_A, "pk1", DATA);
+        eventDao.publish(TENANT_1, TOPIC_A, "pk2", DATA);
+        eventDao.publish(TENANT_1, TOPIC_B, "pk3", DATA);
+        eventDao.publish(TENANT_1, TOPIC_B, "pk4", DATA);
+        eventDao.publish(TENANT_2, TOPIC_C, "pk5", DATA);
+        eventDao.publish(TENANT_2, TOPIC_C, "pk6", DATA);
+        eventDao.publish(TENANT_2, TOPIC_D, "pk7", DATA);
+        eventDao.publish(TENANT_2, TOPIC_D, "pk8", DATA);
         // VALIDATE
-        final var leasable = leaseDao.leasesAvailable(100, 0);
+        final var leasable = SubscriptionOffsetDao.leasesAvailable(100, 0);
         assertThat(leasable)
                 .hasSize(16)
                 .extracting(SubscriptionOffset::subscriptionId)
@@ -66,7 +66,7 @@ public class ProcessorIT extends BaseIT {
 
     @Test
     void leasesAvailable_whenViewIsEmpty_returnsEmptyList() {
-        assertThat(leaseDao.leasesAvailable(100, 0))
+        assertThat(SubscriptionOffsetDao.leasesAvailable(100, 0))
                 .isNotNull()
                 .isEmpty();
     }

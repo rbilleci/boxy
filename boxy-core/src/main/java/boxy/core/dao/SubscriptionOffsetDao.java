@@ -1,31 +1,41 @@
 package boxy.core.dao;
 
 import boxy.core.model.SubscriptionOffset;
-import org.jdbi.v3.sqlobject.SqlObject;
-import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
-import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
+import javax.sql.DataSource;
 import java.util.List;
 import java.util.Optional;
 
-@RegisterConstructorMapper(SubscriptionOffset.class)
-public interface SubscriptionOffsetDao extends SqlObject {
+public class SubscriptionOffsetDao extends BaseDao {
 
-    default void commit(long id, long offset) {
-        getHandle().createUpdate("CALL sp_commit_offset(:id,:offset)")
-                .bind("id", id)
-                .bind("offset", offset)
-                .execute();
+    private static final RowMapper<SubscriptionOffset> MAPPER = rs -> new SubscriptionOffset(
+            rs.getLong("id"),
+            rs.getLong("subscription_id"),
+            rs.getLong("partition_id"),
+            rs.getLong("committed_offset"),
+            rs.getLong("high_watermark"));
+
+    public SubscriptionOffsetDao(DataSource ds) {
+        super(ds);
     }
 
-    @SqlQuery("SELECT * FROM subscription_offsets_view WHERE id = :id")
-    Optional<SubscriptionOffset> find(@Bind("id") long id);
+    public void commit(long id, long offset) {
+        update("CALL sp_commit_offset(?,?)", id, offset);
+    }
 
-    @SqlQuery("SELECT * FROM subscription_offsets_view WHERE subscription_id = :subscriptionId AND partition_id = :partitionId")
-    Optional<SubscriptionOffset> find(@Bind("subscriptionId") long subscriptionId, @Bind("partitionId") long partitionId);
+    public List<SubscriptionOffset> leasesAvailable(int limit, int offset) {
+        return query("SELECT * FROM leases_available_view LIMIT ? OFFSET ?", MAPPER, limit, offset);
+    }
 
-    @SqlQuery("SELECT * FROM subscription_offsets_view WHERE subscription_id = :subscriptionId ORDER BY id")
-    List<SubscriptionOffset> findAll(@Bind("subscriptionId") long subscriptionId);
+    public Optional<SubscriptionOffset> find(long id) {
+        return queryOne("SELECT * FROM subscription_offsets_view WHERE id = ?", MAPPER, id);
+    }
 
+    public Optional<SubscriptionOffset> find(long subscriptionId, long partitionId) {
+        return queryOne("SELECT * FROM subscription_offsets_view WHERE subscription_id = ? AND partition_id = ?", MAPPER, subscriptionId, partitionId);
+    }
+
+    public List<SubscriptionOffset> findAll(long subscriptionId) {
+        return query("SELECT * FROM subscription_offsets_view WHERE subscription_id = ? ORDER BY id", MAPPER, subscriptionId);
+    }
 }

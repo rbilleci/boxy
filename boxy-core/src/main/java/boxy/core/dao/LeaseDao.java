@@ -1,50 +1,39 @@
 package boxy.core.dao;
 
 import boxy.core.model.Lease;
-import boxy.core.model.SubscriptionOffset;
-import org.jdbi.v3.sqlobject.SqlObject;
-import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
-import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.statement.SqlQuery;
 
-import java.util.List;
+import javax.sql.DataSource;
 import java.util.Optional;
 
-@RegisterConstructorMapper(Lease.class)
-public interface LeaseDao extends SqlObject {
+public class LeaseDao extends BaseDao {
 
-    @SqlQuery("SELECT * FROM leases WHERE subscription_offset_id = :subscriptionOffsetId")
-    Optional<Lease> find(@Bind("subscriptionOffsetId") long subscriptionOffsetId);
+    private static final RowMapper<Lease> MAPPER = rs -> new Lease(
+            rs.getLong("subscription_offset_id"),
+            rs.getLong("worker_id"),
+            rs.getLong("version"),
+            rs.getTimestamp("acquired_at").toInstant(),
+            rs.getTimestamp("updated_at").toInstant(),
+            rs.getTimestamp("expires_at").toInstant());
 
-    @SqlQuery("SELECT * FROM leases_available_view LIMIT :limit OFFSET :offset")
-    @RegisterConstructorMapper(SubscriptionOffset.class)
-    List<SubscriptionOffset> leasesAvailable(@Bind("limit") int limit,
-                                             @Bind("offset") int offset);
-
-
-    default boolean acquire(long subscriptionOffsetId, long workerId, long expiresAfter) {
-        return getHandle().createQuery("CALL sp_leases_acquire(:so,:worker,:exp)")
-                .bind("so", subscriptionOffsetId)
-                .bind("worker", workerId)
-                .bind("exp", expiresAfter)
-                .mapTo(Integer.class)
-                .one() > 0;
+    public LeaseDao(DataSource ds) {
+        super(ds);
     }
 
-    default boolean renew(long subscriptionOffsetId, long workerId, long expiresAfter) {
-        return getHandle().createQuery("CALL sp_leases_renew(:so,:worker,:exp)")
-                .bind("so", subscriptionOffsetId)
-                .bind("worker", workerId)
-                .bind("exp", expiresAfter)
-                .mapTo(Integer.class)
-                .one() > 0;
+    public Optional<Lease> find(long subscriptionOffsetId) {
+        return queryOne("SELECT * FROM leases WHERE subscription_offset_id = ?", MAPPER, subscriptionOffsetId);
     }
 
-    default void release(long subscriptionOffsetId, long workerId) {
-        getHandle().createUpdate("CALL sp_leases_release(:so,:worker)")
-                .bind("so", subscriptionOffsetId)
-                .bind("worker", workerId)
-                .execute();
+    public boolean acquire(long subscriptionOffsetId, long workerId, long expiresAfter) {
+        return queryOne("CALL sp_leases_acquire(?,?,?)", rs -> rs.getInt(1), subscriptionOffsetId, workerId, expiresAfter)
+                       .orElse(0) > 0;
     }
 
+    public boolean renew(long subscriptionOffsetId, long workerId, long expiresAfter) {
+        return queryOne("CALL sp_leases_renew(?,?,?)", rs -> rs.getInt(1), subscriptionOffsetId, workerId, expiresAfter)
+                       .orElse(0) > 0;
+    }
+
+    public void release(long subscriptionOffsetId, long workerId) {
+        update("CALL sp_leases_release(?,?)", subscriptionOffsetId, workerId);
+    }
 }

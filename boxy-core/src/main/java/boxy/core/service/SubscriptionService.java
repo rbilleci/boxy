@@ -4,7 +4,8 @@ import boxy.core.dao.ConsumerGroupDao;
 import boxy.core.dao.SubscriptionDao;
 import boxy.core.dao.TopicDao;
 import boxy.core.model.Subscription;
-import org.jdbi.v3.core.Jdbi;
+
+import javax.sql.DataSource;
 
 import java.util.Arrays;
 import java.util.NoSuchElementException;
@@ -16,10 +17,10 @@ public class SubscriptionService {
     private final TopicDao topicDao;
     private final ConsumerGroupDao consumerGroupDao;
 
-    public SubscriptionService(Jdbi jdbi) {
-        this.subscriptionDao = jdbi.onDemand(SubscriptionDao.class);
-        this.topicDao = jdbi.onDemand(TopicDao.class);
-        this.consumerGroupDao = jdbi.onDemand(ConsumerGroupDao.class);
+    public SubscriptionService(DataSource dataSource) {
+        this.subscriptionDao = new SubscriptionDao(dataSource);
+        this.topicDao = new TopicDao(dataSource);
+        this.consumerGroupDao = new ConsumerGroupDao(dataSource);
     }
 
     public Optional<Subscription> find(String tenant, String consumerGroupName, String topic) {

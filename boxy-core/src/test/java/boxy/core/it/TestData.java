@@ -3,7 +3,8 @@ package boxy.core.it;
 import boxy.core.dao.*;
 import boxy.core.model.*;
 import boxy.core.service.SubscriptionService;
-import org.jdbi.v3.core.Jdbi;
+
+import javax.sql.DataSource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,13 +31,12 @@ public record TestData(Topic topic,
     public static final String PARTY_1 = UUID.randomUUID().toString();
     public static final String PARTY_2 = UUID.randomUUID().toString();
 
-    public static TestData seed(final Jdbi jdbi) {
-        // Initialize JDBI Objects
-        final var topicDao = jdbi.onDemand(TopicDao.class);
-        final var consumerGroupDao = jdbi.onDemand(ConsumerGroupDao.class);
-        final var subscriptionService = new SubscriptionService(jdbi);
-        final var subscriptionOffsetDao = jdbi.onDemand(SubscriptionOffsetDao.class);
-        final var workerDao = jdbi.onDemand(WorkerDao.class);
+    public static TestData seed(final DataSource ds) {
+        final var topicDao = new TopicDao(ds);
+        final var consumerGroupDao = new ConsumerGroupDao(ds);
+        final var subscriptionService = new SubscriptionService(ds);
+        final var subscriptionOffsetDao = new SubscriptionOffsetDao(ds);
+        final var workerDao = new WorkerDao(ds);
 
         // Create the topics
         final var topicA = topicDao.find(topicDao.create(TENANT_1, TOPIC_A, DEFAULT_PARTITIONS)).orElseThrow();
@@ -65,7 +65,7 @@ public record TestData(Topic topic,
         subscriptionService.subscribe(TENANT_2, CONSUMER_GROUP_A, TOPIC_D);
         subscriptionService.subscribe(TENANT_2, CONSUMER_GROUP_B, TOPIC_C);
         subscriptionService.subscribe(TENANT_2, CONSUMER_GROUP_B, TOPIC_D);
-        final var subscriptions = jdbi.onDemand(SubscriptionDao.class).findAll(100, 0);
+        final var subscriptions = new SubscriptionDao(ds).findAll(100, 0);
         final var firstSubscription = subscriptions.getFirst();
         final var subscriptionOffset = subscriptionOffsetDao.findAll(firstSubscription.id()).getFirst();
 

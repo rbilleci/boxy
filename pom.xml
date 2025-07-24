@@ -59,18 +59,6 @@
                 <version>6.3.0</version>
             </dependency>
 
-            <!-- JDBI3 -->
-            <dependency>
-                <groupId>org.jdbi</groupId>
-                <artifactId>jdbi3-core</artifactId>
-                <version>3.49.5</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.jdbi</groupId>
-                <artifactId>jdbi3-sqlobject</artifactId>
-                <version>3.49.5</version>
-            </dependency>
 
             <!-- DATABASE DRIVERS (MYSQL) -->
             <dependency>
