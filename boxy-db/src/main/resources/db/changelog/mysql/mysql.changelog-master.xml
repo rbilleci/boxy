@@ -76,5 +76,9 @@
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
+        <sqlFile path="sp/sp_workers_check_in.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
     </changeSet>
 </databaseChangeLog>
