@@ -219,3 +219,9 @@ Integration tests use Testcontainers with MySQL (default) or Postgres. Configure
 | `DB_USER`     | `user`        | Database user         |
 | `DB_PASSWORD` | `password`    | Database password     |
 
+
+## FAQ
+
+#### How is the schema managed?
+Liquibase is used for schema management, but we do not use the database agnostic schema definitions. When this was attempted it was found that 1) the resulting YAML files were overly complex and required too many exceptions, and 2) the generated schemas would not perform as well as hand-crafted schemas without additional exceptions. Since we aim to support a wide range of databases, a decision was made to maintain complete control over the schema.
+
