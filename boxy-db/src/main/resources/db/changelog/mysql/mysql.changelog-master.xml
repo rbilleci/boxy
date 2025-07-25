@@ -28,6 +28,14 @@
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
+        <sqlFile path="sp/sp_workers_heartbeat.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_workers_cleanup_expired.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
         <sqlFile path="sp/sp_topics_create.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
