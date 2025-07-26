@@ -3,6 +3,7 @@ package boxy.core.dao;
 import boxy.core.model.Lease;
 
 import javax.sql.DataSource;
+import java.sql.Timestamp;
 import java.util.Optional;
 
 public final class LeaseDao extends BaseDao {
@@ -12,8 +13,8 @@ public final class LeaseDao extends BaseDao {
             rs.getLong("worker_id"),
             rs.getLong("version"),
             rs.getTimestamp("acquired_at").toInstant(),
-            rs.getTimestamp("updated_at").toInstant(),
-            rs.getTimestamp("expires_at").toInstant());
+            rs.getString("status"),
+            getTimestampOrNull(rs, "release_started_at"));
 
     public LeaseDao(DataSource ds) {
         super(ds);
@@ -33,7 +34,13 @@ public final class LeaseDao extends BaseDao {
                        .orElse(0) > 0;
     }
 
-    public void release(long subscriptionOffsetId, long workerId) {
-        update("CALL sp_leases_release(?,?)", subscriptionOffsetId, workerId);
+    public boolean release(long subscriptionOffsetId, long workerId) {
+        return queryOne("CALL sp_leases_release(?,?)", rs -> rs.getInt(1), subscriptionOffsetId, workerId)
+                       .orElse(0) > 0;
+    }
+    
+    private static java.time.Instant getTimestampOrNull(java.sql.ResultSet rs, String columnName) throws java.sql.SQLException {
+        Timestamp timestamp = rs.getTimestamp(columnName);
+        return timestamp != null ? timestamp.toInstant() : null;
     }
 }

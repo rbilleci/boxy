@@ -7,6 +7,9 @@ public record Lease(
         long workerId,
         long version,
         Instant acquiredAt,
-        Instant updatedAt,
-        Instant expiresAt) {
+        String status,
+        Instant releaseStartedAt) {
+    
+    public static final String STATUS_ACTIVE = "ACTIVE";
+    public static final String STATUS_RELEASING = "RELEASING";
 }

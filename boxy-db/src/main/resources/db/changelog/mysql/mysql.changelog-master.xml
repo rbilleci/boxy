@@ -77,4 +77,18 @@
                  splitStatements="false"
                  stripComments="false"/>
     </changeSet>
+    
+    <changeSet id="2" author="junie" dbms="mysql">
+        <!-- Lease System Update -->
+        <sqlFile path="mysql.lease-system-update.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="true"
+                 stripComments="false"/>
+        
+        <!-- New Worker Check-in Procedure -->
+        <sqlFile path="sp/sp_workers_check_in.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+    </changeSet>
 </databaseChangeLog>
