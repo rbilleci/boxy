@@ -219,6 +219,51 @@ Integration tests use Testcontainers with MySQL (default) or Postgres. Configure
 | `DB_USER`     | `user`        | Database user         |
 | `DB_PASSWORD` | `password`    | Database password     |
 
+## Boxy CLI
+
+Boxy CLI is a command-line interface for managing Boxy database schemas. It can be used to initialize or upgrade a database schema independently of the main application.
+
+### Building the CLI
+
+To build the CLI as a native executable (no Java required to run):
+
+```bash
+# Build the CLI module and create a native executable
+mvn clean package -pl boxy-cli -am -Pnative
+```
+
+The native executable will be created in the `boxy-cli/target` directory.
+
+### Using the CLI
+
+The CLI supports the following commands:
+
+#### Initialize a database schema
+
+```bash
+# Using the native executable
+./boxy-cli/target/boxy-cli db init --url jdbc:mysql://localhost:3306/boxy --username user --password password
+
+# Or using Java
+java -jar boxy-cli/target/boxy-cli.jar db init --url jdbc:mysql://localhost:3306/boxy --username user --password password
+```
+
+#### Migrate a database schema to the latest version
+
+```bash
+# Using the native executable
+./boxy-cli/target/boxy-cli db migrate --url jdbc:mysql://localhost:3306/boxy --username user --password password
+
+# Or using Java
+java -jar boxy-cli/target/boxy-cli.jar db migrate --url jdbc:mysql://localhost:3306/boxy --username user --password password
+```
+
+#### Additional options
+
+- `--verbose` or `-v`: Enable verbose output
+- `--help` or `-h`: Show help message
+- `--version` or `-V`: Show version information
+
 
 ## FAQ
 
