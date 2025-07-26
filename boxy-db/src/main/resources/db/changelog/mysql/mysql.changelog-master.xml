@@ -10,6 +10,8 @@
         <sqlFile path="mysql.consumer_group_stats.sql" relativeToChangelogFile="true"/>
         <!-- CONSUMER GROUP STATS MIGRATION -->
         <sqlFile path="mysql.consumer_group_stats_migration.sql" relativeToChangelogFile="true"/>
+        <!-- LEASE STATE -->
+        <sqlFile path="mysql.lease_state.sql" relativeToChangelogFile="true"/>
         <!-- FUNCTION -->
         <sqlFile path="fn/fn_resolve_partition_id.sql"
                  relativeToChangelogFile="true"
@@ -101,6 +103,10 @@
                  splitStatements="false"
                  stripComments="false"/>
         <sqlFile path="sp/sp_workers_check_in.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_leases_cleanup_releasing.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>

@@ -1,6 +1,7 @@
 package boxy.core.dao;
 
 import boxy.core.model.Lease;
+import boxy.core.model.Lease.LeaseState;
 
 import javax.sql.DataSource;
 import java.util.Optional;
@@ -13,7 +14,8 @@ public final class LeaseDao extends BaseDao {
             rs.getLong("version"),
             rs.getTimestamp("acquired_at").toInstant(),
             rs.getTimestamp("updated_at").toInstant(),
-            rs.getTimestamp("expires_at").toInstant());
+            rs.getTimestamp("expires_at").toInstant(),
+            LeaseState.valueOf(rs.getString("state")));
 
     public LeaseDao(DataSource ds) {
         super(ds);
@@ -35,5 +37,9 @@ public final class LeaseDao extends BaseDao {
 
     public void release(long subscriptionOffsetId, long workerId) {
         update("CALL sp_leases_release(?,?)", subscriptionOffsetId, workerId);
+    }
+    
+    public void cleanupReleasing(long subscriptionOffsetId, long workerId) {
+        update("CALL sp_leases_cleanup_releasing(?,?)", subscriptionOffsetId, workerId);
     }
 }

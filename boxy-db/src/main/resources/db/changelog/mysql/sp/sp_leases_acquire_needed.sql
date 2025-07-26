@@ -42,13 +42,14 @@ BEGIN
         END IF;
         
         -- Acquire the selected leases
-        INSERT INTO leases (subscription_offset_id, worker_id, expires_at)
-        SELECT subscription_offset_id, p_worker_id, DATE_ADD(CURRENT_TIMESTAMP(3), INTERVAL p_lease_ttl SECOND)
+        INSERT INTO leases (subscription_offset_id, worker_id, expires_at, state)
+        SELECT subscription_offset_id, p_worker_id, DATE_ADD(CURRENT_TIMESTAMP(3), INTERVAL p_lease_ttl SECOND), 'ACTIVE'
         FROM temp_leases_added
         ON DUPLICATE KEY UPDATE
             worker_id = IF(leases.expires_at < CURRENT_TIMESTAMP(3), VALUES(worker_id), leases.worker_id),
             version = IF(leases.expires_at < CURRENT_TIMESTAMP(3), leases.version + 1, leases.version),
-            expires_at = IF(leases.expires_at < CURRENT_TIMESTAMP(3), VALUES(expires_at), leases.expires_at);
+            expires_at = IF(leases.expires_at < CURRENT_TIMESTAMP(3), VALUES(expires_at), leases.expires_at),
+            state = IF(leases.expires_at < CURRENT_TIMESTAMP(3), 'ACTIVE', leases.state);
         
         -- Count acquired leases
         SELECT COUNT(*) INTO p_leases_acquired FROM temp_leases_added;

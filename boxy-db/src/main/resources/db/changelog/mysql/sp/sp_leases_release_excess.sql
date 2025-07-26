@@ -21,8 +21,9 @@ BEGIN
         ORDER BY (so.high_watermark - so.committed_offset) ASC
         LIMIT p_current_leases - p_max_leases;
         
-        -- Release the selected leases
-        DELETE FROM leases
+        -- Mark the selected leases as RELEASING instead of deleting them
+        UPDATE leases
+        SET state = 'RELEASING'
         WHERE worker_id = p_worker_id
           AND subscription_offset_id IN (SELECT subscription_offset_id FROM temp_leases_removed);
         

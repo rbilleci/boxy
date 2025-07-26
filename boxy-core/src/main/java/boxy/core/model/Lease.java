@@ -8,5 +8,11 @@ public record Lease(
         long version,
         Instant acquiredAt,
         Instant updatedAt,
-        Instant expiresAt) {
+        Instant expiresAt,
+        LeaseState state) {
+    
+    public enum LeaseState {
+        ACTIVE,
+        RELEASING
+    }
 }
