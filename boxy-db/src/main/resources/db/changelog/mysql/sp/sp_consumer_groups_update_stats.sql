@@ -15,10 +15,9 @@ BEGIN
     SET v_update_threshold = DATE_SUB(CURRENT_TIMESTAMP(3), INTERVAL 5 SECOND);
     
     -- Check if stats exist and are recent enough
-    SELECT COUNT(*), last_updated 
-    INTO v_stats_exist, v_last_updated
-    FROM consumer_group_stats 
-    WHERE consumer_group_id = p_consumer_group_id;
+    SELECT 1, last_updated INTO v_stats_exist, v_last_updated
+        FROM consumer_group_stats
+        WHERE consumer_group_id = p_consumer_group_id;
     
     -- If stats don't exist or are outdated, recalculate them
     IF v_stats_exist = 0 OR v_last_updated < v_update_threshold THEN

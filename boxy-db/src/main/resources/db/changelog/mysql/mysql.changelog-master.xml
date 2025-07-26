@@ -20,11 +20,7 @@
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_workers_register.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-        <sqlFile path="sp/sp_workers_deregister.sql"
+        <sqlFile path="sp/sp_workers_shutdown.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
@@ -57,10 +53,6 @@
                  splitStatements="false"
                  stripComments="false"/>
         <sqlFile path="sp/sp_commit_offset.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-        <sqlFile path="sp/sp_leases_acquire.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>

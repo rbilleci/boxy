@@ -19,6 +19,7 @@ public final class SubscriptionOffsetDao extends BaseDao {
         update("CALL sp_commit_offset(?,?)", id, offset);
     }
 
+    // TODO: we probably don't need this!
     public List<SubscriptionOffset> leasesAvailable(int limit, int offset) {
         return query("SELECT * FROM leases_available_view LIMIT ? OFFSET ?", SUBSCRIPTION_OFFSET_MAPPER, limit, offset);
     }

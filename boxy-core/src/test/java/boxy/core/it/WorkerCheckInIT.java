@@ -40,15 +40,10 @@ public class WorkerCheckInIT extends BaseIT {
     @Test
     void checkIn_singleWorker_acquiresAllLeases() {
         // Given a single worker
-        Worker worker = data.worker1();
+        final var worker = data.worker1();
 
         // When the worker checks in
-        WorkerCheckInResult result = workerDao.checkIn(
-                worker.id(),
-                worker.nodeId(),
-                worker.consumerGroupId(),
-                worker.weight(),
-                5);
+        final var result = workerDao.checkIn(worker.nodeId(), worker.consumerGroupId(), worker.weight(), 5);
 
         // Then the worker should acquire all active leases
         assertThat(result.activeWorkers()).isEqualTo(1);
@@ -70,7 +65,7 @@ public class WorkerCheckInIT extends BaseIT {
         assertThat(result.removedLeases()).isEmpty();
 
         // Verify leases in database
-        for (SubscriptionOffset offset : result.addedLeases()) {
+        for (final var offset : result.addedLeases()) {
             assertThat(leaseDao.find(offset.id()))
                     .isPresent()
                     .get()
@@ -86,12 +81,12 @@ public class WorkerCheckInIT extends BaseIT {
         final var worker2 = data.worker2();
 
         // Make sure they're in the same consumer group
-        final var worker2Id = workerDao.register(UUID.randomUUID().toString(), worker1.consumerGroupId(), worker1.weight());
+        final var worker2Id = workerDao.checkIn(
+                UUID.randomUUID().toString(), worker1.consumerGroupId(), worker1.weight(), 5).workerId();
         final var updatedWorker2 = workerDao.find(worker2Id).orElseThrow();
 
         // When worker1 checks in first
         final var result1 = workerDao.checkIn(
-                worker1.id(),
                 worker1.nodeId(),
                 worker1.consumerGroupId(),
                 worker1.weight(),
@@ -103,7 +98,6 @@ public class WorkerCheckInIT extends BaseIT {
 
         // When worker2 checks in
         final var result2 = workerDao.checkIn(
-                updatedWorker2.id(),
                 updatedWorker2.nodeId(),
                 updatedWorker2.consumerGroupId(),
                 updatedWorker2.weight(),
@@ -118,7 +112,6 @@ public class WorkerCheckInIT extends BaseIT {
 
         // When worker1 checks in again
         final var result1Again = workerDao.checkIn(
-                worker1.id(),
                 worker1.nodeId(),
                 worker1.consumerGroupId(),
                 worker1.weight(),
@@ -157,7 +150,6 @@ public class WorkerCheckInIT extends BaseIT {
 
         // When the worker checks in
         final var result = workerDao.checkIn(
-                worker.id(),
                 worker.nodeId(),
                 worker.consumerGroupId(),
                 worker.weight(),
@@ -179,11 +171,11 @@ public class WorkerCheckInIT extends BaseIT {
         Thread.sleep(result.leaseTtl() * 1000 + 1000);
 
         // When another worker checks in
-        final var worker2Id = workerDao.register(UUID.randomUUID().toString(), worker.consumerGroupId(), worker.weight());
+        final var worker2Id = workerDao.checkIn(
+                UUID.randomUUID().toString(), worker.consumerGroupId(), worker.weight(), 5).workerId();
         final var worker2 = workerDao.find(worker2Id).orElseThrow();
 
         final var result2 = workerDao.checkIn(
-                worker2.id(),
                 worker2.nodeId(),
                 worker2.consumerGroupId(),
                 worker2.weight(),

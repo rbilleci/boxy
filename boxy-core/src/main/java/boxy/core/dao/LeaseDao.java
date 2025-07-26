@@ -16,14 +16,7 @@ public final class LeaseDao extends BaseDao {
     }
 
     public Optional<Lease> find(long subscriptionOffsetId) {
-        return queryOne("SELECT * FROM leases WHERE subscription_offset_id = ?",
-                LEASE_MAPPER,
-                subscriptionOffsetId);
-    }
-
-    public boolean acquire(long subscriptionOffsetId, long workerId) {
-        return queryOne("CALL sp_leases_acquire(?,?)", rs -> rs.getInt(1), subscriptionOffsetId, workerId)
-                       .orElse(0) > 0;
+        return queryOne("SELECT * FROM leases WHERE subscription_offset_id = ?", LEASE_MAPPER, subscriptionOffsetId);
     }
 
     public void release(long subscriptionOffsetId, long workerId) {

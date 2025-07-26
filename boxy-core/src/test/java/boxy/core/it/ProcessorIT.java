@@ -18,14 +18,14 @@ public class ProcessorIT extends BaseIT {
     private static final String DATA = "{\"key\": \"value\"}\n";
 
     private SubscriptionDao subscriptionDao;
-    private SubscriptionOffsetDao SubscriptionOffsetDao;
+    private SubscriptionOffsetDao subscriptionOffsetDao;
     private EventDao eventDao;
     private TestData data;
 
     @BeforeEach
     void setup() {
         subscriptionDao = new SubscriptionDao(dataSource);
-        SubscriptionOffsetDao = new SubscriptionOffsetDao(dataSource);
+        subscriptionOffsetDao = new SubscriptionOffsetDao(dataSource);
         eventDao = new EventDao(dataSource);
         data = TestData.seed(dataSource);
     }
@@ -36,7 +36,7 @@ public class ProcessorIT extends BaseIT {
         // PUBLISH
         eventDao.publish(TENANT_1, TOPIC_A, "partitionKey", DATA);
         // VALIDATE
-        final var subscriptionOffsets = SubscriptionOffsetDao.leasesAvailable(100, 0);
+        final var subscriptionOffsets = subscriptionOffsetDao.leasesAvailable(100, 0);
         assertThat(subscriptionOffsets).hasSize(2);
         final var result = subscriptionOffsets.getFirst();
         assertThat(result.subscriptionId()).isEqualTo(subscriptionId);
@@ -55,7 +55,7 @@ public class ProcessorIT extends BaseIT {
         eventDao.publish(TENANT_2, TOPIC_D, "pk7", DATA);
         eventDao.publish(TENANT_2, TOPIC_D, "pk8", DATA);
         // VALIDATE
-        final var leasable = SubscriptionOffsetDao.leasesAvailable(100, 0);
+        final var leasable = subscriptionOffsetDao.leasesAvailable(100, 0);
         assertThat(leasable)
                 .hasSize(16)
                 .extracting(SubscriptionOffset::subscriptionId)
@@ -64,7 +64,7 @@ public class ProcessorIT extends BaseIT {
 
     @Test
     void leasesAvailable_whenViewIsEmpty_returnsEmptyList() {
-        assertThat(SubscriptionOffsetDao.leasesAvailable(100, 0))
+        assertThat(subscriptionOffsetDao.leasesAvailable(100, 0))
                 .isNotNull()
                 .isEmpty();
     }

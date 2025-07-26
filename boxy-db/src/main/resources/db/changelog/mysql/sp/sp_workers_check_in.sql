@@ -1,5 +1,4 @@
 CREATE PROCEDURE sp_workers_check_in(
-    IN p_worker_id BIGINT,
     IN p_node_id VARCHAR(255),
     IN p_consumer_group_id BIGINT,
     IN p_weight INT,
@@ -19,6 +18,7 @@ BEGIN
     DECLARE v_max_leases INT;
     DECLARE v_leases_released INT DEFAULT 0;
     DECLARE v_leases_acquired INT DEFAULT 0;
+    DECLARE v_worker_id BIGINT;
     
     -- Temporary tables for tracking lease changes
     CREATE TEMPORARY TABLE IF NOT EXISTS temp_leases_added (
@@ -36,15 +36,16 @@ BEGIN
     START TRANSACTION;
     
     -- 1. Update worker heartbeat
-    CALL sp_workers_update_heartbeat(p_worker_id, p_node_id, p_consumer_group_id, p_weight);
+    --    And return the worker id from the node id (performing an upsert on the workers)
+    CALL sp_workers_update_heartbeat(p_node_id, p_consumer_group_id, p_weight, v_worker_id);
     
     -- 2. Clean up expired workers and their leases
     CALL sp_workers_cleanup_expired(p_consumer_group_id, 10);
     
-    -- 2.1 Clean up leases in RELEASING state where the worker's last_updated timestamp is more than 10-seconds old
+    -- 2.1 Clean up leases in RELEASING state where the worker's released_at timestamp is more than 10-seconds old
     DELETE FROM leases
-    WHERE state = 'RELEASING'
-      AND released_at < CURRENT_TIMESTAMP(3) - INTERVAL 10 SECOND;
+        WHERE   state = 'RELEASING' AND
+                released_at < CURRENT_TIMESTAMP(3) - INTERVAL 10 SECOND;
     
     -- 3. Get or calculate consumer group statistics
     CALL sp_consumer_groups_update_stats(
@@ -64,7 +65,7 @@ BEGIN
     SELECT COUNT(*) 
     INTO v_current_leases
     FROM leases l
-    WHERE l.worker_id = p_worker_id
+    WHERE l.worker_id = v_worker_id
       AND l.state = 'ACTIVE';
     
     -- 6. Calculate ideal share based on weight
@@ -86,7 +87,7 @@ BEGIN
     -- 8. Work-stealing logic
     -- If we have too many leases, release some
     CALL sp_leases_release_excess(
-        p_worker_id,
+        v_worker_id,
         p_consumer_group_id,
         v_max_leases,
         v_current_leases,
@@ -95,7 +96,7 @@ BEGIN
     
     -- If we have too few leases, grab more
     CALL sp_leases_acquire_needed(
-        p_worker_id,
+        v_worker_id,
         p_consumer_group_id,
         v_min_leases,
         v_current_leases - v_leases_released,
@@ -107,7 +108,8 @@ BEGIN
     
     -- 9. Return results
     -- Return stats for the worker to calculate next check-in time
-    SELECT 
+    SELECT
+        v_worker_id as worker_id,
         v_active_workers_count AS active_workers,
         v_active_partitions_count AS active_partitions,
         v_total_weight AS total_weight,
