@@ -14,6 +14,7 @@
         <module>boxy-api-worker</module>
         <module>boxy-core</module>
         <module>boxy-db</module>
+        <module>boxy-sql-annotations</module>
     </modules>
 
     <properties>
