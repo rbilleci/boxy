@@ -1,0 +1,88 @@
+{
+  "resources": {
+    "includes": [
+      {
+        "pattern": "\\Qdb/changelog/db.changelog-master.xml\\E"
+      },
+      {
+        "pattern": "\\Qdb/changelog/mysql/mysql.changelog-master.xml\\E"
+      },
+      {
+        "pattern": "\\Qdb/changelog/mysql/mysql.schema.sql\\E"
+      },
+      {
+        "pattern": "\\Qdb/changelog/mysql/fn/fn_resolve_partition_id.sql\\E"
+      },
+      {
+        "pattern": "\\Qdb/changelog/mysql/sp/sp_commit_offset.sql\\E"
+      },
+      {
+        "pattern": "\\Qdb/changelog/mysql/sp/sp_consumer_groups_create.sql\\E"
+      },
+      {
+        "pattern": "\\Qdb/changelog/mysql/sp/sp_consumer_groups_delete.sql\\E"
+      },
+      {
+        "pattern": "\\Qdb/changelog/mysql/sp/sp_events_publish.sql\\E"
+      },
+      {
+        "pattern": "\\Qdb/changelog/mysql/sp/sp_events_publish_advanced.sql\\E"
+      },
+      {
+        "pattern": "\\Qdb/changelog/mysql/sp/sp_events_publish_multi.sql\\E"
+      },
+      {
+        "pattern": "\\Qdb/changelog/mysql/sp/sp_leases_acquire.sql\\E"
+      },
+      {
+        "pattern": "\\Qdb/changelog/mysql/sp/sp_leases_release.sql\\E"
+      },
+      {
+        "pattern": "\\Qdb/changelog/mysql/sp/sp_leases_renew.sql\\E"
+      },
+      {
+        "pattern": "\\Qdb/changelog/mysql/sp/sp_topics_cache_get.sql\\E"
+      },
+      {
+        "pattern": "\\Qdb/changelog/mysql/sp/sp_topics_create.sql\\E"
+      },
+      {
+        "pattern": "\\Qdb/changelog/mysql/sp/sp_topics_delete.sql\\E"
+      },
+      {
+        "pattern": "\\Qdb/changelog/mysql/sp/sp_topics_subscribe.sql\\E"
+      },
+      {
+        "pattern": "\\Qdb/changelog/mysql/sp/sp_topics_unsubscribe.sql\\E"
+      },
+      {
+        "pattern": "\\Qdb/changelog/mysql/sp/sp_workers_deregister.sql\\E"
+      },
+      {
+        "pattern": "\\Qdb/changelog/mysql/sp/sp_workers_register.sql\\E"
+      },
+      {
+        "pattern": "\\QMETA-INF/services/liquibase.database.Database\\E"
+      },
+      {
+        "pattern": "\\QMETA-INF/services/liquibase.parser.ChangeLogParser\\E"
+      },
+      {
+        "pattern": "\\QMETA-INF/services/liquibase.serializer.ChangeLogSerializer\\E"
+      },
+      {
+        "pattern": "\\QMETA-INF/services/liquibase.change.Change\\E"
+      },
+      {
+        "pattern": "\\QMETA-INF/services/liquibase.precondition.Precondition\\E"
+      },
+      {
+        "pattern": "\\QMETA-INF/services/liquibase.sql.visitor.SqlVisitor\\E"
+      },
+      {
+        "pattern": "\\QMETA-INF/services/java.sql.Driver\\E"
+      }
+    ]
+  },
+  "bundles": []
+}

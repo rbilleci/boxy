@@ -200,9 +200,79 @@ This loop ensures:
 - **Duplicate-safety** on failover
 
 
+## Boxy CLI
+
+Boxy CLI is a command-line interface for Boxy that allows you to manage your database schema independently. It follows an AWS CLI-like structure with commands and subcommands.
+
+### Building the CLI
+
+The CLI can be built as a regular JAR or as a native executable:
+
+```bash
+# Build as a JAR
+mvn -pl boxy-cli clean package
+
+# Build as a native executable (requires GraalVM)
+mvn -pl boxy-cli clean package -Pnative
+```
+
+### Using the CLI
+
+The CLI provides commands for database operations:
+
+#### Initialize a Database Schema
+
+```bash
+# Using the JAR
+java -jar boxy-cli/target/boxy-cli-1.0-SNAPSHOT.jar db init \
+  --url jdbc:mysql://localhost:3306/boxy \
+  --username user \
+  --password password
+
+# Using the native executable
+./boxy-cli/target/boxy-cli db init \
+  --url jdbc:mysql://localhost:3306/boxy \
+  --username user \
+  --password password
+```
+
+#### Migrate a Database Schema
+
+```bash
+# Using the JAR
+java -jar boxy-cli/target/boxy-cli-1.0-SNAPSHOT.jar db migrate \
+  --url jdbc:mysql://localhost:3306/boxy \
+  --username user \
+  --password password
+
+# Using the native executable
+./boxy-cli/target/boxy-cli db migrate \
+  --url jdbc:mysql://localhost:3306/boxy \
+  --username user \
+  --password password
+```
+
+#### Show SQL Without Executing (Dry Run)
+
+```bash
+java -jar boxy-cli/target/boxy-cli-1.0-SNAPSHOT.jar db migrate \
+  --url jdbc:mysql://localhost:3306/boxy \
+  --username user \
+  --password password \
+  --dry-run
+```
+
+#### Get Help
+
+```bash
+java -jar boxy-cli/target/boxy-cli-1.0-SNAPSHOT.jar --help
+java -jar boxy-cli/target/boxy-cli-1.0-SNAPSHOT.jar db --help
+java -jar boxy-cli/target/boxy-cli-1.0-SNAPSHOT.jar db init --help
+```
+
 ## Building the Project
 
-Boxy uses Maven and requires Java 17+. From the root:
+Boxy uses Maven and requires Java 21+. From the root:
 
 ```bash
 mvn clean package

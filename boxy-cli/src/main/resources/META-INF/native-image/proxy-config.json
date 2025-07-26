@@ -1,0 +1,13 @@
+[
+  ["java.sql.Connection"],
+  ["java.sql.Statement"],
+  ["java.sql.PreparedStatement"],
+  ["java.sql.ResultSet"],
+  ["java.sql.DatabaseMetaData"],
+  ["liquibase.change.Change"],
+  ["liquibase.database.Database"],
+  ["liquibase.parser.ChangeLogParser"],
+  ["liquibase.precondition.Precondition"],
+  ["liquibase.serializer.ChangeLogSerializer"],
+  ["liquibase.sql.visitor.SqlVisitor"]
+]

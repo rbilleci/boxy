@@ -1,0 +1,24 @@
+[
+  {
+    "name": "com.mysql.cj.jdbc.Driver"
+  },
+  {
+    "name": "java.lang.String",
+    "methods": [
+      { "name": "getBytes", "parameterTypes": ["java.lang.String"] }
+    ]
+  },
+  {
+    "name": "java.sql.DriverManager",
+    "methods": [
+      { "name": "getConnection", "parameterTypes": ["java.lang.String", "java.lang.String", "java.lang.String"] },
+      { "name": "getDriver", "parameterTypes": ["java.lang.String"] }
+    ]
+  },
+  {
+    "name": "java.sql.SQLException"
+  },
+  {
+    "name": "java.sql.SQLFeatureNotSupportedException"
+  }
+]
