@@ -1,7 +1,6 @@
 CREATE PROCEDURE sp_leases_acquire(
     IN p_subscription_offset_id BIGINT,
-    IN p_worker_id BIGINT,
-    IN p_expires_after BIGINT) -- This parameter is kept for backward compatibility but not used
+    IN p_worker_id BIGINT)
 BEGIN
     -- Get the worker's last heartbeat
     DECLARE v_worker_last_heartbeat DATETIME(3);

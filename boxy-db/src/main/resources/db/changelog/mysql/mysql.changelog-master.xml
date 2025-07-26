@@ -4,9 +4,9 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet id="1" author="richard.billeci" dbms="mysql">
-        <!-- EVENT SCHEMA (includes consumer_group_stats table and updated lease structure) -->
+        <!-- SQL SCHEMA -->
         <sqlFile path="mysql.schema.sql" relativeToChangelogFile="true"/>
-        <!-- FUNCTION -->
+        <!-- FUNCTIONS -->
         <sqlFile path="fn/fn_resolve_partition_id.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
@@ -61,10 +61,6 @@
                  splitStatements="false"
                  stripComments="false"/>
         <sqlFile path="sp/sp_leases_acquire.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-        <sqlFile path="sp/sp_leases_renew.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>

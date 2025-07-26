@@ -108,8 +108,6 @@ Each worker runs in one of three high-level states with respect to a given parti
 **Processing**
 - Lease acquired and an event batch is in-flight.
 - Worker reads events, calls handlers, and updates the offset as it goes.
-- It continues renewing the lease on this partition: once N seconds, 
-  or possibly commit of offsets (to-be-determined). 
 
 **Releasing**
 - Release can occur in two scenarios: 1) all in-flight work is done and the final offset is committed, 2) the worker is determined to have an unfair share of leases.
@@ -132,7 +130,6 @@ Each leases row similarly goes through:
 - Any under-loaded worker can pick it up via a randomized grab.
 
 **Held (leases row exists with current worker_id)**
-- The owning worker keeps it alive by renewing before expires_at.
 - Once the worker finishes and enters Releasing, it deletes this row, making it immediately Available again.
 
 ```mermaid
@@ -153,7 +150,7 @@ Releasing --> Idle       : delete lease
 ## State Change Example
 
       t=0s    Worker A grabs lease on P42 → state Idle→Processing, lease created
-      t=0–2s  A processes events 101–105 → in-flight, renew lease at t≈10s
+      t=0–2s  A processes events 101–105 → in-flight
       t=3s    A commits offset=105, no more in-flight → transition to Releasing
       t=3s    A issues DELETE FROM leases WHERE X → lease row gone
       t=4s    New event arrives in P42 → shows up in leases_available_view
@@ -189,7 +186,6 @@ Properties
 3. **Release Excess**: if held leases > ⌊Sᵢ⌋ + Δ, delete the least-backlogged leases.
 4. **Grab More**: if held leases < ⌈Sᵢ⌉ − Δ, pick a random pivot in `leases_available_view` and `SELECT ... LIMIT` to fetch N new `subscription_offset_id`s, then upsert into `leases`.
 5. **Process**: for each held lease, read events > `committed_offset`, process in-order, then update `committed_offset`.
-6. **Renew** leases at \~⅓ TTL (e.g. 10s on a 30s lease) to avoid expiration. A renewal can be packaged with an offset commit. 
 
 This loop ensures:
 

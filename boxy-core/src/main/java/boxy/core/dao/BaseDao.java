@@ -1,6 +1,7 @@
 package boxy.core.dao;
 
 import boxy.core.DataAccessException;
+import boxy.core.mapper.RowMapper;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -22,7 +23,7 @@ public abstract class BaseDao {
     }
 
     protected <T> Optional<T> queryOne(String sql, RowMapper<T> mapper, Object... params) {
-        var list = query(sql, mapper, params);
+        final var list = query(sql, mapper, params);
         return list.isEmpty() ? Optional.empty() : Optional.of(list.getFirst());
     }
 
@@ -43,7 +44,7 @@ public abstract class BaseDao {
     }
 
     private <T> T execute(String sql, SQLFunction<PreparedStatement, T> f, Object... params) {
-        try (var conn = ds.getConnection(); var ps = conn.prepareStatement(sql)) {
+        try (final var connection = ds.getConnection(); var ps = connection.prepareStatement(sql)) {
             bind(ps, params);
             return f.apply(ps);
         } catch (SQLException e) {

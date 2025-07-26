@@ -8,6 +8,7 @@ CREATE PROCEDURE sp_leases_acquire_needed(
 )
 BEGIN
     DECLARE v_random_offset BIGINT;
+    DECLARE p_limit INT;
     
     SET p_leases_acquired = 0;
     
@@ -17,6 +18,7 @@ BEGIN
         SELECT FLOOR(RAND() * (SELECT MAX(id) FROM subscription_offsets)) INTO v_random_offset;
         
         -- Find available leases starting from random offset
+        SET p_limit = p_min_leases - p_current_leases;
         INSERT INTO temp_leases_added
         SELECT lav.id
         FROM leases_available_view lav
@@ -25,9 +27,10 @@ BEGIN
           AND lav.id >= v_random_offset
           AND lav.high_watermark > lav.committed_offset
         ORDER BY lav.id
-        LIMIT p_min_leases - p_current_leases;
+        LIMIT p_limit;
         
         -- If we didn't get enough, wrap around to the beginning
+        SET p_limit = p_min_leases - p_current_leases - (SELECT COUNT(*) FROM temp_leases_added);
         IF (SELECT COUNT(*) FROM temp_leases_added) < (p_min_leases - p_current_leases) THEN
             INSERT INTO temp_leases_added
             SELECT lav.id
@@ -38,7 +41,7 @@ BEGIN
               AND lav.high_watermark > lav.committed_offset
               AND lav.id NOT IN (SELECT subscription_offset_id FROM temp_leases_added)
             ORDER BY lav.id
-            LIMIT p_min_leases - p_current_leases - (SELECT COUNT(*) FROM temp_leases_added);
+            LIMIT p_limit;
         END IF;
         
         -- Acquire the selected leases

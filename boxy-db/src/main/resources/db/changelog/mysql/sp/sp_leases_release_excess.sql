@@ -6,7 +6,9 @@ CREATE PROCEDURE sp_leases_release_excess(
     OUT p_leases_released INT
 )
 BEGIN
+    DECLARE p_limit INT;
     SET p_leases_released = 0;
+    SET p_limit = p_current_leases - p_max_leases;
     
     -- If we have too many leases, release some
     IF p_current_leases > p_max_leases THEN
@@ -19,7 +21,7 @@ BEGIN
         WHERE l.worker_id = p_worker_id
           AND s.consumer_group_id = p_consumer_group_id
         ORDER BY (so.high_watermark - so.committed_offset) ASC
-        LIMIT p_current_leases - p_max_leases;
+        LIMIT p_limit;
         
         -- Mark the selected leases as RELEASING instead of deleting them
         -- Also set the released_at timestamp to track when the release started

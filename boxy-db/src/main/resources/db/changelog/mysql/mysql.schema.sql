@@ -35,6 +35,7 @@ CREATE TABLE consumer_groups (
     COLLATE=utf8mb4_bin
     COMMENT='Defines consumer groups per tenant, which will track offsets independently';
 
+
 CREATE TABLE consumer_group_stats (
     consumer_group_id    BIGINT PRIMARY KEY,
     active_workers_count INT NOT NULL DEFAULT 0,

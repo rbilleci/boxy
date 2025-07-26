@@ -3,7 +3,7 @@ CREATE PROCEDURE sp_workers_check_in(
     IN p_node_id VARCHAR(255),
     IN p_consumer_group_id BIGINT,
     IN p_weight INT,
-    IN p_lease_ttl_multiplier INT DEFAULT 5
+    IN p_lease_ttl_multiplier INT
 )
 BEGIN
     DECLARE v_active_workers_count INT DEFAULT 0;

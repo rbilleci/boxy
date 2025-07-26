@@ -1,5 +1,6 @@
 package boxy.core.dao;
 
+import boxy.core.mapper.ConsumerGroupMapper;
 import boxy.core.model.ConsumerGroup;
 
 import javax.sql.DataSource;
@@ -8,10 +9,7 @@ import java.util.Optional;
 
 public final class ConsumerGroupDao extends BaseDao {
 
-    private static final RowMapper<ConsumerGroup> MAPPER = rs -> new ConsumerGroup(
-            rs.getLong("id"),
-            rs.getString("tenant"),
-            rs.getString("name"));
+    private static final ConsumerGroupMapper CONSUMER_GROUP_MAPPER = new ConsumerGroupMapper();
 
     public ConsumerGroupDao(DataSource ds) {
         super(ds);
@@ -27,10 +25,14 @@ public final class ConsumerGroupDao extends BaseDao {
     }
 
     public Optional<ConsumerGroup> find(String tenant, String name) {
-        return queryOne("SELECT * FROM consumer_groups WHERE tenant = ? AND name = ?", MAPPER, tenant, name);
+        return queryOne("SELECT * FROM consumer_groups WHERE tenant = ? AND name = ?",
+                CONSUMER_GROUP_MAPPER,
+                tenant, name);
     }
 
     public List<ConsumerGroup> findAll(int limit, int offset) {
-        return query("SELECT * FROM consumer_groups ORDER BY id LIMIT ? OFFSET ?", MAPPER, limit, offset);
+        return query("SELECT * FROM consumer_groups ORDER BY id LIMIT ? OFFSET ?",
+                CONSUMER_GROUP_MAPPER,
+                limit, offset);
     }
 }
