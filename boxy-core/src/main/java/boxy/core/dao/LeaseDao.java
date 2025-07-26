@@ -13,8 +13,7 @@ public final class LeaseDao extends BaseDao {
             rs.getLong("worker_id"),
             rs.getLong("version"),
             rs.getTimestamp("acquired_at").toInstant(),
-            rs.getTimestamp("updated_at").toInstant(),
-            rs.getTimestamp("expires_at").toInstant(),
+            rs.getTimestamp("released_at") != null ? rs.getTimestamp("released_at").toInstant() : null,
             LeaseState.valueOf(rs.getString("state")));
 
     public LeaseDao(DataSource ds) {

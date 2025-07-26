@@ -41,6 +41,11 @@ BEGIN
     -- 2. Clean up expired workers and their leases
     CALL sp_workers_cleanup_expired(p_consumer_group_id, 10);
     
+    -- 2.1 Clean up leases in RELEASING state where the worker's last_updated timestamp is more than 10-seconds old
+    DELETE FROM leases
+    WHERE state = 'RELEASING'
+      AND released_at < CURRENT_TIMESTAMP(3) - INTERVAL 10 SECOND;
+    
     -- 3. Get or calculate consumer group statistics
     CALL sp_consumer_groups_update_stats(
         p_consumer_group_id,
@@ -55,11 +60,12 @@ BEGIN
     SET v_lease_ttl = v_lease_ttl_base * p_lease_ttl_multiplier;
     
     -- 5. Count current leases for this worker
+    -- Only count ACTIVE leases, not RELEASING ones
     SELECT COUNT(*) 
     INTO v_current_leases
     FROM leases l
     WHERE l.worker_id = p_worker_id
-      AND l.expires_at > CURRENT_TIMESTAMP(3);
+      AND l.state = 'ACTIVE';
     
     -- 6. Calculate ideal share based on weight
     IF v_total_weight > 0 AND v_active_partitions_count > 0 THEN
