@@ -6,6 +6,10 @@
     <changeSet id="1" author="richard.billeci" dbms="mysql">
         <!-- EVENT SCHEMA -->
         <sqlFile path="mysql.schema.sql" relativeToChangelogFile="true"/>
+        <!-- CONSUMER GROUP STATS TABLE -->
+        <sqlFile path="mysql.consumer_group_stats.sql" relativeToChangelogFile="true"/>
+        <!-- CONSUMER GROUP STATS MIGRATION -->
+        <sqlFile path="mysql.consumer_group_stats_migration.sql" relativeToChangelogFile="true"/>
         <!-- FUNCTION -->
         <sqlFile path="fn/fn_resolve_partition_id.sql"
                  relativeToChangelogFile="true"
@@ -73,6 +77,26 @@
                  splitStatements="false"
                  stripComments="false"/>
         <sqlFile path="sp/sp_topics_cache_get.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_workers_update_heartbeat.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_workers_cleanup_expired.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_consumer_groups_update_stats.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_leases_release_excess.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_leases_acquire_needed.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
