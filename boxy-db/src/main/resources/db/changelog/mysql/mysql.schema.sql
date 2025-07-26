@@ -35,6 +35,20 @@ CREATE TABLE consumer_groups (
     COLLATE=utf8mb4_bin
     COMMENT='Defines consumer groups per tenant, which will track offsets independently';
 
+CREATE TABLE consumer_group_stats (
+    consumer_group_id    BIGINT PRIMARY KEY,
+    active_workers_count INT NOT NULL DEFAULT 0,
+    total_weight         INT NOT NULL DEFAULT 0,
+    active_partitions_count INT NOT NULL DEFAULT 0,
+    heartbeat_interval   INT NOT NULL DEFAULT 3,
+    lease_ttl_base       INT NOT NULL DEFAULT 15,
+    last_updated         DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    FOREIGN KEY (consumer_group_id) REFERENCES consumer_groups (id) ON DELETE CASCADE
+) ENGINE=InnoDB
+    DEFAULT CHARSET=utf8mb4
+    COLLATE=utf8mb4_bin
+    COMMENT='Stores precomputed statistics for consumer groups to optimize worker check-in';
+
 
 CREATE TABLE subscriptions (
     id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -83,16 +97,16 @@ CREATE TABLE leases (
     worker_id               BIGINT NOT NULL,
     version                 BIGINT NOT NULL DEFAULT 1,
     acquired_at             DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    updated_at              DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
-    expires_at              DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    INDEX idx_leases__expires_at (expires_at),
+    released_at             DATETIME(3) NULL,
+    state                   ENUM('ACTIVE', 'RELEASING') NOT NULL DEFAULT 'ACTIVE',
+    INDEX idx_leases__state (state),
     INDEX idx_leases__worker (worker_id),
     FOREIGN KEY (subscription_offset_id) REFERENCES subscription_offsets(id),
     FOREIGN KEY (worker_id) REFERENCES workers(id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
-    COMMENT='Implements distributed locking for processing offsets—tracks worker, version, and expiration';
+    COMMENT='Implements distributed locking for processing offsets—tracks worker, version, and state';
 
 
 CREATE TABLE events (
@@ -151,5 +165,11 @@ SELECT
     p.high_watermark
 FROM subscription_offsets AS so
     INNER JOIN partitions AS p ON p.id = so.partition_id AND p.high_watermark > so.committed_offset
-    LEFT JOIN leases as l ON l.subscription_offset_id = so.id AND l.expires_at >= CURRENT_TIMESTAMP(3)
-WHERE l.subscription_offset_id IS NULL;
+    LEFT JOIN leases AS l ON l.subscription_offset_id = so.id
+    LEFT JOIN workers AS w ON w.id = l.worker_id
+    -- A lease is available if:
+    -- 1. No lease exists for this subscription offset (l.subscription_offset_id IS NULL)
+    -- 2. The lease exists but the worker has expired (ACTIVE state + worker heartbeat is old)
+    -- Note: Leases in RELEASING state are not available
+    WHERE l.subscription_offset_id IS NULL OR 
+          (l.state = 'ACTIVE' AND w.last_heartbeat < CURRENT_TIMESTAMP(3) - INTERVAL 10 SECOND);

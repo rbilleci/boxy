@@ -22,8 +22,10 @@ BEGIN
         LIMIT p_current_leases - p_max_leases;
         
         -- Mark the selected leases as RELEASING instead of deleting them
+        -- Also set the released_at timestamp to track when the release started
         UPDATE leases
-        SET state = 'RELEASING'
+        SET state = 'RELEASING',
+            released_at = CURRENT_TIMESTAMP(3)
         WHERE worker_id = p_worker_id
           AND subscription_offset_id IN (SELECT subscription_offset_id FROM temp_leases_removed);
         
