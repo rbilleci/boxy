@@ -23,7 +23,6 @@ public class WorkerCheckInResultMapper implements RowMapper<WorkerCheckInResult>
                 rs.getTimestamp("heartbeat_deadline") == null ?
                         null :
                         rs.getTimestamp("heartbeat_deadline").toInstant(),
-                new ArrayList<>(),
                 new ArrayList<>());
     }
 }

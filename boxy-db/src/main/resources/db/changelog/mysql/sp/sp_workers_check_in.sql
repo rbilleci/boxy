@@ -22,16 +22,6 @@ BEGIN
     DECLARE v_heartbeat_deadline_seconds INT;
     DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
     
-    -- Temporary tables for tracking lease changes
-    CREATE TEMPORARY TABLE IF NOT EXISTS temp_leases_added (
-        subscription_offset_id BIGINT PRIMARY KEY
-    );
-    CREATE TEMPORARY TABLE IF NOT EXISTS temp_leases_removed (
-        subscription_offset_id BIGINT PRIMARY KEY
-    );
-    TRUNCATE temp_leases_added;
-    TRUNCATE temp_leases_removed;
-
     -- Start transaction to ensure consistency
     START TRANSACTION;
 
@@ -125,8 +115,6 @@ BEGIN
 
     COMMIT;
 
-
-
     -- Return stats for the worker to calculate next check-in time
     SELECT
         v_worker_id as worker_id,
@@ -141,27 +129,15 @@ BEGIN
         v_heartbeat_interval AS heartbeat_interval,
         v_heartbeat_deadline AS heartbeat_deadline;
 
-    -- Return added leases
+    -- Return all active leases for this worker (excluding those in a RELEASING state)
     SELECT
         so.id AS subscription_offset_id,
         so.subscription_id,
         so.partition_id,
         so.committed_offset,
         so.high_watermark
-    FROM temp_leases_added tla
-    INNER JOIN subscription_offsets_view so ON so.id = tla.subscription_offset_id;
-
-    -- Return removed leases
-    SELECT
-        so.id AS subscription_offset_id,
-        so.subscription_id,
-        so.partition_id,
-        so.committed_offset,
-        so.high_watermark
-    FROM temp_leases_removed tlr
-    INNER JOIN subscription_offsets_view so ON so.id = tlr.subscription_offset_id;
-
-    -- Clean up temporary tables
-    DROP TEMPORARY TABLE IF EXISTS temp_leases_added;
-    DROP TEMPORARY TABLE IF EXISTS temp_leases_removed;
+    FROM leases l
+    INNER JOIN subscription_offsets_view so ON so.id = l.subscription_offset_id
+    WHERE l.worker_id = v_worker_id
+      AND l.state = 'ACTIVE';
 END;

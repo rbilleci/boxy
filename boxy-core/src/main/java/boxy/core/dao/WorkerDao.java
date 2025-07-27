@@ -36,12 +36,12 @@ public final class WorkerDao extends BaseDao {
      * 2. Cleans up expired workers
      * 3. Calculates fair share of leases
      * 4. Releases excess leases or acquires new ones as needed
-     * 5. Returns statistics and lease changes
+     * 5. Returns statistics and all active leases
      *
      * @param nodeId             The node identifier
      * @param consumerGroupId    The consumer group ID
      * @param weight             The worker's weight
-     * @return A WorkerCheckInResult containing statistics and lease changes
+     * @return A WorkerCheckInResult containing statistics and all active leases
      */
     public WorkerCheckInResult checkIn(String nodeId,
                                        long consumerGroupId,
@@ -65,19 +65,11 @@ public final class WorkerDao extends BaseDao {
                 }
                 // Map the statistics
                 final var workerCheckInResult = WORKER_CHECK_IN_RESULT_MAPPER.map(rs);
-                // Record added leases
+                // Record active leases
                 if (statement.getMoreResults()) {
-                    try (final var addedRs = statement.getResultSet()) {
-                        while (addedRs.next()) {
-                            workerCheckInResult.addedLeases().add(SUBSCRIPTION_OFFSET_MAPPER.map(addedRs));
-                        }
-                    }
-                }
-                // Record removed leases
-                if (statement.getMoreResults()) {
-                    try (final var removedRs = statement.getResultSet()) {
-                        while (removedRs.next()) {
-                            workerCheckInResult.removedLeases().add(SUBSCRIPTION_OFFSET_MAPPER.map(removedRs));
+                    try (final var leasesRs = statement.getResultSet()) {
+                        while (leasesRs.next()) {
+                            workerCheckInResult.activeLeases().add(SUBSCRIPTION_OFFSET_MAPPER.map(leasesRs));
                         }
                     }
                 }
