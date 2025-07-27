@@ -30,6 +30,7 @@ CREATE TABLE consumer_groups (
     name                        VARCHAR(255) NOT NULL,
     heartbeat_interval_default  DOUBLE NOT NULL DEFAULT 3.0,
     heartbeat_deadline_multiplier DOUBLE NOT NULL DEFAULT 5.0,
+    release_deadline            DOUBLE NOT NULL DEFAULT 10.0,
     total_weight                INT NOT NULL DEFAULT 0,
     active_partitions           INT NOT NULL DEFAULT 0,
     active_workers              INT NOT NULL DEFAULT 0,

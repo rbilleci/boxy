@@ -8,6 +8,7 @@ public record ConsumerGroup(
         String name,
         double heartbeatIntervalDefault,
         double heartbeatDeadlineMultiplier,
+        double releaseDeadline,
         int totalWeight,
         int activePartitions,
         int activeWorkers,
