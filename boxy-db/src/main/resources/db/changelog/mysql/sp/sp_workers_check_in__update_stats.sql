@@ -9,13 +9,11 @@ BEGIN
     DECLARE v_last_updated DATETIME(3);
     DECLARE v_update_threshold DATETIME(3);
     
-    -- Set update threshold to 5 seconds ago
-    SET v_update_threshold = DATE_SUB(CURRENT_TIMESTAMP(3), INTERVAL 5 SECOND);
+    -- Set update threshold to 1 seconds ago
+    SET v_update_threshold = DATE_SUB(CURRENT_TIMESTAMP(3), INTERVAL 1 SECOND);
     
     -- Check if stats are recent enough
-    SELECT last_updated INTO v_last_updated
-        FROM consumer_groups
-        WHERE id = p_consumer_group_id;
+    SELECT last_updated INTO v_last_updated FROM consumer_groups WHERE id = p_consumer_group_id;
     
     -- If stats are outdated, recalculate them
     IF v_last_updated < v_update_threshold THEN
@@ -46,10 +44,10 @@ BEGIN
 
         -- Update the stats in the consumer_groups table
         UPDATE consumer_groups
-        SET active_workers_count = p_active_workers_count,
-            total_weight = p_total_weight,
-            active_partitions_count = p_active_partitions_count,
-            last_updated = CURRENT_TIMESTAMP(3)
+           SET active_workers_count = p_active_workers_count,
+              total_weight = p_total_weight,
+              active_partitions_count = p_active_partitions_count,
+              last_updated = CURRENT_TIMESTAMP(3)
         WHERE id = p_consumer_group_id;
     ELSE
         -- Use existing stats for counts and weights

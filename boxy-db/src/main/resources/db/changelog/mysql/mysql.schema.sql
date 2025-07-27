@@ -24,10 +24,6 @@ CREATE TABLE partitions (
     COLLATE=utf8mb4_bin
     COMMENT='Tracks individual partitions for each topic, including the current high-watermark offset';
 
-
--- Drop the consumer_group_stats table if it exists (migrating its columns to consumer_groups)
-DROP TABLE IF EXISTS consumer_group_stats;
-
 CREATE TABLE consumer_groups (
     id                          BIGINT AUTO_INCREMENT PRIMARY KEY,
     tenant                      VARCHAR(255) NOT NULL,

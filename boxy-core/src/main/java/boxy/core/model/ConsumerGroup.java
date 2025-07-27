@@ -1,6 +1,6 @@
 package boxy.core.model;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record ConsumerGroup(
         long id,
@@ -11,5 +11,5 @@ public record ConsumerGroup(
         int activeWorkersCount,
         int totalWeight,
         int activePartitionsCount,
-        LocalDateTime lastUpdated) {
+        Instant lastUpdated) {
 }
