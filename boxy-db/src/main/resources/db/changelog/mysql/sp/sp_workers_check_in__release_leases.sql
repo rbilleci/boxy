@@ -7,6 +7,8 @@ CREATE PROCEDURE sp_workers_check_in__release_leases(
 )
 BEGIN
     DECLARE p_limit INT;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
+
     SET p_leases_released = 0;
     SET p_limit = p_current_leases - p_max_leases;
     

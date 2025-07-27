@@ -8,6 +8,7 @@ CREATE PROCEDURE sp_workers_check_in__acquire_leases(
 BEGIN
     DECLARE v_random_offset BIGINT;
     DECLARE p_limit INT;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
     
     SET p_leases_acquired = 0;
     

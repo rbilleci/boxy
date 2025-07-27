@@ -15,13 +15,12 @@ BEGIN
     DECLARE v_leases_released INT DEFAULT 0;
     DECLARE v_leases_acquired INT DEFAULT 0;
     DECLARE v_worker_id BIGINT;
-
-    -- Heartbeat parameters
     DECLARE v_heartbeat_interval DOUBLE;
     DECLARE v_heartbeat_interval_default DOUBLE;
     DECLARE v_heartbeat_deadline DATETIME(3);
     DECLARE v_heartbeat_deadline_multiplier DOUBLE;
     DECLARE v_heartbeat_deadline_seconds INT;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; END;
     
     -- Temporary tables for tracking lease changes
     CREATE TEMPORARY TABLE IF NOT EXISTS temp_leases_added (
@@ -36,89 +35,89 @@ BEGIN
     -- Start transaction to ensure consistency
     START TRANSACTION;
 
-    -- Perform a garbage collection (but don't remove this worker)
-    CALL sp_workers_check_in__gc(p_node_id);
+        -- Perform a garbage collection (but don't remove this worker)
+        CALL sp_workers_check_in__gc(p_node_id);
 
-    -- Get the heartbeat_interval_default and heartbeat_deadline_multiplier from the consumer_groups table.
-    SELECT heartbeat_interval_default,  heartbeat_deadline_multiplier
-      INTO v_heartbeat_interval_default, v_heartbeat_deadline_multiplier
-      FROM consumer_groups
-     WHERE id = p_consumer_group_id;
+        -- Get the heartbeat_interval_default and heartbeat_deadline_multiplier from the consumer_groups table.
+        SELECT heartbeat_interval_default,  heartbeat_deadline_multiplier
+          INTO v_heartbeat_interval_default, v_heartbeat_deadline_multiplier
+          FROM consumer_groups
+         WHERE id = p_consumer_group_id;
 
-    -- Compute the initial heartbeat deadline, with a minimum of 1-second for the heartbeat deadline.
-    SET v_heartbeat_deadline_seconds = GREATEST(1, CEILING(v_heartbeat_interval_default * v_heartbeat_deadline_multiplier));
-    SET v_heartbeat_deadline = CURRENT_TIMESTAMP(3) + INTERVAL v_heartbeat_deadline_seconds SECOND;
+        -- Compute the initial heartbeat deadline, with a minimum of 1-second for the heartbeat deadline.
+        SET v_heartbeat_deadline_seconds = GREATEST(1, CEILING(v_heartbeat_interval_default * v_heartbeat_deadline_multiplier));
+        SET v_heartbeat_deadline = CURRENT_TIMESTAMP(3) + INTERVAL v_heartbeat_deadline_seconds SECOND;
 
-    -- Perform a heartbeat for this worker.
-    CALL sp_workers_check_in__heartbeat(
-        p_node_id,
-        p_consumer_group_id,
-        p_weight,
-        v_heartbeat_interval_default,
-        v_heartbeat_deadline,
-        v_worker_id);
+        -- Perform a heartbeat for this worker.
+        CALL sp_workers_check_in__heartbeat(
+            p_node_id,
+            p_consumer_group_id,
+            p_weight,
+            v_heartbeat_interval_default,
+            v_heartbeat_deadline,
+            v_worker_id);
 
-    -- Recompute consumer group and worker statistics
-    CALL sp_workers_check_in__update_stats(
-        p_consumer_group_id,
-        v_active_workers_count,
-        v_total_weight,
-        v_active_partitions_count,
-        v_heartbeat_interval);
+        -- Recompute consumer group and worker statistics
+        CALL sp_workers_check_in__update_stats(
+            p_consumer_group_id,
+            v_active_workers_count,
+            v_total_weight,
+            v_active_partitions_count,
+            v_heartbeat_interval);
 
-    -- Recompute the worker's heartbeat deadline (based on the actual `v_heartbeat_interval` value)
-    SET v_heartbeat_deadline_seconds = GREATEST(1, CEILING(v_heartbeat_interval * v_heartbeat_deadline_multiplier));
-    SET v_heartbeat_deadline = CURRENT_TIMESTAMP(3) + INTERVAL v_heartbeat_deadline_seconds SECOND;
+        -- Recompute the worker's heartbeat deadline (based on the actual `v_heartbeat_interval` value)
+        SET v_heartbeat_deadline_seconds = GREATEST(1, CEILING(v_heartbeat_interval * v_heartbeat_deadline_multiplier));
+        SET v_heartbeat_deadline = CURRENT_TIMESTAMP(3) + INTERVAL v_heartbeat_deadline_seconds SECOND;
 
-    -- Update the worker's heartbeat interval and deadline
-    CALL sp_workers_check_in__heartbeat(
-        p_node_id,
-        p_consumer_group_id,
-        p_weight,
-        v_heartbeat_interval,
-        v_heartbeat_deadline,
-        v_worker_id);
-    
-    -- Count ACTIVE leases for this worker (excluding those in a RELEASING state)
-    SELECT COUNT(1)
-        INTO v_current_leases
-        FROM leases l
-       WHERE l.worker_id = v_worker_id
-         AND l.state = 'ACTIVE';
-    
-    -- Compute ideal share based on weight
-    IF v_total_weight > 0 AND v_active_partitions_count > 0 THEN
-        SET v_ideal_share = (p_weight / v_total_weight) * v_active_partitions_count;
-    ELSE
-        SET v_ideal_share = 0;
-    END IF;
+        -- Update the worker's heartbeat interval and deadline
+        CALL sp_workers_check_in__heartbeat(
+            p_node_id,
+            p_consumer_group_id,
+            p_weight,
+            v_heartbeat_interval,
+            v_heartbeat_deadline,
+            v_worker_id);
 
-    -- Compute min and max leases with slack
-   SET v_min_leases = GREATEST(
-       FLOOR(v_ideal_share * (1.0 - v_slack)),
-       0);
-   SET v_max_leases = LEAST(
-       CEILING(v_ideal_share * (1.0 + v_slack)),
-       v_active_partitions_count);
+        -- Count ACTIVE leases for this worker (excluding those in a RELEASING state)
+        SELECT COUNT(1)
+            INTO v_current_leases
+            FROM leases l
+           WHERE l.worker_id = v_worker_id
+             AND l.state = 'ACTIVE';
 
-    -- Release leases if we are over the fair share
-    CALL sp_workers_check_in__release_leases(
-        v_worker_id,
-        p_consumer_group_id,
-        v_max_leases,
-        v_current_leases,
-        v_leases_released
-    );
-    
-    -- Acquire leases if we are under our fair share
-    CALL sp_workers_check_in__acquire_leases(
-        v_worker_id,
-        p_consumer_group_id,
-        v_min_leases,
-        v_current_leases - v_leases_released,
-        v_leases_acquired
-    );
-    
+        -- Compute ideal share based on weight
+        IF v_total_weight > 0 AND v_active_partitions_count > 0 THEN
+            SET v_ideal_share = (p_weight / v_total_weight) * v_active_partitions_count;
+        ELSE
+            SET v_ideal_share = 0;
+        END IF;
+
+        -- Compute min and max leases with slack
+       SET v_min_leases = GREATEST(
+           FLOOR(v_ideal_share * (1.0 - v_slack)),
+           0);
+       SET v_max_leases = LEAST(
+           CEILING(v_ideal_share * (1.0 + v_slack)),
+           v_active_partitions_count);
+
+        -- Release leases if we are over the fair share
+        CALL sp_workers_check_in__release_leases(
+            v_worker_id,
+            p_consumer_group_id,
+            v_max_leases,
+            v_current_leases,
+            v_leases_released
+        );
+
+        -- Acquire leases if we are under our fair share
+        CALL sp_workers_check_in__acquire_leases(
+            v_worker_id,
+            p_consumer_group_id,
+            v_min_leases,
+            v_current_leases - v_leases_released,
+            v_leases_acquired
+        );
+
     COMMIT;
 
 

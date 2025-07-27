@@ -8,6 +8,7 @@ CREATE PROCEDURE sp_workers_check_in__update_stats(
 BEGIN
     DECLARE v_last_updated DATETIME(3);
     DECLARE v_update_threshold DATETIME(3);
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
     
     -- Set update threshold to 1 seconds ago
     SET v_update_threshold = DATE_SUB(CURRENT_TIMESTAMP(3), INTERVAL 1 SECOND);

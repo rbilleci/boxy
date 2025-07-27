@@ -6,6 +6,7 @@ BEGIN
     DECLARE v_consumer_group_id BIGINT;
     DECLARE v_topic_id BIGINT;
     DECLARE v_id BIGINT;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
 
     -- RESOLVE THE TOPIC ID
     SELECT id INTO v_topic_id FROM topics WHERE tenant = p_tenant AND name = p_topic;

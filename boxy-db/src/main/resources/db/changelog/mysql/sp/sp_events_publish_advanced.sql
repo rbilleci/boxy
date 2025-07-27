@@ -3,6 +3,7 @@ CREATE PROCEDURE sp_events_publish_advanced(
     IN p_data JSON)
 BEGIN
     DECLARE v_sequence BIGINT;
+
     -- EVENT PUBLICATION
     INSERT INTO events(partition_id, data) VALUES (p_partition_id, p_data);
     -- HWM UPDATE
