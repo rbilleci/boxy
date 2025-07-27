@@ -71,8 +71,8 @@ public record TestData(Topic topic,
         final var firstSubscription = subscriptions.getFirst();
         final var subscriptionOffset = subscriptionOffsetDao.findAll(firstSubscription.id()).getFirst();
 
-        final var result1 = workerDao.checkIn(PARTY_1, consumerGroups.get(0).id(), 1, 5);
-        final var result2 = workerDao.checkIn(PARTY_2, consumerGroups.get(1).id(), 1, 5);
+        final var result1 = workerDao.checkIn(PARTY_1, consumerGroups.get(0).id(), 1);
+        final var result2 = workerDao.checkIn(PARTY_2, consumerGroups.get(1).id(), 1);
         final var worker1 = workerDao.find(result1.workerId()).orElseThrow();
         final var worker2 = workerDao.find(result2.workerId()).orElseThrow();
 

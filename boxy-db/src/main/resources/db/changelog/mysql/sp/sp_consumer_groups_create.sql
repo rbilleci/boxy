@@ -14,16 +14,12 @@ BEGIN
         active_workers_count,
         total_weight,
         active_partitions_count,
-        heartbeat_interval,
-        heartbeat_deadline,
         last_updated
     ) VALUES (
         v_consumer_group_id,
         0,  -- active_workers_count
         0,  -- total_weight
         0,  -- active_partitions_count
-        3.0,  -- heartbeat_interval (default minimum)
-        CURRENT_TIMESTAMP(3) + INTERVAL 15 SECOND, -- heartbeat_deadline (default current time + 15 seconds)
         CURRENT_TIMESTAMP(3)
     );
     
