@@ -23,16 +23,20 @@ BEGIN
      WHERE s.consumer_group_id = p_consumer_group_id
         AND so.high_watermark > so.committed_offset;
 
-    -- Get heartbeat_interval_default from consumer_groups
-    SELECT heartbeat_interval_default
-      INTO p_heartbeat_interval
+    -- Get heartbeat configuration values from consumer_groups
+    SELECT heartbeat_interval_default, heartbeat_qps_target, heartbeat_interval_min, heartbeat_interval_max
+      INTO p_heartbeat_interval, @qps_target, @interval_min, @interval_max
       FROM consumer_groups
      WHERE id = p_consumer_group_id;
 
     -- Calculate adaptive heartbeat interval based on heartbeat_interval_default
-    -- With 1000 workers, we want ~10 check-ins per second
-    -- So each worker checks in every ~100 seconds on average
-    SET p_heartbeat_interval = GREATEST(p_heartbeat_interval, p_active_workers / 10.0);
+    -- Use the configurable heartbeat_qps_target instead of hardcoded 10.0
+    -- This controls the cluster-wide check-ins per second
+    SET p_heartbeat_interval = GREATEST(p_heartbeat_interval, p_active_workers / @qps_target);
+    
+    -- Apply min and max constraints to the heartbeat interval
+    SET p_heartbeat_interval = GREATEST(p_heartbeat_interval, @interval_min);
+    SET p_heartbeat_interval = LEAST(p_heartbeat_interval, @interval_max);
 
     -- Update the stats in the consumer_groups table
     UPDATE consumer_groups
