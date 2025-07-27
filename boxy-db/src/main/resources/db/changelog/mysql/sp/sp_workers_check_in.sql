@@ -2,16 +2,16 @@ CREATE PROCEDURE sp_workers_check_in(
     IN p_node_id VARCHAR(255),
     IN p_consumer_group_id BIGINT,
     IN p_weight INT,
-    IN p_lease_ttl_multiplier INT
+    IN p_heartbeat_deadline_multiplier INT
 )
 BEGIN
     DECLARE v_active_workers_count INT DEFAULT 0;
     DECLARE v_total_weight INT DEFAULT 0;
     DECLARE v_active_partitions_count INT DEFAULT 0;
     DECLARE v_heartbeat_interval INT;
-    DECLARE v_lease_ttl_base INT;
-    DECLARE v_lease_ttl INT;
+    DECLARE v_heartbeat_deadline DATETIME(3);
     DECLARE v_current_leases INT DEFAULT 0;
+    DECLARE v_seconds INT;
     DECLARE v_ideal_share DECIMAL(10,2);
     DECLARE v_slack DECIMAL(10,2) DEFAULT 0.1; -- 10% slack to avoid thrashing
     DECLARE v_min_leases INT;
@@ -54,11 +54,16 @@ BEGIN
         v_total_weight,
         v_active_partitions_count,
         v_heartbeat_interval,
-        v_lease_ttl_base
+        v_heartbeat_deadline
     );
     
-    -- 4. Calculate lease TTL using the multiplier
-    SET v_lease_ttl = v_lease_ttl_base * p_lease_ttl_multiplier;
+    -- 4. Adjust heartbeat deadline based on the multiplier if needed
+    IF p_heartbeat_deadline_multiplier != 1 THEN
+        -- Calculate seconds between now and the deadline
+        SET v_seconds = TIMESTAMPDIFF(SECOND, CURRENT_TIMESTAMP(3), v_heartbeat_deadline);
+        -- Adjust the deadline by the multiplier
+        SET v_heartbeat_deadline = CURRENT_TIMESTAMP(3) + INTERVAL (v_seconds * p_heartbeat_deadline_multiplier) SECOND;
+    END IF;
     
     -- 5. Count current leases for this worker
     -- Only count ACTIVE leases, not RELEASING ones
@@ -100,7 +105,6 @@ BEGIN
         p_consumer_group_id,
         v_min_leases,
         v_current_leases - v_leases_released,
-        v_lease_ttl,
         v_leases_acquired
     );
     
@@ -119,7 +123,7 @@ BEGIN
         v_min_leases AS min_leases,
         v_max_leases AS max_leases,
         v_heartbeat_interval AS heartbeat_interval,
-        v_lease_ttl AS lease_ttl;
+        v_heartbeat_deadline AS heartbeat_deadline;
     
     -- Return added leases
     SELECT 

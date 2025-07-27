@@ -3,7 +3,6 @@ CREATE PROCEDURE sp_leases_acquire_needed(
     IN p_consumer_group_id BIGINT,
     IN p_min_leases INT,
     IN p_current_leases INT,
-    IN p_lease_ttl INT,
     OUT p_leases_acquired INT
 )
 BEGIN

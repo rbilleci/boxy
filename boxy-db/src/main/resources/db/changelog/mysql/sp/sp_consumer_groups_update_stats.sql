@@ -4,7 +4,7 @@ CREATE PROCEDURE sp_consumer_groups_update_stats(
     OUT p_total_weight INT,
     OUT p_active_partitions_count INT,
     OUT p_heartbeat_interval INT,
-    OUT p_lease_ttl_base INT
+    OUT p_heartbeat_deadline DATETIME(3)
 )
 BEGIN
     DECLARE v_stats_exist INT DEFAULT 0;
@@ -40,8 +40,8 @@ BEGIN
         -- So each worker checks in every ~100 seconds on average
         SET p_heartbeat_interval = GREATEST(3, p_active_workers_count / 10);
         
-        -- Set lease TTL base (typically 5x heartbeat interval)
-        SET p_lease_ttl_base = p_heartbeat_interval * 5;
+        -- Set heartbeat deadline (typically current time + 5x heartbeat interval in seconds)
+        SET p_heartbeat_deadline = CURRENT_TIMESTAMP(3) + INTERVAL (p_heartbeat_interval * 5) SECOND;
         
         -- Insert or update the stats in the table
         INSERT INTO consumer_group_stats (
@@ -50,7 +50,7 @@ BEGIN
             total_weight, 
             active_partitions_count, 
             heartbeat_interval, 
-            lease_ttl_base, 
+            heartbeat_deadline, 
             last_updated
         )
         VALUES (
@@ -59,7 +59,7 @@ BEGIN
             p_total_weight, 
             p_active_partitions_count, 
             p_heartbeat_interval, 
-            p_lease_ttl_base, 
+            p_heartbeat_deadline, 
             CURRENT_TIMESTAMP(3)
         )
         ON DUPLICATE KEY UPDATE 
@@ -67,7 +67,7 @@ BEGIN
             total_weight = VALUES(total_weight),
             active_partitions_count = VALUES(active_partitions_count),
             heartbeat_interval = VALUES(heartbeat_interval),
-            lease_ttl_base = VALUES(lease_ttl_base),
+            heartbeat_deadline = VALUES(heartbeat_deadline),
             last_updated = VALUES(last_updated);
     ELSE
         -- Use existing stats
@@ -76,13 +76,13 @@ BEGIN
             total_weight, 
             active_partitions_count, 
             heartbeat_interval, 
-            lease_ttl_base
+            heartbeat_deadline
         INTO 
             p_active_workers_count, 
             p_total_weight, 
             p_active_partitions_count, 
             p_heartbeat_interval, 
-            p_lease_ttl_base
+            p_heartbeat_deadline
         FROM consumer_group_stats 
         WHERE consumer_group_id = p_consumer_group_id;
     END IF;

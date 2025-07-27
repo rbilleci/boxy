@@ -15,7 +15,7 @@ BEGIN
         total_weight,
         active_partitions_count,
         heartbeat_interval,
-        lease_ttl_base,
+        heartbeat_deadline,
         last_updated
     ) VALUES (
         v_consumer_group_id,
@@ -23,7 +23,7 @@ BEGIN
         0,  -- total_weight
         0,  -- active_partitions_count
         3,  -- heartbeat_interval (default minimum)
-        15, -- lease_ttl_base (default 5x heartbeat_interval)
+        CURRENT_TIMESTAMP(3) + INTERVAL 15 SECOND, -- heartbeat_deadline (default current time + 15 seconds)
         CURRENT_TIMESTAMP(3)
     );
     

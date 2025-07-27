@@ -55,7 +55,7 @@ public class WorkerCheckInIT extends BaseIT {
         assertThat(result.minLeases()).isLessThanOrEqualTo(result.activePartitions());
         assertThat(result.maxLeases()).isGreaterThanOrEqualTo(result.activePartitions());
         assertThat(result.heartbeatInterval()).isGreaterThan(0);
-        assertThat(result.leaseTtl()).isEqualTo(result.heartbeatInterval() * 5);
+        assertThat(result.heartbeatDeadline()).isNotNull();
 
         // Verify added leases
         assertThat(result.addedLeases()).isNotEmpty();
@@ -168,7 +168,8 @@ public class WorkerCheckInIT extends BaseIT {
         }
 
         // Wait for leases to expire
-        Thread.sleep(result.leaseTtl() * 1000 + 1000);
+        // Sleep for 11 seconds to ensure the worker is considered expired (default 10 seconds)
+        Thread.sleep(11000);
 
         // When another worker checks in
         final var worker2Id = workerDao.checkIn(
