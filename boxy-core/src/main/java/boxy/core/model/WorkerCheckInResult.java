@@ -1,6 +1,6 @@
 package boxy.core.model;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 
 public record WorkerCheckInResult(
@@ -14,7 +14,7 @@ public record WorkerCheckInResult(
         int minLeases,
         int maxLeases,
         int heartbeatInterval,
-        Timestamp heartbeatDeadline,
+        Instant heartbeatDeadline,
         List<SubscriptionOffset> addedLeases,
         List<SubscriptionOffset> removedLeases) {
 }
