@@ -20,6 +20,10 @@
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
+        <sqlFile path="sp/sp_workers_delete.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
         <sqlFile path="sp/sp_workers_shutdown.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"

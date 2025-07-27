@@ -46,36 +46,36 @@ public final class WorkerDao extends BaseDao {
     public WorkerCheckInResult checkIn(String nodeId,
                                        long consumerGroupId,
                                        int weight) {
-        try (final var conn = ds.getConnection();
-             final var stmt = conn.prepareCall("CALL sp_workers_check_in(?, ?, ?)")) {
-            stmt.setString(1, nodeId);
-            stmt.setLong(2, consumerGroupId);
-            stmt.setInt(3, weight);
+        try (final var connection = ds.getConnection();
+             final var statement = connection.prepareCall("CALL sp_workers_check_in(?, ?, ?)")) {
+            statement.setString(1, nodeId);
+            statement.setLong(2, consumerGroupId);
+            statement.setInt(3, weight);
 
             // Execute, then process the results
-            final var hasResults = stmt.execute();
+            final var hasResults = statement.execute();
             if (!hasResults) {
                 throw new SQLException("Expected statistics result set not returned");
             }
 
             //
-            try (final var rs = stmt.getResultSet()) {
+            try (final var rs = statement.getResultSet()) {
                 if (!rs.next()) {
                     throw new SQLException("No statistics found");
                 }
                 // Map the statistics
                 final var workerCheckInResult = WORKER_CHECK_IN_RESULT_MAPPER.map(rs);
                 // Record added leases
-                if (stmt.getMoreResults()) {
-                    try (final var addedRs = stmt.getResultSet()) {
+                if (statement.getMoreResults()) {
+                    try (final var addedRs = statement.getResultSet()) {
                         while (addedRs.next()) {
                             workerCheckInResult.addedLeases().add(SUBSCRIPTION_OFFSET_MAPPER.map(addedRs));
                         }
                     }
                 }
                 // Record removed leases
-                if (stmt.getMoreResults()) {
-                    try (final var removedRs = stmt.getResultSet()) {
+                if (statement.getMoreResults()) {
+                    try (final var removedRs = statement.getResultSet()) {
                         while (removedRs.next()) {
                             workerCheckInResult.removedLeases().add(SUBSCRIPTION_OFFSET_MAPPER.map(removedRs));
                         }

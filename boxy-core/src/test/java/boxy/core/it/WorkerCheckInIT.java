@@ -204,7 +204,7 @@ public class WorkerCheckInIT extends BaseIT {
         // Update the release_deadline for the consumer group to 1 second
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(
-                     "UPDATE consumer_groups SET release_deadline = 1.0 WHERE id = ?")) {
+                     "UPDATE consumer_groups SET release_deadline = 1 WHERE id = ?")) {
             stmt.setLong(1, worker.consumerGroupId());
             stmt.executeUpdate();
         }

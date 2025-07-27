@@ -20,7 +20,7 @@ BEGIN
     DECLARE v_heartbeat_deadline DATETIME(3);
     DECLARE v_heartbeat_deadline_multiplier DOUBLE;
     DECLARE v_heartbeat_deadline_seconds INT;
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; END;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
     
     -- Temporary tables for tracking lease changes
     CREATE TEMPORARY TABLE IF NOT EXISTS temp_leases_added (
@@ -35,9 +35,6 @@ BEGIN
     -- Start transaction to ensure consistency
     START TRANSACTION;
 
-        -- Perform a garbage collection (but don't remove this worker)
-        CALL sp_workers_check_in__gc(p_node_id);
-
         -- Get the heartbeat_interval_default and heartbeat_deadline_multiplier from the consumer_groups table.
         SELECT heartbeat_interval_default,  heartbeat_deadline_multiplier
           INTO v_heartbeat_interval_default, v_heartbeat_deadline_multiplier
@@ -49,6 +46,7 @@ BEGIN
         SET v_heartbeat_deadline = CURRENT_TIMESTAMP(3) + INTERVAL v_heartbeat_deadline_seconds SECOND;
 
         -- Perform a heartbeat for this worker.
+        -- The worker will be inserted with a default deadline if it does not already exist
         CALL sp_workers_check_in__heartbeat(
             p_node_id,
             p_consumer_group_id,
@@ -56,6 +54,13 @@ BEGIN
             v_heartbeat_interval_default,
             v_heartbeat_deadline,
             v_worker_id);
+        IF v_worker_id IS NULL THEN SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'No worker_id returned from sp_workers_check_in__heartbeat';
+        END IF;
+
+        -- Perform a garbage collection
+        -- As this worker submitted a heartbeat already, it won't be removed.
+        CALL sp_workers_check_in__gc(p_consumer_group_id);
 
         -- Recompute consumer group and worker statistics
         CALL sp_workers_check_in__update_stats(
@@ -135,9 +140,9 @@ BEGIN
         v_max_leases AS max_leases,
         v_heartbeat_interval AS heartbeat_interval,
         v_heartbeat_deadline AS heartbeat_deadline;
-    
+
     -- Return added leases
-    SELECT 
+    SELECT
         so.id AS subscription_offset_id,
         so.subscription_id,
         so.partition_id,
@@ -145,9 +150,9 @@ BEGIN
         so.high_watermark
     FROM temp_leases_added tla
     INNER JOIN subscription_offsets_view so ON so.id = tla.subscription_offset_id;
-    
+
     -- Return removed leases
-    SELECT 
+    SELECT
         so.id AS subscription_offset_id,
         so.subscription_id,
         so.partition_id,
@@ -155,7 +160,7 @@ BEGIN
         so.high_watermark
     FROM temp_leases_removed tlr
     INNER JOIN subscription_offsets_view so ON so.id = tlr.subscription_offset_id;
-    
+
     -- Clean up temporary tables
     DROP TEMPORARY TABLE IF EXISTS temp_leases_added;
     DROP TEMPORARY TABLE IF EXISTS temp_leases_removed;

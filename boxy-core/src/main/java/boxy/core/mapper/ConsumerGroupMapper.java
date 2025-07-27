@@ -14,7 +14,7 @@ public class ConsumerGroupMapper implements RowMapper<ConsumerGroup> {
                 rs.getString("name"),
                 rs.getDouble("heartbeat_interval_default"),
                 rs.getDouble("heartbeat_deadline_multiplier"),
-                rs.getDouble("release_deadline"),
+                rs.getInt("release_deadline"),
                 rs.getInt("total_weight"),
                 rs.getInt("active_partitions"),
                 rs.getInt("active_workers"),

@@ -25,16 +25,16 @@ CREATE TABLE partitions (
     COMMENT='Tracks individual partitions for each topic, including the current high-watermark offset';
 
 CREATE TABLE consumer_groups (
-    id                          BIGINT AUTO_INCREMENT PRIMARY KEY,
-    tenant                      VARCHAR(255) NOT NULL,
-    name                        VARCHAR(255) NOT NULL,
-    heartbeat_interval_default  DOUBLE NOT NULL DEFAULT 3.0,
-    heartbeat_deadline_multiplier DOUBLE NOT NULL DEFAULT 5.0,
-    release_deadline            DOUBLE NOT NULL DEFAULT 10.0,
-    total_weight                INT NOT NULL DEFAULT 0,
-    active_partitions           INT NOT NULL DEFAULT 0,
-    active_workers              INT NOT NULL DEFAULT 0,
-    last_updated                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    id                              BIGINT AUTO_INCREMENT PRIMARY KEY,
+    tenant                          VARCHAR(255) NOT NULL,
+    name                            VARCHAR(255) NOT NULL,
+    heartbeat_interval_default      DOUBLE NOT NULL DEFAULT 3.0,
+    heartbeat_deadline_multiplier   DOUBLE NOT NULL DEFAULT 5.0,
+    release_deadline                INT NOT NULL DEFAULT 10,
+    total_weight                    INT NOT NULL DEFAULT 0,
+    active_partitions               INT NOT NULL DEFAULT 0,
+    active_workers                  INT NOT NULL DEFAULT 0,
+    last_updated                    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     CONSTRAINT u_consumer_groups UNIQUE (tenant, name)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
