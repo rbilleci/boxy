@@ -32,7 +32,7 @@ public class WorkerCheckInIT extends BaseIT {
         // Publish some events to create active partitions
         for (int i = 0; i < 10; i++) {
             // Calculate partition ID (topic_id << 16) + partition_number
-            long partitionId = (data.topic().id() << 16) + 0;
+            final var partitionId = (data.topic().id() << 16);
             eventDao.publishAdvanced(partitionId, "{\"message\":\"test" + i + "\"}");
         }
     }
