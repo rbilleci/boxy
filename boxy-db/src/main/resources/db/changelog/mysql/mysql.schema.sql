@@ -84,8 +84,8 @@ CREATE TABLE workers (
     consumer_group_id    BIGINT       NOT NULL,
     weight               INT          NOT NULL DEFAULT 1,
     last_heartbeat       DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    heartbeat_interval   DOUBLE       NOT NULL DEFAULT 3.0,
-    heartbeat_deadline   DATETIME(3)  NOT NULL DEFAULT (CURRENT_TIMESTAMP(3) + INTERVAL 15 SECOND),
+    heartbeat_interval   DOUBLE       NOT NULL,
+    heartbeat_deadline   DATETIME(3)  NOT NULL,
     INDEX idx_workers__consumer_group (consumer_group_id),
     INDEX idx_workers___last_heartbeat (last_heartbeat),
     CONSTRAINT u_workers UNIQUE (node_id, consumer_group_id)

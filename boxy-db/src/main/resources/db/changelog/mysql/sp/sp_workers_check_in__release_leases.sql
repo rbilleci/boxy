@@ -1,4 +1,4 @@
-CREATE PROCEDURE sp_leases_release_excess(
+CREATE PROCEDURE sp_workers_check_in__release_leases(
     IN p_worker_id BIGINT,
     IN p_consumer_group_id BIGINT,
     IN p_max_leases INT,

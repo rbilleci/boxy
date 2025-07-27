@@ -1,4 +1,4 @@
-CREATE PROCEDURE sp_leases_acquire_needed(
+CREATE PROCEDURE sp_workers_check_in__acquire_leases(
     IN p_worker_id BIGINT,
     IN p_consumer_group_id BIGINT,
     IN p_min_leases INT,
