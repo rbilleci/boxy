@@ -94,6 +94,9 @@ public class WorkerCheckInIT extends BaseIT {
                 worker1.consumerGroupId(),
                 worker1.weight());
 
+        // There should be 1 active partition
+        assertThat(result1.activePartitions()).isEqualTo(1);
+
         // Then worker1 should acquire all active leases
         assertThat(result1.activeWorkers()).isEqualTo(1);
         assertThat(result1.addedLeases()).isNotEmpty();
@@ -195,58 +198,62 @@ public class WorkerCheckInIT extends BaseIT {
                     .isEqualTo(worker2.id());
         }
     }
-    
+
     @Test
     void checkIn_releaseDeadline_deletesReleasedLeases() throws InterruptedException, SQLException {
         // Given a consumer group with a short release deadline (1 second)
         final var worker = data.worker1();
-        
+
         // Update the release_deadline for the consumer group to 1 second
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(
+        try (final var connection = dataSource.getConnection();
+             final var statement = connection.prepareStatement(
                      "UPDATE consumer_groups SET release_deadline = 1 WHERE id = ?")) {
-            stmt.setLong(1, worker.consumerGroupId());
-            stmt.executeUpdate();
+            statement.setLong(1, worker.consumerGroupId());
+            statement.executeUpdate();
         }
-        
+
+        // Publish an event
+        eventDao.publish(TestData.TENANT_1, TestData.TOPIC_A, "key", "{}");
+
         // When the worker checks in
         final var result = workerDao.checkIn(
                 worker.nodeId(),
                 worker.consumerGroupId(),
                 worker.weight());
-        
+
         // Then the worker should acquire leases
         assertThat(result.addedLeases()).isNotEmpty();
-        
+        System.out.println(result.addedLeases());
+
         // Get the first lease for testing
         final var leaseId = result.addedLeases().getFirst().id();
-        
+
         // Verify lease in database
         assertThat(leaseDao.find(leaseId))
                 .isPresent()
                 .get()
                 .extracting(Lease::workerId)
                 .isEqualTo(worker.id());
-        
+
         // Release the lease
         leaseDao.release(leaseId, worker.id());
-        
+
         // Verify lease is in RELEASING state
         assertThat(leaseDao.find(leaseId))
                 .isPresent()
                 .get()
                 .extracting(Lease::state)
                 .isEqualTo(Lease.LeaseState.RELEASING);
-        
+
         // Wait for the release deadline to pass (1 second + a small buffer)
         Thread.sleep(1500);
-        
+
         // Trigger garbage collection by checking in the worker again
         workerDao.checkIn(
                 worker.nodeId(),
                 worker.consumerGroupId(),
                 worker.weight());
-        
+
         // Verify lease has been deleted
         assertThat(leaseDao.find(leaseId)).isNotPresent();
     }
