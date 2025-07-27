@@ -43,7 +43,7 @@ public class WorkerCheckInIT extends BaseIT {
         final var worker = data.worker1();
 
         // When the worker checks in
-        final var result = workerDao.checkIn(worker.nodeId(), worker.consumerGroupId(), worker.weight(), 5);
+        final var result = workerDao.checkIn(worker.nodeId(), worker.consumerGroupId(), worker.weight());
 
         // Then the worker should acquire all active leases
         assertThat(result.activeWorkers()).isEqualTo(1);
@@ -82,15 +82,14 @@ public class WorkerCheckInIT extends BaseIT {
 
         // Make sure they're in the same consumer group
         final var worker2Id = workerDao.checkIn(
-                UUID.randomUUID().toString(), worker1.consumerGroupId(), worker1.weight(), 5).workerId();
+                UUID.randomUUID().toString(), worker1.consumerGroupId(), worker1.weight()).workerId();
         final var updatedWorker2 = workerDao.find(worker2Id).orElseThrow();
 
         // When worker1 checks in first
         final var result1 = workerDao.checkIn(
                 worker1.nodeId(),
                 worker1.consumerGroupId(),
-                worker1.weight(),
-                5);
+                worker1.weight());
 
         // Then worker1 should acquire all active leases
         assertThat(result1.activeWorkers()).isEqualTo(1);
@@ -100,8 +99,7 @@ public class WorkerCheckInIT extends BaseIT {
         final var result2 = workerDao.checkIn(
                 updatedWorker2.nodeId(),
                 updatedWorker2.consumerGroupId(),
-                updatedWorker2.weight(),
-                5);
+                updatedWorker2.weight());
 
         // Then worker2 should see both workers
         assertThat(result2.activeWorkers()).isEqualTo(2);
@@ -114,8 +112,7 @@ public class WorkerCheckInIT extends BaseIT {
         final var result1Again = workerDao.checkIn(
                 worker1.nodeId(),
                 worker1.consumerGroupId(),
-                worker1.weight(),
-                5);
+                worker1.weight());
 
         // Then worker1 should release some leases to achieve fair distribution
         assertThat(result1Again.activeWorkers()).isEqualTo(2);
@@ -152,8 +149,7 @@ public class WorkerCheckInIT extends BaseIT {
         final var result = workerDao.checkIn(
                 worker.nodeId(),
                 worker.consumerGroupId(),
-                worker.weight(),
-                1); // Short lease TTL for testing
+                worker.weight()); // No longer need to specify TTL multiplier
 
         // Then the worker should acquire leases
         assertThat(result.addedLeases()).isNotEmpty();
@@ -173,14 +169,13 @@ public class WorkerCheckInIT extends BaseIT {
 
         // When another worker checks in
         final var worker2Id = workerDao.checkIn(
-                UUID.randomUUID().toString(), worker.consumerGroupId(), worker.weight(), 5).workerId();
+                UUID.randomUUID().toString(), worker.consumerGroupId(), worker.weight()).workerId();
         final var worker2 = workerDao.find(worker2Id).orElseThrow();
 
         final var result2 = workerDao.checkIn(
                 worker2.nodeId(),
                 worker2.consumerGroupId(),
-                worker2.weight(),
-                5);
+                worker2.weight());
 
         // Then the new worker should acquire the expired leases
         assertThat(result2.addedLeases()).isNotEmpty();

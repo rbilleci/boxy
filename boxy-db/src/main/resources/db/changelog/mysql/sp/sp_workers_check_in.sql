@@ -1,8 +1,7 @@
 CREATE PROCEDURE sp_workers_check_in(
     IN p_node_id VARCHAR(255),
     IN p_consumer_group_id BIGINT,
-    IN p_weight INT,
-    IN p_heartbeat_deadline_multiplier INT
+    IN p_weight INT
 )
 BEGIN
     DECLARE v_active_workers_count INT DEFAULT 0;
@@ -19,6 +18,7 @@ BEGIN
     DECLARE v_leases_released INT DEFAULT 0;
     DECLARE v_leases_acquired INT DEFAULT 0;
     DECLARE v_worker_id BIGINT;
+    DECLARE v_heartbeat_deadline_multiplier DOUBLE;
     
     -- Temporary tables for tracking lease changes
     CREATE TEMPORARY TABLE IF NOT EXISTS temp_leases_added (
@@ -47,6 +47,12 @@ BEGIN
         WHERE   state = 'RELEASING' AND
                 released_at < CURRENT_TIMESTAMP(3) - INTERVAL 10 SECOND;
     
+    -- 2.2 Get the heartbeat_deadline_multiplier from the consumer_groups table
+    SELECT heartbeat_deadline_multiplier
+    INTO v_heartbeat_deadline_multiplier
+    FROM consumer_groups
+    WHERE id = p_consumer_group_id;
+    
     -- 3. Get or calculate consumer group statistics
     CALL sp_consumer_groups_update_stats(
         p_consumer_group_id,
@@ -57,13 +63,17 @@ BEGIN
         v_heartbeat_deadline
     );
     
-    -- 4. Adjust heartbeat deadline based on the multiplier if needed
-    IF p_heartbeat_deadline_multiplier != 1 THEN
-        -- Calculate seconds between now and the deadline
-        SET v_seconds = TIMESTAMPDIFF(SECOND, CURRENT_TIMESTAMP(3), v_heartbeat_deadline);
-        -- Adjust the deadline by the multiplier
-        SET v_heartbeat_deadline = CURRENT_TIMESTAMP(3) + INTERVAL (v_seconds * p_heartbeat_deadline_multiplier) SECOND;
-    END IF;
+    -- 4. Adjust heartbeat deadline based on the multiplier from consumer_groups
+    -- Calculate seconds between now and the deadline
+    SET v_seconds = TIMESTAMPDIFF(SECOND, CURRENT_TIMESTAMP(3), v_heartbeat_deadline);
+    -- Adjust the deadline by the multiplier
+    SET v_heartbeat_deadline = CURRENT_TIMESTAMP(3) + INTERVAL (v_seconds * v_heartbeat_deadline_multiplier) SECOND;
+    
+    -- 4.1 Update the worker's heartbeat interval and deadline
+    UPDATE workers
+    SET heartbeat_interval = v_heartbeat_interval,
+        heartbeat_deadline = v_heartbeat_deadline
+    WHERE id = v_worker_id;
     
     -- 5. Count current leases for this worker
     -- Only count ACTIVE leases, not RELEASING ones

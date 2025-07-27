@@ -11,6 +11,8 @@ public class ConsumerGroupMapper implements RowMapper<ConsumerGroup> {
         return new ConsumerGroup(
                 rs.getLong("id"),
                 rs.getString("tenant"),
-                rs.getString("name"));
+                rs.getString("name"),
+                rs.getDouble("heartbeat_interval_default"),
+                rs.getDouble("heartbeat_deadline_multiplier"));
     }
 }

@@ -26,9 +26,11 @@ CREATE TABLE partitions (
 
 
 CREATE TABLE consumer_groups (
-    id      BIGINT AUTO_INCREMENT PRIMARY KEY,
-    tenant  VARCHAR(255) NOT NULL,
-    name    VARCHAR(255) NOT NULL,
+    id                          BIGINT AUTO_INCREMENT PRIMARY KEY,
+    tenant                      VARCHAR(255) NOT NULL,
+    name                        VARCHAR(255) NOT NULL,
+    heartbeat_interval_default  DOUBLE NOT NULL DEFAULT 3.0,
+    heartbeat_deadline_multiplier DOUBLE NOT NULL DEFAULT 5.0,
     CONSTRAINT u_consumer_groups UNIQUE (tenant, name)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
@@ -41,8 +43,6 @@ CREATE TABLE consumer_group_stats (
     active_workers_count INT NOT NULL DEFAULT 0,
     total_weight         INT NOT NULL DEFAULT 0,
     active_partitions_count INT NOT NULL DEFAULT 0,
-    heartbeat_interval   DOUBLE NOT NULL DEFAULT 3.0,
-    heartbeat_deadline   DATETIME(3) NOT NULL DEFAULT (CURRENT_TIMESTAMP(3) + INTERVAL 15 SECOND),
     last_updated         DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     FOREIGN KEY (consumer_group_id) REFERENCES consumer_groups (id) ON DELETE CASCADE
 ) ENGINE=InnoDB
@@ -84,6 +84,8 @@ CREATE TABLE workers (
     consumer_group_id    BIGINT       NOT NULL,
     weight               INT          NOT NULL DEFAULT 1,
     last_heartbeat       DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    heartbeat_interval   DOUBLE       NOT NULL DEFAULT 3.0,
+    heartbeat_deadline   DATETIME(3)  NOT NULL DEFAULT (CURRENT_TIMESTAMP(3) + INTERVAL 15 SECOND),
     INDEX idx_workers__consumer_group (consumer_group_id),
     INDEX idx_workers___last_heartbeat (last_heartbeat),
     CONSTRAINT u_workers UNIQUE (node_id, consumer_group_id)

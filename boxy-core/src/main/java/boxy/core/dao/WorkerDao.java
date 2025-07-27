@@ -41,19 +41,16 @@ public final class WorkerDao extends BaseDao {
      * @param nodeId             The node identifier
      * @param consumerGroupId    The consumer group ID
      * @param weight             The worker's weight
-     * @param leaseTtlMultiplier Multiplier for lease TTL (default: 5)
      * @return A WorkerCheckInResult containing statistics and lease changes
      */
     public WorkerCheckInResult checkIn(String nodeId,
                                        long consumerGroupId,
-                                       int weight,
-                                       int leaseTtlMultiplier) {
+                                       int weight) {
         try (final var conn = ds.getConnection();
-             final var stmt = conn.prepareCall("CALL sp_workers_check_in(?, ?, ?, ?)")) {
+             final var stmt = conn.prepareCall("CALL sp_workers_check_in(?, ?, ?)")) {
             stmt.setString(1, nodeId);
             stmt.setLong(2, consumerGroupId);
             stmt.setInt(3, weight);
-            stmt.setInt(4, leaseTtlMultiplier);
 
             // Execute, then process the results
             final var hasResults = stmt.execute();

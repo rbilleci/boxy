@@ -35,13 +35,20 @@ BEGIN
         WHERE s.consumer_group_id = p_consumer_group_id
           AND so.high_watermark > so.committed_offset;
         
-        -- Calculate adaptive heartbeat interval
+        -- Get heartbeat_interval_default from consumer_groups
+        SELECT heartbeat_interval_default 
+        INTO p_heartbeat_interval
+        FROM consumer_groups
+        WHERE id = p_consumer_group_id;
+        
+        -- Calculate adaptive heartbeat interval based on heartbeat_interval_default
         -- With 1000 workers, we want ~10 check-ins per second
         -- So each worker checks in every ~100 seconds on average
-        SET p_heartbeat_interval = GREATEST(3.0, p_active_workers_count / 10.0);
+        SET p_heartbeat_interval = GREATEST(p_heartbeat_interval, p_active_workers_count / 10.0);
         
-        -- Set heartbeat deadline (typically current time + 5x heartbeat interval in seconds)
-        SET p_heartbeat_deadline = CURRENT_TIMESTAMP(3) + INTERVAL (p_heartbeat_interval * 5) SECOND;
+        -- Set heartbeat deadline (current time + heartbeat interval in seconds)
+        -- The actual multiplier will be applied in sp_workers_check_in
+        SET p_heartbeat_deadline = CURRENT_TIMESTAMP(3) + INTERVAL p_heartbeat_interval SECOND;
         
         -- Insert or update the stats in the table
         INSERT INTO consumer_group_stats (
@@ -49,8 +56,6 @@ BEGIN
             active_workers_count, 
             total_weight, 
             active_partitions_count, 
-            heartbeat_interval, 
-            heartbeat_deadline, 
             last_updated
         )
         VALUES (
@@ -58,32 +63,36 @@ BEGIN
             p_active_workers_count, 
             p_total_weight, 
             p_active_partitions_count, 
-            p_heartbeat_interval, 
-            p_heartbeat_deadline, 
             CURRENT_TIMESTAMP(3)
         )
         ON DUPLICATE KEY UPDATE 
             active_workers_count = VALUES(active_workers_count),
             total_weight = VALUES(total_weight),
             active_partitions_count = VALUES(active_partitions_count),
-            heartbeat_interval = VALUES(heartbeat_interval),
-            heartbeat_deadline = VALUES(heartbeat_deadline),
             last_updated = VALUES(last_updated);
     ELSE
-        -- Use existing stats
+        -- Use existing stats for counts and weights
         SELECT 
             active_workers_count, 
             total_weight, 
-            active_partitions_count, 
-            heartbeat_interval, 
-            heartbeat_deadline
+            active_partitions_count
         INTO 
             p_active_workers_count, 
             p_total_weight, 
-            p_active_partitions_count, 
-            p_heartbeat_interval, 
-            p_heartbeat_deadline
+            p_active_partitions_count
         FROM consumer_group_stats 
         WHERE consumer_group_id = p_consumer_group_id;
+        
+        -- Get heartbeat_interval_default from consumer_groups
+        SELECT heartbeat_interval_default 
+        INTO p_heartbeat_interval
+        FROM consumer_groups
+        WHERE id = p_consumer_group_id;
+        
+        -- Calculate adaptive heartbeat interval based on heartbeat_interval_default
+        SET p_heartbeat_interval = GREATEST(p_heartbeat_interval, p_active_workers_count / 10.0);
+        
+        -- Set heartbeat deadline (current time + heartbeat interval in seconds)
+        SET p_heartbeat_deadline = CURRENT_TIMESTAMP(3) + INTERVAL p_heartbeat_interval SECOND;
     END IF;
 END;
