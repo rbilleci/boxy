@@ -181,7 +181,7 @@ Properties
 ## Work-Stealing Lease Protocol
 
 1. **Fair-Share Calculation**:
-    - Let `Wᵢ` = worker weight, `T` = total active weight, `P` = active partition count.
+    - Let `Wᵢ` = worker weight, `T` = total active weight, `P` = active partitions.
     - Ideal share `Sᵢ = (Wᵢ / T) * P` with slack Δ to prevent oscillation.
 3. **Release Excess**: if held leases > ⌊Sᵢ⌋ + Δ, delete the least-backlogged leases.
 4. **Grab More**: if held leases < ⌈Sᵢ⌉ − Δ, pick a random pivot in `leases_available_view` and `SELECT ... LIMIT` to fetch N new `subscription_offset_id`s, then upsert into `leases`.

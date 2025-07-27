@@ -30,9 +30,9 @@ CREATE TABLE consumer_groups (
     name                        VARCHAR(255) NOT NULL,
     heartbeat_interval_default  DOUBLE NOT NULL DEFAULT 3.0,
     heartbeat_deadline_multiplier DOUBLE NOT NULL DEFAULT 5.0,
-    active_workers_count        INT NOT NULL DEFAULT 0,
     total_weight                INT NOT NULL DEFAULT 0,
-    active_partitions_count     INT NOT NULL DEFAULT 0,
+    active_partitions           INT NOT NULL DEFAULT 0,
+    active_workers              INT NOT NULL DEFAULT 0,
     last_updated                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     CONSTRAINT u_consumer_groups UNIQUE (tenant, name)
 ) ENGINE=InnoDB
