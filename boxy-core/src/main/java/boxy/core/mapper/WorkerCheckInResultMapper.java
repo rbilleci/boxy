@@ -19,7 +19,7 @@ public class WorkerCheckInResultMapper implements RowMapper<WorkerCheckInResult>
                 rs.getInt("current_leases"),
                 rs.getInt("min_leases"),
                 rs.getInt("max_leases"),
-                rs.getInt("heartbeat_interval"),
+                rs.getDouble("heartbeat_interval"),
                 rs.getTimestamp("heartbeat_deadline") == null ?
                         null :
                         rs.getTimestamp("heartbeat_deadline").toInstant(),

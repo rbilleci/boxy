@@ -41,7 +41,7 @@ CREATE TABLE consumer_group_stats (
     active_workers_count INT NOT NULL DEFAULT 0,
     total_weight         INT NOT NULL DEFAULT 0,
     active_partitions_count INT NOT NULL DEFAULT 0,
-    heartbeat_interval   INT NOT NULL DEFAULT 3,
+    heartbeat_interval   DOUBLE NOT NULL DEFAULT 3.0,
     heartbeat_deadline   DATETIME(3) NOT NULL DEFAULT (CURRENT_TIMESTAMP(3) + INTERVAL 15 SECOND),
     last_updated         DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     FOREIGN KEY (consumer_group_id) REFERENCES consumer_groups (id) ON DELETE CASCADE

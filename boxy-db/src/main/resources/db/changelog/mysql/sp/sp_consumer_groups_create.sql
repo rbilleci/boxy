@@ -22,7 +22,7 @@ BEGIN
         0,  -- active_workers_count
         0,  -- total_weight
         0,  -- active_partitions_count
-        3,  -- heartbeat_interval (default minimum)
+        3.0,  -- heartbeat_interval (default minimum)
         CURRENT_TIMESTAMP(3) + INTERVAL 15 SECOND, -- heartbeat_deadline (default current time + 15 seconds)
         CURRENT_TIMESTAMP(3)
     );

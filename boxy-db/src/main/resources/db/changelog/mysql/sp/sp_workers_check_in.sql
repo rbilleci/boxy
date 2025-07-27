@@ -8,7 +8,7 @@ BEGIN
     DECLARE v_active_workers_count INT DEFAULT 0;
     DECLARE v_total_weight INT DEFAULT 0;
     DECLARE v_active_partitions_count INT DEFAULT 0;
-    DECLARE v_heartbeat_interval INT;
+    DECLARE v_heartbeat_interval DOUBLE;
     DECLARE v_heartbeat_deadline DATETIME(3);
     DECLARE v_current_leases INT DEFAULT 0;
     DECLARE v_seconds INT;

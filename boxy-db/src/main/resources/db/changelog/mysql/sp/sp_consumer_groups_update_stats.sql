@@ -3,7 +3,7 @@ CREATE PROCEDURE sp_consumer_groups_update_stats(
     OUT p_active_workers_count INT,
     OUT p_total_weight INT,
     OUT p_active_partitions_count INT,
-    OUT p_heartbeat_interval INT,
+    OUT p_heartbeat_interval DOUBLE,
     OUT p_heartbeat_deadline DATETIME(3)
 )
 BEGIN
@@ -38,7 +38,7 @@ BEGIN
         -- Calculate adaptive heartbeat interval
         -- With 1000 workers, we want ~10 check-ins per second
         -- So each worker checks in every ~100 seconds on average
-        SET p_heartbeat_interval = GREATEST(3, p_active_workers_count / 10);
+        SET p_heartbeat_interval = GREATEST(3.0, p_active_workers_count / 10.0);
         
         -- Set heartbeat deadline (typically current time + 5x heartbeat interval in seconds)
         SET p_heartbeat_deadline = CURRENT_TIMESTAMP(3) + INTERVAL (p_heartbeat_interval * 5) SECOND;

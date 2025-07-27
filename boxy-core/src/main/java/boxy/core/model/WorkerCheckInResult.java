@@ -13,7 +13,7 @@ public record WorkerCheckInResult(
         int currentLeases,
         int minLeases,
         int maxLeases,
-        int heartbeatInterval,
+        double heartbeatInterval,
         Instant heartbeatDeadline,
         List<SubscriptionOffset> addedLeases,
         List<SubscriptionOffset> removedLeases) {
