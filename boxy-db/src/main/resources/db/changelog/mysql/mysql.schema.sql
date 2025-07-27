@@ -25,30 +25,24 @@ CREATE TABLE partitions (
     COMMENT='Tracks individual partitions for each topic, including the current high-watermark offset';
 
 
+-- Drop the consumer_group_stats table if it exists (migrating its columns to consumer_groups)
+DROP TABLE IF EXISTS consumer_group_stats;
+
 CREATE TABLE consumer_groups (
     id                          BIGINT AUTO_INCREMENT PRIMARY KEY,
     tenant                      VARCHAR(255) NOT NULL,
     name                        VARCHAR(255) NOT NULL,
     heartbeat_interval_default  DOUBLE NOT NULL DEFAULT 3.0,
     heartbeat_deadline_multiplier DOUBLE NOT NULL DEFAULT 5.0,
+    active_workers_count        INT NOT NULL DEFAULT 0,
+    total_weight                INT NOT NULL DEFAULT 0,
+    active_partitions_count     INT NOT NULL DEFAULT 0,
+    last_updated                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     CONSTRAINT u_consumer_groups UNIQUE (tenant, name)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
-    COMMENT='Defines consumer groups per tenant, which will track offsets independently';
-
-
-CREATE TABLE consumer_group_stats (
-    consumer_group_id    BIGINT PRIMARY KEY,
-    active_workers_count INT NOT NULL DEFAULT 0,
-    total_weight         INT NOT NULL DEFAULT 0,
-    active_partitions_count INT NOT NULL DEFAULT 0,
-    last_updated         DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    FOREIGN KEY (consumer_group_id) REFERENCES consumer_groups (id) ON DELETE CASCADE
-) ENGINE=InnoDB
-    DEFAULT CHARSET=utf8mb4
-    COLLATE=utf8mb4_bin
-    COMMENT='Stores precomputed statistics for consumer groups to optimize worker check-in';
+    COMMENT='Defines consumer groups per tenant, which will track offsets independently and store precomputed statistics';
 
 
 CREATE TABLE subscriptions (
