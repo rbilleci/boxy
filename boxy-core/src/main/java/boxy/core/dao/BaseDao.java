@@ -22,17 +22,21 @@ public abstract class BaseDao {
         this.ds = ds;
     }
 
-    protected <T> Optional<T> queryOne(String sql, RowMapper<T> mapper, Object... params) {
+    protected <T> Optional<T> queryOne(final String sql,
+                                       final RowMapper<T> mapper,
+                                       final Object... parameters) {
         return execute(sql, ps -> {
             try (final var rs = ps.executeQuery()) {
                 return rs.next() ?
                         Optional.of(mapper.map(rs)) :
                         Optional.empty();
             }
-        }, params);
+        }, parameters);
     }
 
-    protected <T> List<T> query(String sql, RowMapper<T> mapper, Object... params) {
+    protected <T> List<T> query(final String sql,
+                                final RowMapper<T> mapper,
+                                final Object... parameters) {
         return execute(sql, ps -> {
             try (final var rs = ps.executeQuery()) {
                 final var results = new ArrayList<T>();
@@ -41,10 +45,11 @@ public abstract class BaseDao {
                 }
                 return results;
             }
-        }, params);
+        }, parameters);
     }
 
-    protected int update(String sql, Object... parameters) {
+    protected int update(final String sql,
+                         final Object... parameters) {
         return execute(sql, PreparedStatement::executeUpdate, parameters);
     }
 
