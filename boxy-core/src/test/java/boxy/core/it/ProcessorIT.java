@@ -36,8 +36,8 @@ public class ProcessorIT extends BaseIT {
         // PUBLISH
         eventDao.publish(TENANT_1, TOPIC_A, "partitionKey", DATA);
         // VALIDATE
-        final var subscriptionOffsets = subscriptionOffsetDao.leasesAvailable(100, 0);
-        assertThat(subscriptionOffsets).hasSize(2);
+        final var subscriptionOffsets = subscriptionOffsetDao.findLeasable(subscriptionId, 100, 0);
+        assertThat(subscriptionOffsets).hasSize(1);
         final var result = subscriptionOffsets.getFirst();
         assertThat(result.subscriptionId()).isEqualTo(subscriptionId);
         assertThat(result.committedOffset()).isEqualTo(0L);
@@ -55,18 +55,10 @@ public class ProcessorIT extends BaseIT {
         eventDao.publish(TENANT_2, TOPIC_D, "pk7", DATA);
         eventDao.publish(TENANT_2, TOPIC_D, "pk8", DATA);
         // VALIDATE
-        final var leasable = subscriptionOffsetDao.leasesAvailable(100, 0);
+        final var leasable = subscriptionOffsetDao.findLeasable(100, 0);
         assertThat(leasable)
                 .hasSize(16)
                 .extracting(SubscriptionOffset::subscriptionId)
                 .containsAll(data.subscriptions().stream().map(Subscription::id).toList());
     }
-
-    @Test
-    void leasesAvailable_whenViewIsEmpty_returnsEmptyList() {
-        assertThat(subscriptionOffsetDao.leasesAvailable(100, 0))
-                .isNotNull()
-                .isEmpty();
-    }
-
 }

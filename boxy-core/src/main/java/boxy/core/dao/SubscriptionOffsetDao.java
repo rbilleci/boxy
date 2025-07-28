@@ -30,4 +30,27 @@ public final class SubscriptionOffsetDao extends BaseDao {
     public List<SubscriptionOffset> findAll(long subscriptionId) {
         return query("SELECT * FROM subscription_offsets WHERE subscription_id = ? ORDER BY id", SUBSCRIPTION_OFFSET_MAPPER, subscriptionId);
     }
+
+
+    public List<SubscriptionOffset> findLeasable(int limit, int offset) {
+        return query(
+                "SELECT * FROM unleased_subscription_offsets_view ORDER BY id LIMIT ? OFFSET ?",
+                SUBSCRIPTION_OFFSET_MAPPER,
+                limit, offset);
+    }
+
+    public List<SubscriptionOffset> findLeasable(long subscriptionId, int limit, int offset) {
+        return query(
+                "SELECT * FROM unleased_subscription_offsets_view WHERE subscription_id = ? ORDER BY id LIMIT ? OFFSET ?",
+                SUBSCRIPTION_OFFSET_MAPPER,
+                subscriptionId, limit, offset);
+    }
+
+    public List<SubscriptionOffset> findLeased(long subscriptionId, int limit, int offset) {
+        return query(
+                "SELECT * FROM leased_subscription_offsets_view WHERE subscription_id = ? ORDER BY id LIMIT ? OFFSET ?",
+                SUBSCRIPTION_OFFSET_MAPPER,
+                subscriptionId, limit, offset);
+    }
+
 }
