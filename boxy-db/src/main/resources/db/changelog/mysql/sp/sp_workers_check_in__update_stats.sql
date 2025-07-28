@@ -2,7 +2,7 @@ CREATE PROCEDURE sp_workers_check_in__update_stats(
     IN p_consumer_group_id BIGINT,
     OUT p_active_partitions INT,
     OUT p_active_workers INT,
-    OUT p_active_workers_weight INT,
+    OUT p_active_workers_weight DOUBLE,
     OUT p_heartbeat_interval DOUBLE
 )
 BEGIN

@@ -1,7 +1,7 @@
 CREATE PROCEDURE sp_workers_check_in__heartbeat(
     IN p_node_id VARCHAR(255),
     IN p_consumer_group_id BIGINT,
-    IN p_weight INT,
+    IN p_weight DOUBLE,
     IN p_heartbeat_interval INT,
     IN p_heartbeat_deadline DATETIME(3),
     OUT p_worker_id BIGINT

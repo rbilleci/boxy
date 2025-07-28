@@ -45,12 +45,12 @@ public final class WorkerDao extends BaseDao {
      */
     public WorkerCheckInResult checkIn(String nodeId,
                                        long consumerGroupId,
-                                       int weight) {
+                                       double weight) {
         try (final var connection = ds.getConnection();
              final var statement = connection.prepareCall("CALL sp_workers_check_in(?, ?, ?)")) {
             statement.setString(1, nodeId);
             statement.setLong(2, consumerGroupId);
-            statement.setInt(3, weight);
+            statement.setDouble(3, weight);
 
             // Execute, then process the results
             final var hasResults = statement.execute();

@@ -14,6 +14,6 @@ public record ConsumerGroup(
         int releaseDeadline,
         int activePartitions,
         int activeWorkers,
-        int activeWorkersWeight,
+        double activeWorkersWeight,
         Instant lastUpdated) {
 }

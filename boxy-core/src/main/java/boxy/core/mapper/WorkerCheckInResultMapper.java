@@ -12,9 +12,9 @@ public class WorkerCheckInResultMapper implements RowMapper<WorkerCheckInResult>
         return new WorkerCheckInResult(
                 rs.getLong("worker_id"),
                 rs.getInt("active_workers"),
-                rs.getInt("active_workers_weight"),
+                rs.getDouble("active_workers_weight"),
                 rs.getInt("active_partitions"),
-                rs.getInt("worker_weight"),
+                rs.getDouble("worker_weight"),
                 rs.getDouble("ideal_share"),
                 rs.getInt("current_leases"),
                 rs.getInt("min_leases"),

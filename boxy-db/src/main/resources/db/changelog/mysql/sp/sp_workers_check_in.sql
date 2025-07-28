@@ -1,11 +1,11 @@
 CREATE PROCEDURE sp_workers_check_in(
     IN p_node_id VARCHAR(255),
     IN p_consumer_group_id BIGINT,
-    IN p_weight INT
+    IN p_weight DOUBLE
 )
 BEGIN
     DECLARE v_active_workers INT DEFAULT 0;
-    DECLARE v_active_workers_weight INT DEFAULT 0;
+    DECLARE v_active_workers_weight DOUBLE DEFAULT 0;
     DECLARE v_active_partitions INT DEFAULT 0;
     DECLARE v_current_leases INT DEFAULT 0;
     DECLARE v_ideal_share DECIMAL(10,2);

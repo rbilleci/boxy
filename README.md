@@ -113,7 +113,7 @@ classDiagram
         +long id
         +String nodeId
         +long consumerGroupId
-        +int weight
+        +double weight
         +Instant lastHeartbeat
     }
     class SubscriptionOffset {

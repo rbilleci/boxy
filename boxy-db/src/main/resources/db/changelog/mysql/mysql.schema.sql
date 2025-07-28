@@ -36,7 +36,7 @@ CREATE TABLE consumer_groups (
     release_deadline                INT NOT NULL DEFAULT 10,
     active_partitions               INT NOT NULL DEFAULT 0,
     active_workers                  INT NOT NULL DEFAULT 0,
-    active_workers_weight           INT NOT NULL DEFAULT 0,
+    active_workers_weight           DOUBLE NOT NULL DEFAULT 0,
     last_updated                    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     CONSTRAINT u_consumer_groups UNIQUE (tenant, name)
 ) ENGINE=InnoDB
@@ -76,7 +76,7 @@ CREATE TABLE workers (
     id                   BIGINT AUTO_INCREMENT PRIMARY KEY,
     node_id              VARCHAR(255) NOT NULL,
     consumer_group_id    BIGINT       NOT NULL,
-    weight               INT          NOT NULL DEFAULT 1,
+    weight               DOUBLE       NOT NULL DEFAULT 1,
     last_heartbeat       DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     heartbeat_interval   DOUBLE       NOT NULL,
     heartbeat_deadline   DATETIME(3)  NOT NULL,

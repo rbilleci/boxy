@@ -6,9 +6,9 @@ import java.util.List;
 public record WorkerCheckInResult(
         long workerId,
         int activeWorkers,
-        int activeWorkersWeight,
+        double activeWorkersWeight,
         int activePartitions,
-        int workerWeight,
+        double workerWeight,
         double idealShare,
         int currentLeases,
         int minLeases,
