@@ -13,7 +13,7 @@ public class WorkerMapper implements RowMapper<Worker> {
                 rs.getString("node_id"),
                 rs.getLong("consumer_group_id"),
                 rs.getDouble("weight"),
-                rs.getTimestamp("last_heartbeat").toInstant(),
+                rs.getTimestamp("heartbeat_detected_at").toInstant(),
                 rs.getDouble("heartbeat_interval"),
                 rs.getTimestamp("heartbeat_deadline").toInstant());
     }

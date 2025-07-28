@@ -13,7 +13,7 @@ BEGIN
         node_id,
         consumer_group_id,
         weight,
-        last_heartbeat,
+        heartbeat_detected_at,
         heartbeat_interval,
         heartbeat_deadline)
     VALUES (
@@ -26,7 +26,7 @@ BEGIN
     ON DUPLICATE KEY UPDATE
         id                  = LAST_INSERT_ID(id),
         weight              = VALUES(weight),
-        last_heartbeat      = VALUES(last_heartbeat),
+        heartbeat_detected_at = VALUES(heartbeat_detected_at),
         heartbeat_interval  = VALUES(heartbeat_interval),
         heartbeat_deadline  = VALUES(heartbeat_deadline);
 

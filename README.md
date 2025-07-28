@@ -79,7 +79,7 @@ erDiagram
 
 ### Key Tables and Views
 
-- **workers**: registers each node’s `consumer_group`, `node_id`, `weight`, and `last_heartbeat`.
+- **workers**: registers each node’s `consumer_group`, `node_id`, `weight`, and `heartbeat_detected_at`.
 - **subscription_offsets**: tracks the committed offset per (subscription, partition).
 - **leases**: one row per `subscription_offset` when a node holds a lease, with `state` indicating whether it's 'ACTIVE' or 'RELEASING'.
 - **consumer_groups**: stores configuration and precomputed statistics for each consumer group.

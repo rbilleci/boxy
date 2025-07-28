@@ -7,7 +7,7 @@ public record Worker(
         String nodeId,
         long consumerGroupId,
         double weight,
-        Instant lastHeartbeat,
+        Instant heartbeatDetectedAt,
         double heartbeatInterval,
         Instant heartbeatDeadline) {
 }

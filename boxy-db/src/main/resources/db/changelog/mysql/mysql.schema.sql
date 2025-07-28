@@ -77,11 +77,11 @@ CREATE TABLE workers (
     node_id              VARCHAR(255) NOT NULL,
     consumer_group_id    BIGINT       NOT NULL,
     weight               DOUBLE       NOT NULL DEFAULT 1,
-    last_heartbeat       DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    heartbeat_detected_at DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     heartbeat_interval   DOUBLE       NOT NULL,
     heartbeat_deadline   DATETIME(3)  NOT NULL,
     INDEX idx_workers__consumer_group (consumer_group_id),
-    INDEX idx_workers___last_heartbeat (last_heartbeat),
+    INDEX idx_workers__heartbeat_detected_at (heartbeat_detected_at),
     CONSTRAINT u_workers UNIQUE (node_id, consumer_group_id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
@@ -143,7 +143,7 @@ CREATE OR REPLACE ALGORITHM = MERGE VIEW unleased_subscription_offsets_view AS
     -- 1. No lease exists for this subscription offset (l.subscription_offset_id IS NULL)
     -- 2. Or a lease exists but the worker has expired
      WHERE so.committed_offset < p.high_watermark
-       AND (l.subscription_offset_id IS NULL OR w.last_heartbeat < w.heartbeat_deadline);
+       AND (l.subscription_offset_id IS NULL OR w.heartbeat_detected_at < w.heartbeat_deadline);
 
 
 -- ========================================================
@@ -157,7 +157,7 @@ CREATE OR REPLACE ALGORITHM = MERGE VIEW leased_subscription_offsets_view AS
       FROM workers w
       JOIN leases l ON w.id = l.worker_id
       JOIN subscription_offsets so ON l.subscription_offset_id = so.id
-     WHERE w.last_heartbeat < w.heartbeat_deadline
+     WHERE w.heartbeat_detected_at < w.heartbeat_deadline
        AND l.state = 'ACTIVE'
   ORDER BY worker_id, so.id;
 

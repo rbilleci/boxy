@@ -77,10 +77,10 @@ SQL code are **consistent**, **performant**, and **maintainable**.
 1. **Efficient Upsert**:
 
    ```sql
-   INSERT INTO workers (node_id, zone_id, ..., last_heartbeat_at)
+   INSERT INTO workers (node_id, zone_id, ..., heartbeat_detected_at)
    VALUES (...)
    ON DUPLICATE KEY UPDATE
-     last_heartbeat_at = UTC_TIMESTAMP(),
+     heartbeat_detected_at = UTC_TIMESTAMP(),
      id = LAST_INSERT_ID(id);
    SET p_worker_id = LAST_INSERT_ID();
    ```
@@ -139,11 +139,11 @@ BEGIN
   BEGIN ROLLBACK; END;
   START TRANSACTION;
 
-  INSERT INTO workers (node_id, heartbeat_interval, last_heartbeat_at)
+  INSERT INTO workers (node_id, heartbeat_interval, heartbeat_detected_at)
   VALUES (p_node_id, p_interval, UTC_TIMESTAMP())
   ON DUPLICATE KEY UPDATE
     heartbeat_interval = p_interval,
-    last_heartbeat_at = UTC_TIMESTAMP(),
+    heartbeat_detected_at = UTC_TIMESTAMP(),
     id = LAST_INSERT_ID(id);
 
   SET p_id = LAST_INSERT_ID();
