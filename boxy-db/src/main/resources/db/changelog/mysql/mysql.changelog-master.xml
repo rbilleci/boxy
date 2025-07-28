@@ -4,9 +4,9 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet id="1" author="richard.billeci" dbms="mysql">
-        <!-- EVENT SCHEMA -->
+        <!-- SQL SCHEMA -->
         <sqlFile path="mysql.schema.sql" relativeToChangelogFile="true"/>
-        <!-- FUNCTION -->
+        <!-- FUNCTIONS -->
         <sqlFile path="fn/fn_resolve_partition_id.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
@@ -20,11 +20,11 @@
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_workers_register.sql"
+        <sqlFile path="sp/sp_workers_delete.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_workers_deregister.sql"
+        <sqlFile path="sp/sp_workers_shutdown.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
@@ -60,19 +60,35 @@
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_leases_acquire.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-        <sqlFile path="sp/sp_leases_renew.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
         <sqlFile path="sp/sp_leases_release.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
         <sqlFile path="sp/sp_topics_cache_get.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_workers_check_in__gc.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_workers_check_in__heartbeat.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_workers_check_in__update_stats.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_workers_check_in__release_leases.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_workers_check_in__acquire_leases.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_workers_check_in.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>

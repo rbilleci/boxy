@@ -1,4 +1,4 @@
-package boxy.core.dao;
+package boxy.core.mapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

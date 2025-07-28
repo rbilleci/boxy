@@ -24,16 +24,25 @@ CREATE TABLE partitions (
     COLLATE=utf8mb4_bin
     COMMENT='Tracks individual partitions for each topic, including the current high-watermark offset';
 
-
 CREATE TABLE consumer_groups (
-    id      BIGINT AUTO_INCREMENT PRIMARY KEY,
-    tenant  VARCHAR(255) NOT NULL,
-    name    VARCHAR(255) NOT NULL,
+    id                              BIGINT AUTO_INCREMENT PRIMARY KEY,
+    tenant                          VARCHAR(255) NOT NULL,
+    name                            VARCHAR(255) NOT NULL,
+    heartbeat_interval_default      DOUBLE NOT NULL DEFAULT 3.0,
+    heartbeat_interval_min          DOUBLE NOT NULL DEFAULT 0.10,
+    heartbeat_interval_max          DOUBLE NOT NULL DEFAULT 1000.00,
+    heartbeat_deadline_multiplier   DOUBLE NOT NULL DEFAULT 5.0,
+    heartbeat_qps_target            DOUBLE NOT NULL DEFAULT 10.0,
+    release_deadline                INT NOT NULL DEFAULT 10,
+    total_weight                    INT NOT NULL DEFAULT 0,
+    active_partitions               INT NOT NULL DEFAULT 0,
+    active_workers                  INT NOT NULL DEFAULT 0,
+    last_updated                    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     CONSTRAINT u_consumer_groups UNIQUE (tenant, name)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
-    COMMENT='Defines consumer groups per tenant, which will track offsets independently';
+    COMMENT='Defines consumer groups per tenant, which will track offsets independently and store precomputed statistics';
 
 
 CREATE TABLE subscriptions (
@@ -69,6 +78,8 @@ CREATE TABLE workers (
     consumer_group_id    BIGINT       NOT NULL,
     weight               INT          NOT NULL DEFAULT 1,
     last_heartbeat       DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    heartbeat_interval   DOUBLE       NOT NULL,
+    heartbeat_deadline   DATETIME(3)  NOT NULL,
     INDEX idx_workers__consumer_group (consumer_group_id),
     INDEX idx_workers___last_heartbeat (last_heartbeat),
     CONSTRAINT u_workers UNIQUE (node_id, consumer_group_id)
@@ -83,16 +94,16 @@ CREATE TABLE leases (
     worker_id               BIGINT NOT NULL,
     version                 BIGINT NOT NULL DEFAULT 1,
     acquired_at             DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    updated_at              DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
-    expires_at              DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    INDEX idx_leases__expires_at (expires_at),
+    released_at             DATETIME(3) NULL,
+    state                   ENUM('ACTIVE', 'RELEASING') NOT NULL DEFAULT 'ACTIVE',
+    INDEX idx_leases__state (state),
     INDEX idx_leases__worker (worker_id),
     FOREIGN KEY (subscription_offset_id) REFERENCES subscription_offsets(id),
     FOREIGN KEY (worker_id) REFERENCES workers(id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
-    COMMENT='Implements distributed locking for processing offsets—tracks worker, version, and expiration';
+    COMMENT='Implements distributed locking for processing offsets—tracks worker, version, and state';
 
 
 CREATE TABLE events (
@@ -151,5 +162,11 @@ SELECT
     p.high_watermark
 FROM subscription_offsets AS so
     INNER JOIN partitions AS p ON p.id = so.partition_id AND p.high_watermark > so.committed_offset
-    LEFT JOIN leases as l ON l.subscription_offset_id = so.id AND l.expires_at >= CURRENT_TIMESTAMP(3)
-WHERE l.subscription_offset_id IS NULL;
+    LEFT JOIN leases AS l ON l.subscription_offset_id = so.id
+    LEFT JOIN workers AS w ON w.id = l.worker_id
+    -- A lease is available if:
+    -- 1. No lease exists for this subscription offset (l.subscription_offset_id IS NULL)
+    -- 2. The lease exists but the worker has expired (ACTIVE state + worker heartbeat is old)
+    -- Note: Leases in RELEASING state are not available
+    WHERE l.subscription_offset_id IS NULL OR 
+          (l.state = 'ACTIVE' AND w.last_heartbeat < CURRENT_TIMESTAMP(3) - INTERVAL 10 SECOND);

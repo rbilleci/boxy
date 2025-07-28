@@ -1,5 +1,6 @@
 package boxy.core.dao;
 
+import boxy.core.mapper.TopicMapper;
 import boxy.core.model.Topic;
 
 import javax.sql.DataSource;
@@ -7,11 +8,7 @@ import java.util.Optional;
 
 public final class TopicDao extends BaseDao {
 
-    private static final RowMapper<Topic> MAPPER = rs -> new Topic(
-            rs.getLong("id"),
-            rs.getString("tenant"),
-            rs.getString("name"),
-            rs.getInt("partitions"));
+    private static final TopicMapper TOPIC_MAPPER = new TopicMapper();
 
     public TopicDao(DataSource ds) {
         super(ds);
@@ -22,7 +19,7 @@ public final class TopicDao extends BaseDao {
     }
 
     public Optional<Topic> find(String tenant, String name) {
-        return queryOne("SELECT * FROM topics WHERE tenant = ? AND name = ?", MAPPER, tenant, name);
+        return queryOne("SELECT * FROM topics WHERE tenant = ? AND name = ?", TOPIC_MAPPER, tenant, name);
     }
 
     public void delete(String tenant, String name) {

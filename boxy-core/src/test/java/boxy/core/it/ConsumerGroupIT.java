@@ -23,7 +23,23 @@ public class ConsumerGroupIT extends BaseIT {
 
     @Test
     void create_whenCreated_isPresent() {
+        System.out.println("[DEBUG_LOG] Running create_whenCreated_isPresent test");
         final var consumerGroup = consumerGroupDao.find(TENANT_1, CONSUMER_GROUP_A).orElseThrow();
+        System.out.println("[DEBUG_LOG] Found consumer group: " + consumerGroup);
+        System.out.println("[DEBUG_LOG] Consumer group fields:");
+        System.out.println("[DEBUG_LOG]   ID: " + consumerGroup.id());
+        System.out.println("[DEBUG_LOG]   Tenant: " + consumerGroup.tenant());
+        System.out.println("[DEBUG_LOG]   Name: " + consumerGroup.name());
+        System.out.println("[DEBUG_LOG]   Heartbeat Interval Default: " + consumerGroup.heartbeatIntervalDefault());
+        System.out.println("[DEBUG_LOG]   Heartbeat Deadline Multiplier: " + consumerGroup.heartbeatDeadlineMultiplier());
+        System.out.println("[DEBUG_LOG]   Release Deadline: " + consumerGroup.releaseDeadline());
+        System.out.println("[DEBUG_LOG]   Heartbeat QPS Target: " + consumerGroup.heartbeatQpsTarget());
+        System.out.println("[DEBUG_LOG]   Heartbeat Interval Min: " + consumerGroup.heartbeatIntervalMin());
+        System.out.println("[DEBUG_LOG]   Heartbeat Interval Max: " + consumerGroup.heartbeatIntervalMax());
+        System.out.println("[DEBUG_LOG]   Active Workers Count: " + consumerGroup.activeWorkers());
+        System.out.println("[DEBUG_LOG]   Total Weight: " + consumerGroup.totalWeight());
+        System.out.println("[DEBUG_LOG]   Active Partitions Count: " + consumerGroup.activePartitions());
+        System.out.println("[DEBUG_LOG]   Last Updated: " + consumerGroup.lastUpdated());
         assertThat(consumerGroup).extracting(ConsumerGroup::tenant).isEqualTo(TENANT_1);
         assertThat(consumerGroup).extracting(ConsumerGroup::name).isEqualTo(CONSUMER_GROUP_A);
     }
