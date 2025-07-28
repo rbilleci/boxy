@@ -61,14 +61,12 @@ public class WorkerCheckInIT extends BaseIT {
         assertThat(result.heartbeatDeadline()).isNotNull();
 
         // Verify added leases
-        assertThat(result.addedLeases()).isNotEmpty();
-        assertThat(result.addedLeases().size()).isGreaterThanOrEqualTo(result.minLeases());
+        assertThat(result.activeLeases()).isNotEmpty();
+        assertThat(result.activeLeases().size()).isGreaterThanOrEqualTo(result.minLeases());
 
-        // Verify no removed leases
-        assertThat(result.removedLeases()).isEmpty();
 
         // Verify leases in database
-        for (final var offset : result.addedLeases()) {
+        for (final var offset : result.activeLeases()) {
             assertThat(leaseDao.find(offset.id()))
                     .isPresent()
                     .get()
@@ -99,7 +97,7 @@ public class WorkerCheckInIT extends BaseIT {
 
         // Then worker1 should acquire all active leases
         assertThat(result1.activeWorkers()).isEqualTo(1);
-        assertThat(result1.addedLeases()).isNotEmpty();
+        assertThat(result1.activeLeases()).isNotEmpty();
 
         // When worker2 checks in
         final var result2 = workerDao.checkIn(
@@ -112,7 +110,7 @@ public class WorkerCheckInIT extends BaseIT {
 
         // And worker2 should acquire approximately half of the leases
         assertThat(result2.idealShare()).isCloseTo(result2.activePartitions() / 2.0, within(0.5));
-        assertThat(result2.addedLeases()).isNotEmpty();
+        assertThat(result2.activeLeases()).isNotEmpty();
 
         // When worker1 checks in again
         final var result1Again = workerDao.checkIn(
@@ -122,14 +120,13 @@ public class WorkerCheckInIT extends BaseIT {
 
         // Then worker1 should release some leases to achieve fair distribution
         assertThat(result1Again.activeWorkers()).isEqualTo(2);
-        assertThat(result1Again.removedLeases()).isNotEmpty();
 
         // Verify final distribution is approximately fair
         final var worker1Leases = new AtomicInteger(0);
         final var worker2Leases = new AtomicInteger(0);
 
         final var allOffsets = subscriptionOffsetDao.findAll(
-                result1.addedLeases().getFirst().subscriptionId());
+                result1.activeLeases().getFirst().subscriptionId());
 
         for (SubscriptionOffset offset : allOffsets) {
             leaseDao.find(offset.id()).ifPresent(lease -> {
@@ -158,10 +155,10 @@ public class WorkerCheckInIT extends BaseIT {
                 worker.weight()); // No longer need to specify TTL multiplier
 
         // Then the worker should acquire leases
-        assertThat(result.addedLeases()).isNotEmpty();
+        assertThat(result.activeLeases()).isNotEmpty();
 
         // Verify leases in database
-        for (SubscriptionOffset offset : result.addedLeases()) {
+        for (SubscriptionOffset offset : result.activeLeases()) {
             assertThat(leaseDao.find(offset.id()))
                     .isPresent()
                     .get()
@@ -184,13 +181,13 @@ public class WorkerCheckInIT extends BaseIT {
                 worker2.weight());
 
         // Then the new worker should acquire the expired leases
-        assertThat(result2.addedLeases()).isNotEmpty();
+        assertThat(result2.activeLeases()).isNotEmpty();
 
         // And the original worker should be considered expired
         assertThat(result2.activeWorkers()).isEqualTo(1);
 
         // Verify leases in database are now owned by worker2
-        for (final var offset : result2.addedLeases()) {
+        for (final var offset : result2.activeLeases()) {
             assertThat(leaseDao.find(offset.id()))
                     .isPresent()
                     .get()
@@ -222,11 +219,11 @@ public class WorkerCheckInIT extends BaseIT {
                 worker.weight());
 
         // Then the worker should acquire leases
-        assertThat(result.addedLeases()).isNotEmpty();
-        System.out.println(result.addedLeases());
+        assertThat(result.activeLeases()).isNotEmpty();
+        System.out.println(result.activeLeases());
 
         // Get the first lease for testing
-        final var leaseId = result.addedLeases().getFirst().id();
+        final var leaseId = result.activeLeases().getFirst().id();
 
         // Verify lease in database
         assertThat(leaseDao.find(leaseId))

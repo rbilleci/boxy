@@ -131,7 +131,7 @@ BEGIN
 
     -- Return all active leases for this worker (excluding those in a RELEASING state)
     SELECT
-        so.id AS subscription_offset_id,
+        so.id AS id,
         so.subscription_id,
         so.partition_id,
         so.committed_offset,
