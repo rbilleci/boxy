@@ -14,26 +14,20 @@ BEGIN
     
     -- If we have too many leases, release some
     IF p_current_leases > p_max_leases THEN
-        -- Find leases to release (smallest backlog first)
-        INSERT INTO temp_leases_removed
-        SELECT l.subscription_offset_id
-        FROM leases l
+        -- Mark leases as RELEASING (smallest backlog first)
+        -- Also set the released_at timestamp to track when the release started
+        UPDATE leases l
         INNER JOIN subscription_offsets_view so ON so.id = l.subscription_offset_id
         INNER JOIN subscriptions s ON s.id = so.subscription_id
+        SET l.state = 'RELEASING',
+            l.released_at = CURRENT_TIMESTAMP(3)
         WHERE l.worker_id = p_worker_id
           AND s.consumer_group_id = p_consumer_group_id
+          AND l.state = 'ACTIVE'
         ORDER BY (so.high_watermark - so.committed_offset) ASC
         LIMIT p_limit;
         
-        -- Mark the selected leases as RELEASING instead of deleting them
-        -- Also set the released_at timestamp to track when the release started
-        UPDATE leases
-        SET state = 'RELEASING',
-            released_at = CURRENT_TIMESTAMP(3)
-        WHERE worker_id = p_worker_id
-          AND subscription_offset_id IN (SELECT subscription_offset_id FROM temp_leases_removed);
-        
         -- Count released leases
-        SELECT COUNT(*) INTO p_leases_released FROM temp_leases_removed;
+        SET p_leases_released = ROW_COUNT();
     END IF;
 END;
