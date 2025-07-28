@@ -30,8 +30,8 @@ BEGIN
      WHERE id = p_consumer_group_id;
 
     -- Calculate adaptive heartbeat interval based on heartbeat_interval_default
-    -- Use the configurable heartbeat_target_qps instead of hardcoded 10.0
-    -- This controls the cluster-wide check-ins per second
+    -- Use the configurable heartbeat_target_qps
+    -- This controls the ideal cluster-wide check-ins per second
     SET p_heartbeat_interval = GREATEST(p_heartbeat_interval, p_active_workers / @target_qps);
     
     -- Apply min and max constraints to the heartbeat interval
