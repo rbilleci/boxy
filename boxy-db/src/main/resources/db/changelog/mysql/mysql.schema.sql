@@ -32,7 +32,7 @@ CREATE TABLE consumer_groups (
     heartbeat_interval_min          DOUBLE NOT NULL DEFAULT 0.10,
     heartbeat_interval_max          DOUBLE NOT NULL DEFAULT 1000.00,
     heartbeat_deadline_multiplier   DOUBLE NOT NULL DEFAULT 5.0,
-    heartbeat_qps_target            DOUBLE NOT NULL DEFAULT 10.0,
+    heartbeat_target_qps            DOUBLE NOT NULL DEFAULT 10.0,
     release_deadline                INT NOT NULL DEFAULT 10,
     active_partitions               INT NOT NULL DEFAULT 0,
     active_workers                  INT NOT NULL DEFAULT 0,

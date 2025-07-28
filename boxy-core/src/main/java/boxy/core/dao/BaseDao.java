@@ -23,38 +23,43 @@ public abstract class BaseDao {
     }
 
     protected <T> Optional<T> queryOne(String sql, RowMapper<T> mapper, Object... params) {
-        final var list = query(sql, mapper, params);
-        return list.isEmpty() ? Optional.empty() : Optional.of(list.getFirst());
+        return execute(sql, ps -> {
+            try (final var rs = ps.executeQuery()) {
+                return rs.next() ?
+                        Optional.of(mapper.map(rs)) :
+                        Optional.empty();
+            }
+        }, params);
     }
 
     protected <T> List<T> query(String sql, RowMapper<T> mapper, Object... params) {
         return execute(sql, ps -> {
             try (final var rs = ps.executeQuery()) {
-                final var result = new ArrayList<T>();
+                final var results = new ArrayList<T>();
                 while (rs.next()) {
-                    result.add(mapper.map(rs));
+                    results.add(mapper.map(rs));
                 }
-                return result;
+                return results;
             }
         }, params);
     }
 
-    protected int update(String sql, Object... params) {
-        return execute(sql, PreparedStatement::executeUpdate, params);
+    protected int update(String sql, Object... parameters) {
+        return execute(sql, PreparedStatement::executeUpdate, parameters);
     }
 
-    private <T> T execute(String sql, SQLFunction<PreparedStatement, T> f, Object... params) {
-        try (final var connection = ds.getConnection(); var ps = connection.prepareStatement(sql)) {
-            bind(ps, params);
-            return f.apply(ps);
+    private <T> T execute(final String sql,
+                          final SQLFunction<PreparedStatement, T> function,
+                          final Object... parameters) {
+        try (final var connection = ds.getConnection();
+             final var statement = connection.prepareStatement(sql)) {
+            for (var i = 0; i < parameters.length; i++) {
+                statement.setObject(i + 1, parameters[i]);
+            }
+            return function.apply(statement);
         } catch (SQLException e) {
             throw new DataAccessException(e);
         }
     }
 
-    private static void bind(PreparedStatement ps, Object... params) throws SQLException {
-        for (var i = 0; i < params.length; i++) {
-            ps.setObject(i + 1, params[i]);
-        }
-    }
 }

@@ -33,7 +33,7 @@ public class ConsumerGroupIT extends BaseIT {
         System.out.println("[DEBUG_LOG]   Heartbeat Interval Default: " + consumerGroup.heartbeatIntervalDefault());
         System.out.println("[DEBUG_LOG]   Heartbeat Deadline Multiplier: " + consumerGroup.heartbeatDeadlineMultiplier());
         System.out.println("[DEBUG_LOG]   Release Deadline: " + consumerGroup.releaseDeadline());
-        System.out.println("[DEBUG_LOG]   Heartbeat QPS Target: " + consumerGroup.heartbeatQpsTarget());
+        System.out.println("[DEBUG_LOG]   Heartbeat QPS Target: " + consumerGroup.heartbeatTargetQPS());
         System.out.println("[DEBUG_LOG]   Heartbeat Interval Min: " + consumerGroup.heartbeatIntervalMin());
         System.out.println("[DEBUG_LOG]   Heartbeat Interval Max: " + consumerGroup.heartbeatIntervalMax());
         System.out.println("[DEBUG_LOG]   Active Workers Count: " + consumerGroup.activeWorkers());

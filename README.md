@@ -223,7 +223,7 @@ Rather than each worker writing every X seconds, we define:
 
 - QPS<sub>target</sub>: the desired total heartbeats/sec for the whole cluster (e.g. 10 qps)
 
-On each cycle, each worker flips a weighted coin with probability `p = min(1, QPS_target / N_active)`, 
+On each cycle, each worker flips a weighted coin with probability `p = min(1, target_QPS / N_active)`, 
 and only writes a heartbeat if it “wins” that flip.
 
 Properties
@@ -382,7 +382,7 @@ BoxyConsumerGroup consumerGroup = BoxyConsumerGroup.builder()
     .tenant("mycompany")
     .name("order-processor")
     .heartbeatIntervalDefault(3.0) // Default heartbeat interval in seconds
-    .heartbeatQpsTarget(10.0)      // Target heartbeats per second for the cluster
+    .heartbeatTargetQPS(10.0)      // Target heartbeats per second for the cluster
     .releaseDeadline(10)           // Seconds to wait before cleaning up releasing leases
     .build();
 
