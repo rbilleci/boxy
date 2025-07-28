@@ -30,7 +30,7 @@ Boxy is released under the **Apache License 2.0** and remains a work in progress
 ## Design Highlights
 
 - **Decentralized, Randomized Work-Stealing** for lease distribution
-- **Fair-share Load Balancing** across worker nodes, proportional to capacity weights
+- **Fair-share Load Balancing** across workers, proportional to capacity weights
 - **Low Consumer Lag**: p99 ~5ms for active partitions, and ~100ms for cold partitions
 - **Scalable Polling**: workers stagger lease grabs to minimize database queries (e.g. ≈10 checks/s instead of hundreds)
 
@@ -79,9 +79,9 @@ erDiagram
 
 ### Key Tables and Views
 
-- **workers**: registers each node’s `consumer_group`, `node_id`, `weight`, and `heartbeat_detected_at`.
+- **workers**: registers each worker’s `consumer_group`, `weight`, and `heartbeat_detected_at`.
 - **subscription_offsets**: tracks the committed offset per (subscription, partition).
-- **leases**: one row per `subscription_offset` when a node holds a lease, with `state` indicating whether it's 'ACTIVE' or 'RELEASING'.
+- **leases**: one row per `subscription_offset` when a worker holds a lease, with `state` indicating whether it's 'ACTIVE' or 'RELEASING'.
 - **consumer_groups**: stores configuration and precomputed statistics for each consumer group.
 
 ### Consumer Group Statistics
@@ -110,7 +110,6 @@ The Boxy Core module uses Java records to model the schema. Relevant classes:
 classDiagram
     class Worker {
         +long id
-        +String nodeId
         +long consumerGroupId
         +double weight
         +Instant lastHeartbeat
@@ -214,7 +213,7 @@ Releasing --> Idle       : delete lease
 
 ## Heartbeats
 
-Node-level heartbeat (in the workers table) remains independent of per-partition state.
+Worker-level heartbeat (in the workers table) remains independent of per-partition state.
 
 Rather than each worker writing every X seconds, we define:
 
@@ -354,8 +353,8 @@ BoxyConsumerGroup consumerGroup = BoxyConsumerGroup.create(dataSource, tenant, c
 consumerGroup.subscribe("orders");
 
 // Create a worker
-String nodeId = "worker-1";
-BoxyWorker worker = consumerGroup.createWorker(nodeId);
+String id = "worker-1";
+BoxyWorker worker = consumerGroup.createWorker(id);
 
 // Register event handler
 worker.registerHandler("orders", event -> {
@@ -386,7 +385,7 @@ BoxyConsumerGroup consumerGroup = BoxyConsumerGroup.builder()
     .build();
 
 BoxyWorker worker = consumerGroup.createWorker(BoxyWorker.builder()
-    .nodeId("worker-1")
+    .id("worker-1")
     .weight(2)                     // Higher weight gets proportionally more partitions
     .build());
 ```

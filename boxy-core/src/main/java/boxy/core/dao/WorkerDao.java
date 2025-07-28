@@ -20,15 +20,9 @@ public final class WorkerDao extends BaseDao {
         super(ds);
     }
 
-    public Optional<Worker> find(long id) {
+    public Optional<Worker> find(String id) {
         return queryOne("SELECT * FROM workers WHERE id = ?", WORKER_MAPPER, id);
     }
-
-    public Optional<Worker> find(String nodeId, long consumerGroupId) {
-        return queryOne("SELECT * FROM workers WHERE node_id = ? AND consumer_group_id = ?",
-                WORKER_MAPPER, nodeId, consumerGroupId);
-    }
-
 
     /**
      * Performs a worker check-in, which:
@@ -38,17 +32,17 @@ public final class WorkerDao extends BaseDao {
      * 4. Releases excess leases or acquires new ones as needed
      * 5. Returns statistics and all active leases
      *
-     * @param nodeId             The node identifier
-     * @param consumerGroupId    The consumer group ID
-     * @param weight             The worker's weight
+     * @param workerId          The worker identifier
+     * @param consumerGroupId The consumer group ID
+     * @param weight          The worker's weight
      * @return A WorkerCheckInResult containing statistics and all active leases
      */
-    public CheckInResult checkIn(String nodeId,
+    public CheckInResult checkIn(String workerId,
                                  long consumerGroupId,
                                  double weight) {
         try (final var connection = ds.getConnection();
              final var statement = connection.prepareCall("CALL sp_workers_check_in(?, ?, ?)")) {
-            statement.setString(1, nodeId);
+            statement.setString(1, workerId);
             statement.setLong(2, consumerGroupId);
             statement.setDouble(3, weight);
 

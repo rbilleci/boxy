@@ -10,7 +10,7 @@ public class LeaseMapper implements RowMapper<Lease> {
     public Lease map(ResultSet rs) throws SQLException {
         return new Lease(
                 rs.getLong("subscription_offset_id"),
-                rs.getLong("worker_id"),
+                rs.getString("worker_id"),
                 rs.getLong("version"),
                 rs.getTimestamp("acquired_at").toInstant(),
                 rs.getTimestamp("released_at") != null ? rs.getTimestamp("released_at").toInstant() : null,

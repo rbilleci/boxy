@@ -1,5 +1,5 @@
 CREATE PROCEDURE sp_workers_check_in__acquire_leases(
-    IN p_worker_id BIGINT,
+    IN p_worker_id VARCHAR(255),
     IN p_consumer_group_id BIGINT,
     IN p_min_leases INT,
     IN p_current_leases INT,

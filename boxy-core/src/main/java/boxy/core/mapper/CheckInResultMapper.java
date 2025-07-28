@@ -10,7 +10,7 @@ public class CheckInResultMapper implements RowMapper<CheckInResult> {
     @Override
     public CheckInResult map(ResultSet rs) throws SQLException {
         return new CheckInResult(
-                rs.getLong("worker_id"),
+                rs.getString("worker_id"),
                 rs.getInt("active_workers"),
                 rs.getDouble("active_workers_weight"),
                 rs.getInt("active_partitions"),

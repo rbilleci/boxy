@@ -1,6 +1,6 @@
 CREATE PROCEDURE sp_leases_release(
     IN p_subscription_offset_id BIGINT,
-    IN p_worker_id BIGINT)
+    IN p_worker_id VARCHAR(255))
 BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
     -- Instead of deleting the lease, mark it as RELEASING and set the released_at timestamp

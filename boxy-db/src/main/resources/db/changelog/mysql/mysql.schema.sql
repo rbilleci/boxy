@@ -73,25 +73,23 @@ CREATE TABLE subscription_offsets (
 
 
 CREATE TABLE workers (
-    id                   BIGINT AUTO_INCREMENT PRIMARY KEY,
-    node_id              VARCHAR(255) NOT NULL,
+    id                   VARCHAR(255) PRIMARY KEY,
     consumer_group_id    BIGINT       NOT NULL,
     weight               DOUBLE       NOT NULL DEFAULT 1,
-    heartbeat_detected_at DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    heartbeat_detected_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     heartbeat_interval   DOUBLE       NOT NULL,
     heartbeat_deadline   DATETIME(3)  NOT NULL,
     INDEX idx_workers__consumer_group (consumer_group_id),
-    INDEX idx_workers__heartbeat_detected_at (heartbeat_detected_at),
-    CONSTRAINT u_workers UNIQUE (node_id, consumer_group_id)
+    INDEX idx_workers__heartbeat_detected_at (heartbeat_detected_at)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
-    COMMENT='Registered worker nodes per consumer-group, with capacity weight and heartbeat timestamp';
+    COMMENT='Registered workers per consumer-group, with capacity weight and heartbeat timestamp';
 
 
 CREATE TABLE leases (
     subscription_offset_id  BIGINT PRIMARY KEY,
-    worker_id               BIGINT NOT NULL,
+    worker_id               VARCHAR(255) NOT NULL,
     version                 BIGINT NOT NULL DEFAULT 1,
     acquired_at             DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     released_at             DATETIME(3) NULL,

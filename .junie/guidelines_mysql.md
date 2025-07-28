@@ -77,7 +77,7 @@ SQL code are **consistent**, **performant**, and **maintainable**.
 1. **Efficient Upsert**:
 
    ```sql
-   INSERT INTO workers (node_id, zone_id, ..., heartbeat_detected_at)
+   INSERT INTO workers (id, ..., heartbeat_detected_at)
    VALUES (...)
    ON DUPLICATE KEY UPDATE
      heartbeat_detected_at = UTC_TIMESTAMP(),
@@ -130,7 +130,7 @@ SQL code are **consistent**, **performant**, and **maintainable**.
 ```sql
 -- Heartbeat upsert with LAST_INSERT_ID
 CREATE PROCEDURE sp_workers_heartbeat(
-  IN p_node_id VARCHAR(255),
+  IN p_worker_id VARCHAR(255),
   IN p_interval DOUBLE,
   OUT p_id BIGINT
 )
@@ -139,8 +139,8 @@ BEGIN
   BEGIN ROLLBACK; END;
   START TRANSACTION;
 
-  INSERT INTO workers (node_id, heartbeat_interval, heartbeat_detected_at)
-  VALUES (p_node_id, p_interval, UTC_TIMESTAMP())
+  INSERT INTO workers (id, heartbeat_interval, heartbeat_detected_at)
+  VALUES (p_worker_id, p_interval, UTC_TIMESTAMP())
   ON DUPLICATE KEY UPDATE
     heartbeat_interval = p_interval,
     heartbeat_detected_at = UTC_TIMESTAMP(),

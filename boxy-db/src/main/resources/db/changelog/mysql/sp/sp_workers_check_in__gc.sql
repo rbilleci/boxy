@@ -1,7 +1,7 @@
 CREATE PROCEDURE sp_workers_check_in__gc(IN p_consumer_group_id BIGINT)
 BEGIN
     DECLARE v_release_deadline INT;
-    DECLARE v_worker_id BIGINT;
+    DECLARE v_worker_id VARCHAR(255);
     DECLARE done INT DEFAULT FALSE;
 
     -- Cursor for processing dead workers. We limit to 10 per check-in.

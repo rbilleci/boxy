@@ -3,8 +3,7 @@ package boxy.core.model;
 import java.time.Instant;
 
 public record Worker(
-        long id,
-        String nodeId,
+        String id,
         long consumerGroupId,
         double weight,
         Instant heartbeatDetectedAt,

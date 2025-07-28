@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.List;
 
 public record CheckInResult(
-        long workerId,
+        String workerId,
         int activeWorkers,
         double activeWorkersWeight,
         int activePartitions,

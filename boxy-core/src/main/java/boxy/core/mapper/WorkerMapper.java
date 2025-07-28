@@ -9,8 +9,7 @@ public class WorkerMapper implements RowMapper<Worker> {
     @Override
     public Worker map(ResultSet rs) throws SQLException {
         return new Worker(
-                rs.getLong("id"),
-                rs.getString("node_id"),
+                rs.getString("id"),
                 rs.getLong("consumer_group_id"),
                 rs.getDouble("weight"),
                 rs.getTimestamp("heartbeat_detected_at").toInstant(),

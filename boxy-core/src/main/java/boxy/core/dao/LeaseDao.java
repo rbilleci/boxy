@@ -19,7 +19,7 @@ public final class LeaseDao extends BaseDao {
         return queryOne("SELECT * FROM leases WHERE subscription_offset_id = ?", LEASE_MAPPER, subscriptionOffsetId);
     }
 
-    public void release(long subscriptionOffsetId, long workerId) {
+    public void release(long subscriptionOffsetId, String workerId) {
         update("CALL sp_leases_release(?,?)", subscriptionOffsetId, workerId);
     }
 

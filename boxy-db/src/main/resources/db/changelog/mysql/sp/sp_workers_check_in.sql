@@ -1,5 +1,5 @@
 CREATE PROCEDURE sp_workers_check_in(
-    IN p_node_id VARCHAR(255),
+    IN p_worker_id VARCHAR(255),
     IN p_consumer_group_id BIGINT,
     IN p_weight DOUBLE
 )
@@ -14,7 +14,6 @@ BEGIN
     DECLARE v_max_leases INT;
     DECLARE v_leases_released INT DEFAULT 0;
     DECLARE v_leases_acquired INT DEFAULT 0;
-    DECLARE v_worker_id BIGINT;
     DECLARE v_heartbeat_interval DOUBLE;
     DECLARE v_heartbeat_interval_default DOUBLE;
     DECLARE v_heartbeat_deadline DATETIME(3);
@@ -38,15 +37,11 @@ BEGIN
         -- Perform a heartbeat for this worker.
         -- The worker will be inserted with a default deadline if it does not already exist
         CALL sp_workers_check_in__heartbeat(
-            p_node_id,
+            p_worker_id,
             p_consumer_group_id,
             p_weight,
             v_heartbeat_interval_default,
-            v_heartbeat_deadline,
-            v_worker_id);
-        IF v_worker_id IS NULL THEN SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'No worker_id returned from sp_workers_check_in__heartbeat';
-        END IF;
+            v_heartbeat_deadline);
 
         -- Perform a garbage collection
         -- As this worker submitted a heartbeat already, it won't be removed.
@@ -66,18 +61,17 @@ BEGIN
 
         -- Update the worker's heartbeat interval and deadline
         CALL sp_workers_check_in__heartbeat(
-            p_node_id,
+            p_worker_id,
             p_consumer_group_id,
             p_weight,
             v_heartbeat_interval,
-            v_heartbeat_deadline,
-            v_worker_id);
+            v_heartbeat_deadline);
 
         -- Count ACTIVE leases for this worker (excluding those in a RELEASING state)
         SELECT COUNT(1)
             INTO v_current_leases
             FROM leases l
-           WHERE l.worker_id = v_worker_id
+           WHERE l.worker_id = p_worker_id
              AND l.state = 'ACTIVE';
 
         -- Compute ideal share based on weight
@@ -97,7 +91,7 @@ BEGIN
 
         -- Release leases if we are over the fair share
         CALL sp_workers_check_in__release_leases(
-            v_worker_id,
+            p_worker_id,
             v_max_leases,
             v_current_leases,
             v_leases_released
@@ -105,7 +99,7 @@ BEGIN
 
         -- Acquire leases if we are under our fair share
         CALL sp_workers_check_in__acquire_leases(
-            v_worker_id,
+            p_worker_id,
             p_consumer_group_id,
             v_min_leases,
             v_current_leases - v_leases_released,
@@ -116,7 +110,7 @@ BEGIN
 
     -- Return stats for the worker to calculate next check-in time
     SELECT
-        v_worker_id             AS worker_id,
+        p_worker_id             AS worker_id,
         v_active_partitions     AS active_partitions,
         v_active_workers        AS active_workers,
         v_active_workers_weight AS active_workers_weight,
@@ -129,5 +123,5 @@ BEGIN
         v_heartbeat_deadline    AS heartbeat_deadline;
 
     -- LEASED subscription offsets
-    SELECT * FROM leased_subscription_offsets_view WHERE worker_id = v_worker_id;
+    SELECT * FROM leased_subscription_offsets_view WHERE worker_id = p_worker_id;
 END;
