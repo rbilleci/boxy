@@ -36,9 +36,9 @@ public class ProcessorIT extends BaseIT {
         // PUBLISH
         eventDao.publish(TENANT_1, TOPIC_A, "partitionKey", DATA);
         // VALIDATE
-        final var subscriptionOffsets = subscriptionOffsetDao.findLeasable(subscriptionId, 100, 0);
-        assertThat(subscriptionOffsets).hasSize(1);
-        final var result = subscriptionOffsets.getFirst();
+        final var leasable = subscriptionOffsetDao.findLeasable(subscriptionId, 100, 0);
+        assertThat(leasable).hasSize(1);
+        final var result = leasable.getFirst();
         assertThat(result.subscriptionId()).isEqualTo(subscriptionId);
         assertThat(result.committedOffset()).isEqualTo(0L);
     }

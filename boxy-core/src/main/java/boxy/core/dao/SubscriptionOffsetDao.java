@@ -46,11 +46,4 @@ public final class SubscriptionOffsetDao extends BaseDao {
                 subscriptionId, limit, offset);
     }
 
-    public List<SubscriptionOffset> findLeased(long subscriptionId, int limit, int offset) {
-        return query(
-                "SELECT * FROM leased_subscription_offsets_view WHERE subscription_id = ? ORDER BY id LIMIT ? OFFSET ?",
-                SUBSCRIPTION_OFFSET_MAPPER,
-                subscriptionId, limit, offset);
-    }
-
 }
