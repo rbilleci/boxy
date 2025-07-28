@@ -12,7 +12,6 @@ public class SubscriptionOffsetMapper implements RowMapper<SubscriptionOffset> {
                 rs.getLong("id"),
                 rs.getLong("subscription_id"),
                 rs.getLong("partition_id"),
-                rs.getLong("committed_offset"),
-                rs.getLong("high_watermark"));
+                rs.getLong("committed_offset"));
     }
 }

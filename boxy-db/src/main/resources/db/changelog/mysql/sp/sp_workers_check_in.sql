@@ -98,7 +98,6 @@ BEGIN
         -- Release leases if we are over the fair share
         CALL sp_workers_check_in__release_leases(
             v_worker_id,
-            p_consumer_group_id,
             v_max_leases,
             v_current_leases,
             v_leases_released
@@ -129,15 +128,6 @@ BEGIN
         v_heartbeat_interval    AS heartbeat_interval,
         v_heartbeat_deadline    AS heartbeat_deadline;
 
-    -- Return all active leases for this worker (excluding those in a RELEASING state)
-    SELECT
-        so.id AS id,
-        so.subscription_id,
-        so.partition_id,
-        so.committed_offset,
-        so.high_watermark
-    FROM leases l
-    INNER JOIN subscription_offsets_view so ON so.id = l.subscription_offset_id
-    WHERE l.worker_id = v_worker_id
-      AND l.state = 'ACTIVE';
+    -- LEASED subscription offsets
+    SELECT * FROM leased_subscription_offsets_view WHERE worker_id = v_worker_id;
 END;

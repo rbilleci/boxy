@@ -1,10 +1,10 @@
 package boxy.core.dao;
 
 import boxy.core.mapper.SubscriptionOffsetMapper;
-import boxy.core.mapper.WorkerCheckInResultMapper;
+import boxy.core.mapper.CheckInResultMapper;
 import boxy.core.mapper.WorkerMapper;
 import boxy.core.model.Worker;
-import boxy.core.model.WorkerCheckInResult;
+import boxy.core.model.CheckInResult;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
@@ -13,7 +13,7 @@ import java.util.Optional;
 public final class WorkerDao extends BaseDao {
 
     private static final WorkerMapper WORKER_MAPPER = new WorkerMapper();
-    private static final WorkerCheckInResultMapper WORKER_CHECK_IN_RESULT_MAPPER = new WorkerCheckInResultMapper();
+    private static final CheckInResultMapper WORKER_CHECK_IN_RESULT_MAPPER = new CheckInResultMapper();
     private static final SubscriptionOffsetMapper SUBSCRIPTION_OFFSET_MAPPER = new SubscriptionOffsetMapper();
 
     public WorkerDao(DataSource ds) {
@@ -43,9 +43,9 @@ public final class WorkerDao extends BaseDao {
      * @param weight             The worker's weight
      * @return A WorkerCheckInResult containing statistics and all active leases
      */
-    public WorkerCheckInResult checkIn(String nodeId,
-                                       long consumerGroupId,
-                                       double weight) {
+    public CheckInResult checkIn(String nodeId,
+                                 long consumerGroupId,
+                                 double weight) {
         try (final var connection = ds.getConnection();
              final var statement = connection.prepareCall("CALL sp_workers_check_in(?, ?, ?)")) {
             statement.setString(1, nodeId);

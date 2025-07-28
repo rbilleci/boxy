@@ -82,7 +82,6 @@ erDiagram
 - **workers**: registers each node’s `consumer_group`, `node_id`, `weight`, and `last_heartbeat`.
 - **subscription_offsets**: tracks the committed offset per (subscription, partition).
 - **leases**: one row per `subscription_offset` when a node holds a lease, with `state` indicating whether it's 'ACTIVE' or 'RELEASING'.
-- **leases_available_view**: shows active, unleased partitions that can be claimed.
 - **consumer_groups**: stores configuration and precomputed statistics for each consumer group.
 
 ### Consumer Group Statistics
@@ -173,7 +172,7 @@ Each lease row goes through the following states:
 
       [Available] ──(INSERT/UPSERT)──> [ACTIVE] ──(UPDATE)──> [RELEASING] ──(DELETE)──> [Available]
 
-**Available (leases_available_view)**
+**Available (unleased_subscription_offsets_view)**
 
 - Partition is active (high_watermark > committed_offset) but unleased.
 - Any under-loaded worker can pick it up via a randomized grab.
@@ -209,7 +208,7 @@ Releasing --> Idle       : delete lease
       t=0–2s  A processes events 101–105 → in-flight
       t=3s    A commits offset=105, no more in-flight → transition to Releasing
       t=3s    A issues DELETE FROM leases WHERE X → lease row gone
-      t=4s    New event arrives in P42 → shows up in leases_available_view
+      t=4s    New event arrives in P42 → shows up in unleased_subscription_offsets_view
       t=5s    Worker B grabs lease on P42 → begins Processing
 
 
@@ -256,7 +255,7 @@ The work-stealing algorithm is implemented in the `sp_workers_check_in` stored p
    - Released leases are not immediately deleted but enter a 'RELEASING' state with a timestamp.
 
 4. **Grab More**: 
-   - If held leases < Min leases, acquire more leases from the `leases_available_view`.
+   - If held leases < Min leases, acquire more leases from the `unleased_subscription_offsets_view`.
    - The algorithm uses a randomized pivot point to minimize contention.
    - It performs two passes if necessary: first from the pivot to the end, then from the beginning to the pivot.
    - Leases are acquired with state='ACTIVE' and no released_at timestamp.

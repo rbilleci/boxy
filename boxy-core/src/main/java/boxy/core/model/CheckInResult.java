@@ -3,7 +3,7 @@ package boxy.core.model;
 import java.time.Instant;
 import java.util.List;
 
-public record WorkerCheckInResult(
+public record CheckInResult(
         long workerId,
         int activeWorkers,
         double activeWorkersWeight,

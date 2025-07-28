@@ -119,25 +119,6 @@ CREATE TABLE events (
     COMMENT='Append-only event store per partition; JSON payloads in sequence order';
 
 
--- ========================================================
--- VIEW: subscription_offsets_view
---  Provides for each subscription-partition pair:
---    • the last committed offset
---    • the current high-watermark of that partition
---  → Useful for monitoring consumer lag and for tooling that needs
---    both committed and available offsets in one place.
--- ========================================================
-CREATE OR REPLACE ALGORITHM = MERGE VIEW subscription_offsets_view AS
-SELECT
-    so.id,
-    so.subscription_id,
-    so.partition_id,
-    so.committed_offset,
-    p.high_watermark
-FROM subscription_offsets AS so
-    INNER JOIN partitions AS p ON p.id = so.partition_id;
-
-
 CREATE TABLE topics_cache (
   tenant      VARCHAR(255)  NOT NULL,
   topic       VARCHAR(255)  NOT NULL,
@@ -146,27 +127,38 @@ CREATE TABLE topics_cache (
   PRIMARY KEY (tenant, topic)
 ) ENGINE=MEMORY;
 
+
 -- ========================================================
--- VIEW: leases_available_view
---  Shows only those subscription-partition pairs which:
---    • have new events available (high_watermark > committed_offset)
---    • are not currently leased (no unexpired lease row exists)
---  → Designed for workers to pick up “workable” partitions
---    without racing other consumers.
-CREATE OR REPLACE ALGORITHM = MERGE VIEW leases_available_view AS
-SELECT
-    so.id,
-    so.subscription_id,
-    so.partition_id,
-    so.committed_offset,
-    p.high_watermark
-FROM subscription_offsets AS so
-    INNER JOIN partitions AS p ON p.id = so.partition_id AND p.high_watermark > so.committed_offset
-    LEFT JOIN leases AS l ON l.subscription_offset_id = so.id
-    LEFT JOIN workers AS w ON w.id = l.worker_id
+-- VIEW: unleased_subscription_offsets_view
+-- List subscription offsets leases that are not leased and have active work to perform
+CREATE OR REPLACE ALGORITHM = MERGE VIEW unleased_subscription_offsets_view AS
+    SELECT so.*,
+           s.consumer_group_id
+      FROM subscription_offsets so
+      JOIN subscriptions s  ON so.subscription_id = s.id
+      JOIN partitions p     ON so.partition_id = p.id
+ LEFT JOIN leases l         ON so.id = l.subscription_offset_id
+ LEFT JOIN workers w        ON l.worker_id = w.id
     -- A lease is available if:
     -- 1. No lease exists for this subscription offset (l.subscription_offset_id IS NULL)
-    -- 2. The lease exists but the worker has expired (ACTIVE state + worker heartbeat is old)
-    -- Note: Leases in RELEASING state are not available
-    WHERE l.subscription_offset_id IS NULL OR 
-          (l.state = 'ACTIVE' AND w.last_heartbeat < CURRENT_TIMESTAMP(3) - INTERVAL 10 SECOND);
+    -- 2. Or a lease exists but the worker has expired
+     WHERE so.committed_offset < p.high_watermark
+       AND (l.subscription_offset_id IS NULL OR w.last_heartbeat < w.heartbeat_deadline);
+
+
+-- ========================================================
+-- VIEW: leased_subscription_offsets_view
+-- List active leases. Normal use will filter by worker_id
+CREATE OR REPLACE ALGORITHM = MERGE VIEW leased_subscription_offsets_view AS
+    SELECT so.*,
+           w.id AS worker_id,
+           l.subscription_offset_id AS lease_id,
+           l.acquired_at
+      FROM workers w
+      JOIN leases l ON w.id = l.worker_id
+      JOIN subscription_offsets so ON l.subscription_offset_id = so.id
+     WHERE w.last_heartbeat < w.heartbeat_deadline
+       AND l.state = 'ACTIVE'
+  ORDER BY worker_id, so.id;
+
+

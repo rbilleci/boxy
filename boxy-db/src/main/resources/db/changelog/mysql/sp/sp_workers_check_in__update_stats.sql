@@ -18,10 +18,11 @@ BEGIN
     -- ACTIVE PARTITIONS (where high_watermark > committed_offset)
     SELECT COUNT(1)
       INTO p_active_partitions
-      FROM subscription_offsets_view so
-     INNER JOIN subscriptions s ON s.id = so.subscription_id
-     WHERE s.consumer_group_id = p_consumer_group_id
-        AND so.high_watermark > so.committed_offset;
+      FROM subscriptions s
+      JOIN subscription_offsets so ON s.id = so.subscription_id
+      JOIN partitions p ON so.partition_id = p.id
+     WHERE so.committed_offset < p.high_watermark
+       AND s.consumer_group_id = p_consumer_group_id;
 
     -- Get heartbeat configuration values from consumer_groups
     SELECT heartbeat_interval_default, heartbeat_target_qps, heartbeat_interval_min, heartbeat_interval_max

@@ -1,15 +1,15 @@
 package boxy.core.mapper;
 
-import boxy.core.model.WorkerCheckInResult;
+import boxy.core.model.CheckInResult;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
-public class WorkerCheckInResultMapper implements RowMapper<WorkerCheckInResult> {
+public class CheckInResultMapper implements RowMapper<CheckInResult> {
     @Override
-    public WorkerCheckInResult map(ResultSet rs) throws SQLException {
-        return new WorkerCheckInResult(
+    public CheckInResult map(ResultSet rs) throws SQLException {
+        return new CheckInResult(
                 rs.getLong("worker_id"),
                 rs.getInt("active_workers"),
                 rs.getDouble("active_workers_weight"),
@@ -20,9 +20,7 @@ public class WorkerCheckInResultMapper implements RowMapper<WorkerCheckInResult>
                 rs.getInt("min_leases"),
                 rs.getInt("max_leases"),
                 rs.getDouble("heartbeat_interval"),
-                rs.getTimestamp("heartbeat_deadline") == null ?
-                        null :
-                        rs.getTimestamp("heartbeat_deadline").toInstant(),
+                rs.getTimestamp("heartbeat_deadline").toInstant(),
                 new ArrayList<>());
     }
 }
