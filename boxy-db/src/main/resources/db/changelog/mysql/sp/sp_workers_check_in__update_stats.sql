@@ -1,8 +1,8 @@
 CREATE PROCEDURE sp_workers_check_in__update_stats(
     IN p_consumer_group_id BIGINT,
-    OUT p_total_weight INT,
     OUT p_active_partitions INT,
     OUT p_active_workers INT,
+    OUT p_active_workers_weight INT,
     OUT p_heartbeat_interval DOUBLE
 )
 BEGIN
@@ -10,7 +10,7 @@ BEGIN
 
     -- ACTIVE WORKERS
     SELECT COUNT(1), COALESCE(SUM(weight), 0)
-        INTO p_active_workers, p_total_weight
+        INTO p_active_workers, p_active_workers_weight
         FROM workers
        WHERE consumer_group_id = p_consumer_group_id
          AND heartbeat_deadline > CURRENT_TIMESTAMP(3);
@@ -40,10 +40,10 @@ BEGIN
 
     -- Update the stats in the consumer_groups table
     UPDATE consumer_groups
-       SET active_workers = p_active_workers,
-          total_weight = p_total_weight,
-          active_partitions = p_active_partitions,
-          last_updated = CURRENT_TIMESTAMP(3)
+       SET active_workers        = p_active_workers,
+           active_workers_weight = p_active_workers_weight,
+          active_partitions      = p_active_partitions,
+          last_updated             = CURRENT_TIMESTAMP(3)
     WHERE id = p_consumer_group_id;
 
 END;

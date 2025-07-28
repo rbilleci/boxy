@@ -5,7 +5,7 @@ CREATE PROCEDURE sp_workers_check_in(
 )
 BEGIN
     DECLARE v_active_workers INT DEFAULT 0;
-    DECLARE v_total_weight INT DEFAULT 0;
+    DECLARE v_active_workers_weight INT DEFAULT 0;
     DECLARE v_active_partitions INT DEFAULT 0;
     DECLARE v_current_leases INT DEFAULT 0;
     DECLARE v_ideal_share DECIMAL(10,2);
@@ -55,9 +55,9 @@ BEGIN
         -- Recompute consumer group and worker statistics
         CALL sp_workers_check_in__update_stats(
             p_consumer_group_id,
-            v_total_weight,
             v_active_partitions,
             v_active_workers,
+            v_active_workers_weight,
             v_heartbeat_interval);
 
         -- Recompute the worker's heartbeat deadline (based on the actual `v_heartbeat_interval` value)
@@ -81,8 +81,8 @@ BEGIN
              AND l.state = 'ACTIVE';
 
         -- Compute ideal share based on weight
-        IF v_total_weight > 0 AND v_active_partitions > 0 THEN
-            SET v_ideal_share = (p_weight / v_total_weight) * v_active_partitions;
+        IF v_active_workers_weight > 0 AND v_active_partitions > 0 THEN
+            SET v_ideal_share = (p_weight / v_active_workers_weight) * v_active_partitions;
         ELSE
             SET v_ideal_share = 0;
         END IF;
@@ -117,17 +117,17 @@ BEGIN
 
     -- Return stats for the worker to calculate next check-in time
     SELECT
-        v_worker_id as worker_id,
-        v_total_weight AS total_weight,
-        v_active_partitions AS active_partitions,
-        v_active_workers AS active_workers,
-        p_weight AS worker_weight,
-        v_ideal_share AS ideal_share,
+        v_worker_id             AS worker_id,
+        v_active_partitions     AS active_partitions,
+        v_active_workers        AS active_workers,
+        v_active_workers_weight AS active_workers_weight,
+        p_weight                AS worker_weight,
+        v_ideal_share           AS ideal_share,
         v_current_leases - v_leases_released + v_leases_acquired AS current_leases,
-        v_min_leases AS min_leases,
-        v_max_leases AS max_leases,
-        v_heartbeat_interval AS heartbeat_interval,
-        v_heartbeat_deadline AS heartbeat_deadline;
+        v_min_leases            AS min_leases,
+        v_max_leases            AS max_leases,
+        v_heartbeat_interval    AS heartbeat_interval,
+        v_heartbeat_deadline    AS heartbeat_deadline;
 
     -- Return all active leases for this worker (excluding those in a RELEASING state)
     SELECT

@@ -89,15 +89,15 @@ erDiagram
 
 The `consumer_groups` table stores precomputed statistics that are updated with each worker check-in:
 
-- **total_weight**: Sum of weights of all active workers in the consumer group.
 - **active_partitions**: Count of partitions with new events (high_watermark > committed_offset).
-- **active_workers**: Count of workers with valid heartbeats.
+- **active_workers**: Count of workers with valid heartbeats. 
+- **active_workers_weight**: Sum of weights of all active workers in the consumer group.
 - **last_updated**: Timestamp of the last statistics update.
 - **release_deadline**: Configurable deadline (in seconds) for how long a lease remains in the 'RELEASING' state before being deleted.
 
 These statistics are used for:
 
-1. **Fair Share Calculation**: The ideal share of leases for each worker is calculated as `(worker_weight / total_weight) * active_partitions`.
+1. **Fair Share Calculation**: The ideal share of leases for each worker is calculated as `(worker_weight / active_workers_weight) * active_partitions`.
 2. **Adaptive Heartbeat Intervals**: The heartbeat interval is adjusted based on the number of active workers to maintain a target QPS (queries per second) for the cluster.
 3. **Garbage Collection**: The release_deadline determines how long a lease remains in the 'RELEASING' state before being deleted.
 
@@ -240,9 +240,9 @@ The work-stealing algorithm is implemented in the `sp_workers_check_in` stored p
 
 1. **Consumer Group Statistics Update**:
    - The procedure updates precomputed statistics in the `consumer_groups` table:
-     - `total_weight`: Sum of weights of all active workers
      - `active_partitions`: Count of partitions with new events (high_watermark > committed_offset)
-     - `active_workers`: Count of workers with valid heartbeats
+     - `active_workers`: Count of workers with valid heartbeats    
+     - `active_workers_weight`: Sum of weights of all active workers
    - These statistics are used for fair share calculation and adaptive heartbeat intervals.
 
 2. **Fair-Share Calculation**:

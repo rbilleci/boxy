@@ -37,7 +37,7 @@ public class ConsumerGroupIT extends BaseIT {
         System.out.println("[DEBUG_LOG]   Heartbeat Interval Min: " + consumerGroup.heartbeatIntervalMin());
         System.out.println("[DEBUG_LOG]   Heartbeat Interval Max: " + consumerGroup.heartbeatIntervalMax());
         System.out.println("[DEBUG_LOG]   Active Workers Count: " + consumerGroup.activeWorkers());
-        System.out.println("[DEBUG_LOG]   Total Weight: " + consumerGroup.totalWeight());
+        System.out.println("[DEBUG_LOG]   Total Weight: " + consumerGroup.activeWorkersWeight());
         System.out.println("[DEBUG_LOG]   Active Partitions Count: " + consumerGroup.activePartitions());
         System.out.println("[DEBUG_LOG]   Last Updated: " + consumerGroup.lastUpdated());
         assertThat(consumerGroup).extracting(ConsumerGroup::tenant).isEqualTo(TENANT_1);

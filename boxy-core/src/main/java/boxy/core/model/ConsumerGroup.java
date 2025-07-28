@@ -12,8 +12,8 @@ public record ConsumerGroup(
         double heartbeatDeadlineMultiplier,
         double heartbeatQpsTarget,
         int releaseDeadline,
-        int totalWeight,
         int activePartitions,
         int activeWorkers,
+        int activeWorkersWeight,
         Instant lastUpdated) {
 }
