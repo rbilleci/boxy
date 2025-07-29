@@ -20,7 +20,7 @@ public final class LeaseRepository extends BaseRepository {
     }
 
     public void release(long subscriptionOffsetId, String workerId) {
-        update("CALL sp_leases_release(?,?)", subscriptionOffsetId, workerId);
+        update("{CALL sp_leases_release(?,?)}", subscriptionOffsetId, workerId);
     }
 
 }

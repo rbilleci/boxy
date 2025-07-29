@@ -41,7 +41,7 @@ public final class WorkerRepository extends BaseRepository {
                                  long consumerGroupId,
                                  double weight) {
         try (final var connection = ds.getConnection();
-             final var statement = connection.prepareCall("CALL sp_workers_check_in(?, ?, ?)")) {
+             final var statement = connection.prepareCall("{CALL sp_workers_check_in(?, ?, ?)}")) {
             statement.setString(1, workerId);
             statement.setLong(2, consumerGroupId);
             statement.setDouble(3, weight);
@@ -78,7 +78,7 @@ public final class WorkerRepository extends BaseRepository {
 
 
     public void shutdown(long id) {
-        update("CALL sp_workers_shutdown(?)", id);
+        update("{CALL sp_workers_shutdown(?)}", id);
     }
 
 }

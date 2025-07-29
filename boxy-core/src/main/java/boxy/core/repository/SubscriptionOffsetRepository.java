@@ -16,7 +16,7 @@ public final class SubscriptionOffsetRepository extends BaseRepository {
     }
 
     public void commit(long id, long offset) {
-        update("CALL sp_commit_offset(?,?)", id, offset);
+        update("{CALL sp_commit_offset(?,?)}", id, offset);
     }
 
     public Optional<SubscriptionOffset> find(long id) {

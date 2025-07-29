@@ -16,12 +16,12 @@ public final class ConsumerGroupRepository extends BaseRepository {
     }
 
     public long create(String tenant, String name) {
-        return queryOne("CALL sp_consumer_groups_create(?, ?)", rs -> rs.getLong(1), tenant, name)
+        return queryOne("{CALL sp_consumer_groups_create(?, ?)}", rs -> rs.getLong(1), tenant, name)
                 .orElseThrow();
     }
 
     public void delete(String tenant, String name) {
-        update("CALL sp_consumer_groups_delete(?, ?)", tenant, name);
+        update("{CALL sp_consumer_groups_delete(?, ?)}", tenant, name);
     }
 
     public Optional<ConsumerGroup> find(String tenant, String name) {

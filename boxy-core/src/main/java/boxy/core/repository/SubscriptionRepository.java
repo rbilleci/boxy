@@ -28,12 +28,12 @@ public final class SubscriptionRepository extends BaseRepository {
     }
 
     public long subscribe(String tenant, String consumerGroup, String topic) {
-        return queryOne("CALL sp_topics_subscribe(?,?,?)", rs -> rs.getLong(1), tenant, consumerGroup, topic)
+        return queryOne("{CALL sp_topics_subscribe(?,?,?)}", rs -> rs.getLong(1), tenant, consumerGroup, topic)
                 .orElseThrow();
     }
 
     public void unsubscribe(String tenant, String consumerGroup, String topic) {
-        update("CALL sp_topics_unsubscribe(?,?,?)", tenant, consumerGroup, topic);
+        update("{CALL sp_topics_unsubscribe(?,?,?)}", tenant, consumerGroup, topic);
     }
 
     public List<Subscription> findAll(int limit, int offset) {
