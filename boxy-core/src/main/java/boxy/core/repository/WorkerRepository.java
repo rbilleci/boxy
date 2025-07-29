@@ -1,4 +1,4 @@
-package boxy.core.dao;
+package boxy.core.repository;
 
 import boxy.core.mapper.SubscriptionOffsetMapper;
 import boxy.core.mapper.CheckInResultMapper;
@@ -10,13 +10,13 @@ import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.Optional;
 
-public final class WorkerDao extends BaseDao {
+public final class WorkerRepository extends BaseRepository {
 
     private static final WorkerMapper WORKER_MAPPER = new WorkerMapper();
     private static final CheckInResultMapper WORKER_CHECK_IN_RESULT_MAPPER = new CheckInResultMapper();
     private static final SubscriptionOffsetMapper SUBSCRIPTION_OFFSET_MAPPER = new SubscriptionOffsetMapper();
 
-    public WorkerDao(DataSource ds) {
+    public WorkerRepository(DataSource ds) {
         super(ds);
     }
 

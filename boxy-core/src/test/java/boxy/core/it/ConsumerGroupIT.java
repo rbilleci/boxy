@@ -1,6 +1,6 @@
 package boxy.core.it;
 
-import boxy.core.dao.ConsumerGroupDao;
+import boxy.core.repository.ConsumerGroupRepository;
 import boxy.core.model.ConsumerGroup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,19 +12,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers
 public class ConsumerGroupIT extends BaseIT {
 
-    private ConsumerGroupDao consumerGroupDao;
+    private ConsumerGroupRepository consumerGroupRepository;
     private TestData data;
 
     @BeforeEach
     void setup() {
-        consumerGroupDao = new ConsumerGroupDao(dataSource);
+        consumerGroupRepository = new ConsumerGroupRepository(dataSource);
         data = TestData.seed(dataSource);
     }
 
     @Test
     void create_whenCreated_isPresent() {
         System.out.println("[DEBUG_LOG] Running create_whenCreated_isPresent test");
-        final var consumerGroup = consumerGroupDao.find(TENANT_1, CONSUMER_GROUP_A).orElseThrow();
+        final var consumerGroup = consumerGroupRepository.find(TENANT_1, CONSUMER_GROUP_A).orElseThrow();
         System.out.println("[DEBUG_LOG] Found consumer group: " + consumerGroup);
         System.out.println("[DEBUG_LOG] Consumer group fields:");
         System.out.println("[DEBUG_LOG]   ID: " + consumerGroup.id());
@@ -46,25 +46,25 @@ public class ConsumerGroupIT extends BaseIT {
 
     @Test
     void deleted_whenDeleted_isNotPresent() {
-        consumerGroupDao.find(TENANT_1, CONSUMER_GROUP_A).orElseThrow();
-        consumerGroupDao.delete(TENANT_1, CONSUMER_GROUP_A);
-        assertThat(consumerGroupDao.find(TENANT_1, CONSUMER_GROUP_A)).isNotPresent();
+        consumerGroupRepository.find(TENANT_1, CONSUMER_GROUP_A).orElseThrow();
+        consumerGroupRepository.delete(TENANT_1, CONSUMER_GROUP_A);
+        assertThat(consumerGroupRepository.find(TENANT_1, CONSUMER_GROUP_A)).isNotPresent();
     }
 
     @Test
     void find_whenNotCreated_isNotPresent() {
-        assertThat(consumerGroupDao.find("UNDEFINED", "UNDEFINED")).isNotPresent();
+        assertThat(consumerGroupRepository.find("UNDEFINED", "UNDEFINED")).isNotPresent();
     }
 
     @Test
     void findAll_whenPaging_returnsCorrectItems() {
-        assertThat(consumerGroupDao.findAll(100, 0))
+        assertThat(consumerGroupRepository.findAll(100, 0))
                 .hasSize(data.consumerGroups().size())
                 .extracting(ConsumerGroup::name)
                 .containsExactlyInAnyOrder(
                         CONSUMER_GROUP_A, CONSUMER_GROUP_B, CONSUMER_GROUP_C, CONSUMER_GROUP_D,
                         CONSUMER_GROUP_A, CONSUMER_GROUP_B, CONSUMER_GROUP_C, CONSUMER_GROUP_D);
-        assertThat(consumerGroupDao.findAll(100, 0))
+        assertThat(consumerGroupRepository.findAll(100, 0))
                 .hasSize(data.consumerGroups().size())
                 .extracting(ConsumerGroup::tenant)
                 .containsExactlyInAnyOrder(
@@ -74,7 +74,7 @@ public class ConsumerGroupIT extends BaseIT {
 
     @Test
     void findAll_whenEmpty() {
-        consumerGroupDao.findAll(100, 0).forEach(cg -> consumerGroupDao.delete(cg.tenant(), cg.name()));
-        assertThat(consumerGroupDao.findAll(100, 0)).isEmpty();
+        consumerGroupRepository.findAll(100, 0).forEach(cg -> consumerGroupRepository.delete(cg.tenant(), cg.name()));
+        assertThat(consumerGroupRepository.findAll(100, 0)).isEmpty();
     }
 }

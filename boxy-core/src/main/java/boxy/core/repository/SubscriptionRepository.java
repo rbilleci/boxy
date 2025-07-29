@@ -1,4 +1,4 @@
-package boxy.core.dao;
+package boxy.core.repository;
 
 import boxy.core.mapper.SubscriptionMapper;
 import boxy.core.model.Subscription;
@@ -7,11 +7,11 @@ import javax.sql.DataSource;
 import java.util.List;
 import java.util.Optional;
 
-public final class SubscriptionDao extends BaseDao {
+public final class SubscriptionRepository extends BaseRepository {
 
     private static final SubscriptionMapper SUBSCRIPTION_MAPPER = new SubscriptionMapper();
 
-    public SubscriptionDao(DataSource ds) {
+    public SubscriptionRepository(DataSource ds) {
         super(ds);
     }
 

@@ -1,4 +1,4 @@
-package boxy.core.dao;
+package boxy.core.repository;
 
 import boxy.core.mapper.PartitionMapper;
 import boxy.core.model.Partition;
@@ -6,11 +6,11 @@ import boxy.core.model.Partition;
 import javax.sql.DataSource;
 import java.util.Optional;
 
-public final class PartitionDao extends BaseDao {
+public final class PartitionRepository extends BaseRepository {
 
     private static final PartitionMapper PARTITION_MAPPER = new PartitionMapper();
 
-    public PartitionDao(DataSource ds) {
+    public PartitionRepository(DataSource ds) {
         super(ds);
     }
 

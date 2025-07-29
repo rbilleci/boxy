@@ -1,4 +1,4 @@
-package boxy.core.dao;
+package boxy.core.repository;
 
 import boxy.core.mapper.LeaseMapper;
 import boxy.core.model.Lease;
@@ -6,12 +6,12 @@ import boxy.core.model.Lease;
 import javax.sql.DataSource;
 import java.util.Optional;
 
-public final class LeaseDao extends BaseDao {
+public final class LeaseRepository extends BaseRepository {
 
 
     private static final LeaseMapper LEASE_MAPPER = new LeaseMapper();
 
-    public LeaseDao(DataSource ds) {
+    public LeaseRepository(DataSource ds) {
         super(ds);
     }
 

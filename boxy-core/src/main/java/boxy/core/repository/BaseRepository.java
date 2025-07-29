@@ -1,4 +1,4 @@
-package boxy.core.dao;
+package boxy.core.repository;
 
 import boxy.core.DataAccessException;
 import boxy.core.mapper.RowMapper;
@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public abstract class BaseDao {
+public abstract class BaseRepository {
 
     @FunctionalInterface
     interface SQLFunction<T, R> {
@@ -18,7 +18,7 @@ public abstract class BaseDao {
 
     protected final DataSource ds;
 
-    protected BaseDao(DataSource ds) {
+    protected BaseRepository(DataSource ds) {
         this.ds = ds;
     }
 

@@ -1,4 +1,4 @@
-package boxy.core.dao;
+package boxy.core.repository;
 
 import boxy.core.mapper.TopicMapper;
 import boxy.core.model.Topic;
@@ -6,11 +6,11 @@ import boxy.core.model.Topic;
 import javax.sql.DataSource;
 import java.util.Optional;
 
-public final class TopicDao extends BaseDao {
+public final class TopicRepository extends BaseRepository {
 
     private static final TopicMapper TOPIC_MAPPER = new TopicMapper();
 
-    public TopicDao(DataSource ds) {
+    public TopicRepository(DataSource ds) {
         super(ds);
     }
 

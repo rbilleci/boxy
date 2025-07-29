@@ -1,8 +1,8 @@
 package boxy.core.it;
 
-import boxy.core.dao.EventDao;
-import boxy.core.dao.PartitionDao;
-import boxy.core.dao.TopicDao;
+import boxy.core.repository.EventRepository;
+import boxy.core.repository.PartitionRepository;
+import boxy.core.repository.TopicRepository;
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,22 +24,22 @@ public class BenchmarkIT extends BaseIT {
     private static final String DATA = "{\"key\": \"value\"}\n";
 
     private Recorder recorder;
-    private EventDao eventDao;
-    private TopicDao topicDao;
-    private PartitionDao partitionDao;
+    private EventRepository eventRepository;
+    private TopicRepository topicRepository;
+    private PartitionRepository partitionRepository;
 
     @BeforeEach
     void setup() {
-        eventDao = new EventDao(dataSource);
-        topicDao = new TopicDao(dataSource);
-        partitionDao = new PartitionDao(dataSource);
+        eventRepository = new EventRepository(dataSource);
+        topicRepository = new TopicRepository(dataSource);
+        partitionRepository = new PartitionRepository(dataSource);
         recorder = new Recorder(TimeUnit.SECONDS.toNanos(1), 3);
     }
 
     @Test
     void publishAdvanced_singleThreaded() {
-        topicDao.create(TENANT, TOPIC, PARTITIONS);
-        final var partitionId = partitionDao.find(TENANT, TOPIC, 0).orElseThrow().id();
+        topicRepository.create(TENANT, TOPIC, PARTITIONS);
+        final var partitionId = partitionRepository.find(TENANT, TOPIC, 0).orElseThrow().id();
 
         final var histogram = new Histogram(TimeUnit.SECONDS.toNanos(1), 3);
 
@@ -47,7 +47,7 @@ public class BenchmarkIT extends BaseIT {
             histogram.reset();
             for (int i = 0; i < 10_000; i++) {
                 final var start = System.nanoTime();
-                eventDao.publishAdvanced(partitionId, DATA);
+                eventRepository.publishAdvanced(partitionId, DATA);
                 histogram.recordValue(System.nanoTime() - start);
             }
             System.out.printf("Run #%d:%n", run);
@@ -57,14 +57,14 @@ public class BenchmarkIT extends BaseIT {
 
     @Test
     void publish_singleThreaded() {
-        topicDao.create(TENANT, TOPIC, PARTITIONS);
+        topicRepository.create(TENANT, TOPIC, PARTITIONS);
         final var histogram = new Histogram(TimeUnit.SECONDS.toNanos(1), 3);
 
         for (int run = 0; run < 4; run++) {
             histogram.reset();
             for (int i = 0; i < 10_000; i++) {
                 final var start = System.nanoTime();
-                eventDao.publish(TENANT, TOPIC, "k" + i, DATA);
+                eventRepository.publish(TENANT, TOPIC, "k" + i, DATA);
                 histogram.recordValue(System.nanoTime() - start);
             }
             System.out.printf("Run #%d:%n", run);
@@ -74,7 +74,7 @@ public class BenchmarkIT extends BaseIT {
 
     @Test
     void publish_multiThreaded() throws InterruptedException, BrokenBarrierException {
-        topicDao.create(TENANT, TOPIC, PARTITIONS);
+        topicRepository.create(TENANT, TOPIC, PARTITIONS);
         final var threadCount = 10;
         final var opsPerThread = 1_000;
 
@@ -89,7 +89,7 @@ public class BenchmarkIT extends BaseIT {
                             startBarrier.await();
                             for (int j = 0; j < opsPerThread; j++) {
                                 final var start = System.nanoTime();
-                                eventDao.publish(TENANT, TOPIC, "k" + j, DATA);
+                                eventRepository.publish(TENANT, TOPIC, "k" + j, DATA);
                                 recorder.recordValue(System.nanoTime() - start);
                             }
                         } catch (ArrayIndexOutOfBoundsException | BrokenBarrierException | InterruptedException e) {

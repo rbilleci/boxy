@@ -1,10 +1,10 @@
-package boxy.core.dao;
+package boxy.core.repository;
 
 import javax.sql.DataSource;
 
-public final class EventDao extends BaseDao {
+public final class EventRepository extends BaseRepository {
 
-    public EventDao(DataSource ds) {
+    public EventRepository(DataSource ds) {
         super(ds);
     }
 

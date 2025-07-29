@@ -1,4 +1,4 @@
-package boxy.core.dao;
+package boxy.core.repository;
 
 import boxy.core.mapper.SubscriptionOffsetMapper;
 import boxy.core.model.SubscriptionOffset;
@@ -7,11 +7,11 @@ import javax.sql.DataSource;
 import java.util.List;
 import java.util.Optional;
 
-public final class SubscriptionOffsetDao extends BaseDao {
+public final class SubscriptionOffsetRepository extends BaseRepository {
 
     private static final SubscriptionOffsetMapper SUBSCRIPTION_OFFSET_MAPPER = new SubscriptionOffsetMapper();
 
-    public SubscriptionOffsetDao(DataSource ds) {
+    public SubscriptionOffsetRepository(DataSource ds) {
         super(ds);
     }
 

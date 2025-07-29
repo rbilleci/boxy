@@ -1,6 +1,6 @@
 package boxy.core.it;
 
-import boxy.core.dao.*;
+import boxy.core.repository.*;
 import boxy.core.model.SubscriptionOffset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,12 +12,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers
 public class SubscriptionOffsetIT extends BaseIT {
 
-    private SubscriptionOffsetDao subscriptionOffsetDao;
+    private SubscriptionOffsetRepository subscriptionOffsetRepository;
     private TestData data;
 
     @BeforeEach
     void setup() {
-        subscriptionOffsetDao = new SubscriptionOffsetDao(dataSource);
+        subscriptionOffsetRepository = new SubscriptionOffsetRepository(dataSource);
         data = TestData.seed(dataSource);
     }
 
@@ -28,8 +28,8 @@ public class SubscriptionOffsetIT extends BaseIT {
         final var partitionId = subscriptionOffset.partitionId();
 
         // COMMIT HWM
-        subscriptionOffsetDao.commit(subscriptionOffset.id(), 100L);
-        assertThat(subscriptionOffsetDao.find(subscriptionId, partitionId))
+        subscriptionOffsetRepository.commit(subscriptionOffset.id(), 100L);
+        assertThat(subscriptionOffsetRepository.find(subscriptionId, partitionId))
                 .isPresent()
                 .get()
                 .extracting(SubscriptionOffset::committedOffset)
@@ -43,10 +43,10 @@ public class SubscriptionOffsetIT extends BaseIT {
         final var partitionId = subscriptionOffset.partitionId();
 
         // COMMIT HWM
-        subscriptionOffsetDao.commit(subscriptionOffset.id(), 100L);
-        subscriptionOffsetDao.commit(subscriptionOffset.id(), 101L);
-        subscriptionOffsetDao.commit(subscriptionOffset.id(), 102L);
-        assertThat(subscriptionOffsetDao.find(subscriptionId, partitionId))
+        subscriptionOffsetRepository.commit(subscriptionOffset.id(), 100L);
+        subscriptionOffsetRepository.commit(subscriptionOffset.id(), 101L);
+        subscriptionOffsetRepository.commit(subscriptionOffset.id(), 102L);
+        assertThat(subscriptionOffsetRepository.find(subscriptionId, partitionId))
                 .isPresent()
                 .get()
                 .extracting(SubscriptionOffset::committedOffset)
@@ -60,9 +60,9 @@ public class SubscriptionOffsetIT extends BaseIT {
         final var partitionId = subscriptionOffset.partitionId();
 
         // COMMIT HWM
-        subscriptionOffsetDao.commit(subscriptionOffset.id(), 100L);
-        subscriptionOffsetDao.commit(subscriptionOffset.id(), 10L);
-        assertThat(subscriptionOffsetDao.find(subscriptionId, partitionId))
+        subscriptionOffsetRepository.commit(subscriptionOffset.id(), 100L);
+        subscriptionOffsetRepository.commit(subscriptionOffset.id(), 10L);
+        assertThat(subscriptionOffsetRepository.find(subscriptionId, partitionId))
                 .isPresent()
                 .get()
                 .extracting(SubscriptionOffset::committedOffset)
@@ -76,9 +76,9 @@ public class SubscriptionOffsetIT extends BaseIT {
         final var partitionId = subscriptionOffset.partitionId();
 
         // COMMIT HWM
-        subscriptionOffsetDao.commit(subscriptionOffset.id(), 100L);
-        subscriptionOffsetDao.commit(subscriptionOffset.id(), 100L);
-        assertThat(subscriptionOffsetDao.find(subscriptionId, partitionId))
+        subscriptionOffsetRepository.commit(subscriptionOffset.id(), 100L);
+        subscriptionOffsetRepository.commit(subscriptionOffset.id(), 100L);
+        assertThat(subscriptionOffsetRepository.find(subscriptionId, partitionId))
                 .isPresent()
                 .get()
                 .extracting(SubscriptionOffset::committedOffset)

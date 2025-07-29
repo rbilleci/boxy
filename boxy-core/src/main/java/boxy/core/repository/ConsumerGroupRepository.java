@@ -1,4 +1,4 @@
-package boxy.core.dao;
+package boxy.core.repository;
 
 import boxy.core.mapper.ConsumerGroupMapper;
 import boxy.core.model.ConsumerGroup;
@@ -7,11 +7,11 @@ import javax.sql.DataSource;
 import java.util.List;
 import java.util.Optional;
 
-public final class ConsumerGroupDao extends BaseDao {
+public final class ConsumerGroupRepository extends BaseRepository {
 
     private static final ConsumerGroupMapper CONSUMER_GROUP_MAPPER = new ConsumerGroupMapper();
 
-    public ConsumerGroupDao(DataSource ds) {
+    public ConsumerGroupRepository(DataSource ds) {
         super(ds);
     }
 
