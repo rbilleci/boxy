@@ -106,7 +106,7 @@ CREATE TABLE leases (
 
 CREATE TABLE events (
     id              BIGINT AUTO_INCREMENT PRIMARY KEY,
-    ts              DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) NOT NULL,
+    published_at    DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) NOT NULL,
     partition_id    BIGINT NOT NULL,
     data            JSON   NOT NULL,
     INDEX idx_events__cover(partition_id, id)
