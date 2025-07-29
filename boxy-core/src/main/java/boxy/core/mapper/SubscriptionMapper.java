@@ -1,6 +1,6 @@
 package boxy.core.mapper;
 
-import boxy.core.model.Subscription;
+import boxy.core.domain.Subscription;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

@@ -1,7 +1,7 @@
 package boxy.core.repository;
 
 import boxy.core.mapper.PartitionMapper;
-import boxy.core.model.Partition;
+import boxy.core.domain.Partition;
 
 import javax.sql.DataSource;
 import java.util.Optional;

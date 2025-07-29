@@ -1,6 +1,6 @@
 package boxy.core.mapper;
 
-import boxy.core.model.Worker;
+import boxy.core.domain.Worker;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

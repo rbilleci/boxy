@@ -1,6 +1,6 @@
 package boxy.core.mapper;
 
-import boxy.core.model.Lease;
+import boxy.core.domain.Lease;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

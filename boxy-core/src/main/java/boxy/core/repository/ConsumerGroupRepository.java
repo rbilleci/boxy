@@ -1,7 +1,7 @@
 package boxy.core.repository;
 
 import boxy.core.mapper.ConsumerGroupMapper;
-import boxy.core.model.ConsumerGroup;
+import boxy.core.domain.ConsumerGroup;
 
 import javax.sql.DataSource;
 import java.util.List;

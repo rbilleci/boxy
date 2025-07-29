@@ -1,7 +1,7 @@
 package boxy.core.it;
 
 import boxy.core.repository.*;
-import boxy.core.model.*;
+import boxy.core.domain.*;
 
 import javax.sql.DataSource;
 

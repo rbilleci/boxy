@@ -1,4 +1,4 @@
-package boxy.core.model;
+package boxy.core.domain;
 
 public record Partition(
         long id,

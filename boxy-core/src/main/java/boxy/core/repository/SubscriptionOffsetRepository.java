@@ -1,7 +1,7 @@
 package boxy.core.repository;
 
 import boxy.core.mapper.SubscriptionOffsetMapper;
-import boxy.core.model.SubscriptionOffset;
+import boxy.core.domain.SubscriptionOffset;
 
 import javax.sql.DataSource;
 import java.util.List;

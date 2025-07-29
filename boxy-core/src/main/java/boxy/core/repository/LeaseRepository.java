@@ -1,7 +1,7 @@
 package boxy.core.repository;
 
 import boxy.core.mapper.LeaseMapper;
-import boxy.core.model.Lease;
+import boxy.core.domain.Lease;
 
 import javax.sql.DataSource;
 import java.util.Optional;

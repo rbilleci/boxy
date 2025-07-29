@@ -3,8 +3,8 @@ package boxy.core.repository;
 import boxy.core.mapper.SubscriptionOffsetMapper;
 import boxy.core.mapper.CheckInResultMapper;
 import boxy.core.mapper.WorkerMapper;
-import boxy.core.model.Worker;
-import boxy.core.model.CheckInResult;
+import boxy.core.domain.Worker;
+import boxy.core.domain.CheckInResult;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;

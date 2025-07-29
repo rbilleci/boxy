@@ -1,7 +1,7 @@
 package boxy.core.repository;
 
 import boxy.core.mapper.TopicMapper;
-import boxy.core.model.Topic;
+import boxy.core.domain.Topic;
 
 import javax.sql.DataSource;
 import java.util.Optional;

@@ -1,6 +1,6 @@
 package boxy.core.mapper;
 
-import boxy.core.model.ConsumerGroup;
+import boxy.core.domain.ConsumerGroup;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

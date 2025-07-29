@@ -3,7 +3,7 @@ package boxy.core.it;
 import boxy.core.repository.ConsumerGroupRepository;
 import boxy.core.repository.SubscriptionRepository;
 import boxy.core.repository.TopicRepository;
-import boxy.core.model.Subscription;
+import boxy.core.domain.Subscription;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Testcontainers;

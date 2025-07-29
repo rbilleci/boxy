@@ -1,7 +1,7 @@
 package boxy.core.it;
 
 import boxy.core.repository.*;
-import boxy.core.model.SubscriptionOffset;
+import boxy.core.domain.SubscriptionOffset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Testcontainers;

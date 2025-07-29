@@ -1,6 +1,6 @@
 package boxy.core.mapper;
 
-import boxy.core.model.CheckInResult;
+import boxy.core.domain.CheckInResult;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

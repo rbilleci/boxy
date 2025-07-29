@@ -1,7 +1,7 @@
 package boxy.core.it;
 
 import boxy.core.repository.ConsumerGroupRepository;
-import boxy.core.model.ConsumerGroup;
+import boxy.core.domain.ConsumerGroup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Testcontainers;
