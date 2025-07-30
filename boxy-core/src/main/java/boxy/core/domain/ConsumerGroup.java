@@ -11,6 +11,7 @@ public record ConsumerGroup(
         double heartbeatIntervalMax,
         double heartbeatDeadlineMultiplier,
         double heartbeatTargetQPS,
+        int statisticsRefreshInterval,
         int releaseDeadline,
         int activePartitions,
         int activeWorkers,

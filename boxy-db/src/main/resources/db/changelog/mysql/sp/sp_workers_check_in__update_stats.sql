@@ -24,9 +24,19 @@ BEGIN
      WHERE so.committed_offset < p.high_watermark
        AND s.consumer_group_id = p_consumer_group_id;
 
-    -- Get heartbeat configuration values from consumer_groups
-    SELECT heartbeat_interval_default, heartbeat_target_qps, heartbeat_interval_min, heartbeat_interval_max
-      INTO p_heartbeat_interval, @target_qps, @interval_min, @interval_max
+    -- Get heartbeat configuration values from consumer_groups, including the last statistics update time
+    SELECT heartbeat_interval_default,
+           heartbeat_target_qps,
+           heartbeat_interval_min,
+           heartbeat_interval_max,
+           statistics_refresh_interval,
+           last_updated
+      INTO p_heartbeat_interval,
+           @target_qps,
+           @interval_min,
+           @interval_max,
+           @stats_refresh_interval,
+           @stats_last_updated
       FROM consumer_groups
      WHERE id = p_consumer_group_id;
 
@@ -39,12 +49,14 @@ BEGIN
     SET p_heartbeat_interval = GREATEST(p_heartbeat_interval, @interval_min);
     SET p_heartbeat_interval = LEAST(p_heartbeat_interval, @interval_max);
 
-    -- Update the stats in the consumer_groups table
-    UPDATE consumer_groups
-       SET active_workers        = p_active_workers,
-           active_workers_weight = p_active_workers_weight,
-          active_partitions      = p_active_partitions,
-          last_updated             = CURRENT_TIMESTAMP(3)
-    WHERE id = p_consumer_group_id;
+    -- Update the stats in the consumer_groups table if they are stale
+    IF TIMESTAMPDIFF(SECOND, @stats_last_updated, CURRENT_TIMESTAMP(3)) >= @stats_refresh_interval THEN
+        UPDATE consumer_groups
+           SET active_workers        = p_active_workers,
+               active_workers_weight = p_active_workers_weight,
+               active_partitions     = p_active_partitions,
+               last_updated          = CURRENT_TIMESTAMP(3)
+        WHERE id = p_consumer_group_id;
+    END IF;
 
 END;
