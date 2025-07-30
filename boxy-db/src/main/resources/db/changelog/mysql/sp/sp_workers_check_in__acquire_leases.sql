@@ -6,7 +6,7 @@ CREATE PROCEDURE sp_workers_check_in__acquire_leases(
     OUT p_leases_acquired INT
 )
 BEGIN
-    DECLARE v_random_key DOUBLE;
+    DECLARE v_random_key INT;
     DECLARE p_limit INT;
     DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
 
@@ -15,7 +15,7 @@ BEGIN
     -- First pass based on a random pivot
     IF p_current_leases < p_min_leases THEN
         -- Generate a random key for randomized scanning
-        SET v_random_key = RAND();
+        SET v_random_key = fn_random_int();
         
         -- Find and acquire available leases starting from random offset
         SET p_limit = p_min_leases - p_current_leases;
@@ -26,7 +26,7 @@ BEGIN
                FROM unleased_subscription_offsets_view
               WHERE consumer_group_id = p_consumer_group_id
                 AND random_key >= v_random_key -- Start from a random pivot
-          ORDER BY random_key
+          ORDER BY random_key, id
               LIMIT p_limit
                  ON DUPLICATE KEY UPDATE
                     worker_id = VALUES(worker_id),
@@ -44,7 +44,7 @@ BEGIN
                FROM unleased_subscription_offsets_view
               WHERE consumer_group_id = p_consumer_group_id
                 AND random_key < v_random_key -- Wrap around, fetching from the start
-          ORDER BY random_key
+          ORDER BY random_key, id
               LIMIT p_limit
                  ON DUPLICATE KEY UPDATE
                     worker_id = VALUES(worker_id),

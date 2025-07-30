@@ -4,6 +4,6 @@ public record SubscriptionOffset(
         long id,
         long subscriptionId,
         long partitionId,
-        double randomKey,
+        int randomKey,
         long committedOffset) {
 }

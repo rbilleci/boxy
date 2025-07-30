@@ -12,7 +12,7 @@ public class SubscriptionOffsetMapper implements RowMapper<SubscriptionOffset> {
                 rs.getLong("id"),
                 rs.getLong("subscription_id"),
                 rs.getLong("partition_id"),
-                rs.getDouble("random_key"),
+                rs.getInt("random_key"),
                 rs.getLong("committed_offset"));
     }
 }

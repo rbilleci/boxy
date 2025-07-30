@@ -6,7 +6,7 @@ BEGIN
     DECLARE v_consumer_group_id BIGINT;
     DECLARE v_topic_id BIGINT;
     DECLARE v_id BIGINT;
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; END;
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
 
     START TRANSACTION;
         -- RESOLVE THE TOPIC ID
@@ -21,9 +21,9 @@ BEGIN
         -- INSERT OFFSETS
         SET v_id = LAST_INSERT_ID();
         INSERT INTO subscription_offsets(subscription_id, partition_id, random_key, committed_offset)
-            SELECT v_id, id, RAND(), 0
-            FROM partitions
-            WHERE topic_id = v_topic_id;
+             SELECT v_id, id, fn_random_int(), 0
+               FROM partitions
+              WHERE topic_id = v_topic_id;
     COMMIT;
 
     SELECT v_id AS id;
