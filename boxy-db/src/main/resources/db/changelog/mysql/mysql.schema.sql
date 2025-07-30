@@ -37,7 +37,7 @@ CREATE TABLE consumer_groups (
     release_deadline                INT NOT NULL DEFAULT 10,
     active_partitions               INT NOT NULL DEFAULT 0,
     active_workers                  INT NOT NULL DEFAULT 0,
-    active_workers_limit           INT NOT NULL DEFAULT 16,
+    active_workers_limit            INT NOT NULL DEFAULT 16,
     active_workers_weight           DOUBLE NOT NULL DEFAULT 0,
     last_updated                    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     CONSTRAINT u_consumer_groups UNIQUE (tenant, name)
