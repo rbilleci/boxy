@@ -13,6 +13,7 @@ public class CheckInResultMapper implements RowMapper<CheckInResult> {
                 rs.getString("worker_id"),
                 rs.getInt("active_workers"),
                 rs.getDouble("active_workers_weight"),
+                rs.getInt("active_workers_limit"),
                 rs.getInt("active_partitions"),
                 rs.getDouble("worker_weight"),
                 rs.getDouble("ideal_share"),

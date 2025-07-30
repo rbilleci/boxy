@@ -19,14 +19,19 @@ BEGIN
     DECLARE v_heartbeat_deadline DATETIME(3);
     DECLARE v_heartbeat_deadline_multiplier DOUBLE;
     DECLARE v_heartbeat_deadline_seconds INT;
+    DECLARE v_active_workers_limit INT;
     DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
     
     -- Start transaction to ensure consistency
     START TRANSACTION;
 
         -- Get the heartbeat_interval_default and heartbeat_deadline_multiplier from the consumer_groups table.
-        SELECT heartbeat_interval_default,  heartbeat_deadline_multiplier
-          INTO v_heartbeat_interval_default, v_heartbeat_deadline_multiplier
+        SELECT heartbeat_interval_default,
+               heartbeat_deadline_multiplier,
+               active_workers_limit
+          INTO v_heartbeat_interval_default,
+               v_heartbeat_deadline_multiplier,
+               v_active_workers_limit
           FROM consumer_groups
          WHERE id = p_consumer_group_id;
 
@@ -114,6 +119,7 @@ BEGIN
         v_active_partitions     AS active_partitions,
         v_active_workers        AS active_workers,
         v_active_workers_weight AS active_workers_weight,
+        v_active_workers_limit  AS active_workers_limit,
         p_weight                AS worker_weight,
         v_ideal_share           AS ideal_share,
         v_current_leases - v_leases_released + v_leases_acquired AS current_leases,

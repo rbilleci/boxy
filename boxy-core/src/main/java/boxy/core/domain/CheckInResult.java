@@ -7,6 +7,7 @@ public record CheckInResult(
         String workerId,
         int activeWorkers,
         double activeWorkersWeight,
+        int activeWorkersLimit,
         int activePartitions,
         double workerWeight,
         double idealShare,
