@@ -52,7 +52,8 @@ CREATE TABLE subscriptions (
     topic_id            BIGINT NOT NULL,
     FOREIGN KEY (consumer_group_id) REFERENCES consumer_groups (id) ON DELETE CASCADE,
     FOREIGN KEY (topic_id) REFERENCES topics (id) ON DELETE CASCADE,
-    CONSTRAINT u_subscriptions UNIQUE (consumer_group_id, topic_id)
+    CONSTRAINT u_subscriptions UNIQUE (consumer_group_id, topic_id),
+    INDEX idx_subscriptions__consumer_group (consumer_group_id, id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
@@ -63,14 +64,20 @@ CREATE TABLE subscription_offsets (
     id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
     subscription_id     BIGINT NOT NULL,
     partition_id        BIGINT NOT NULL,
+    random_key          INT    NOT NULL,
     committed_offset    BIGINT NOT NULL DEFAULT 0,
     FOREIGN KEY (subscription_id)   REFERENCES subscriptions (id) ON DELETE CASCADE,
     FOREIGN KEY (partition_id)      REFERENCES partitions (id) ON DELETE CASCADE,
-    CONSTRAINT u_subscription_offsets UNIQUE (subscription_id, partition_id)
+    CONSTRAINT u_subscription_offsets UNIQUE (subscription_id, partition_id),
+    -- Apply multiple indexes on the random key for now (let the optimizer choose the best)
+    INDEX idx_subscription_offsets__random_1 (random_key, id),
+    INDEX idx_subscription_offsets__random_2 (subscription_id, random_key, id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
     COMMENT='Maintains the last committed offset per partition for each subscription';
+
+CREATE INDEX idx_subscription_offsets__random_key ON subscription_offsets(random_key);
 
 
 CREATE TABLE workers (
@@ -95,7 +102,7 @@ CREATE TABLE leases (
     acquired_at             DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     released_at             DATETIME(3) NULL,
     state                   ENUM('ACTIVE', 'RELEASING') NOT NULL DEFAULT 'ACTIVE',
-    INDEX idx_leases__state (state),
+    INDEX idx_leases__state (subscription_offset_id, state),
     INDEX idx_leases__worker (worker_id),
     FOREIGN KEY (subscription_offset_id) REFERENCES subscription_offsets(id),
     FOREIGN KEY (worker_id) REFERENCES workers(id)

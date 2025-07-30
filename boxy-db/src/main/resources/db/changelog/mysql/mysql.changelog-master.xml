@@ -11,6 +11,10 @@
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
+        <sqlFile path="fn/fn_random_int.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
         <!-- STORED PROCEDURES -->
         <sqlFile path="sp/sp_consumer_groups_create.sql"
                  relativeToChangelogFile="true"

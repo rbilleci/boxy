@@ -81,6 +81,8 @@ erDiagram
 
 - **workers**: registers each worker’s `consumer_group`, `weight`, and `heartbeat_detected_at`.
 - **subscription_offsets**: tracks the committed offset per (subscription, partition).
+  Each row is assigned a persistent `random_key` used for evenly
+  distributing the start position when acquiring leases.
 - **leases**: one row per `subscription_offset` when a worker holds a lease, with `state` indicating whether it's 'ACTIVE' or 'RELEASING'.
 - **consumer_groups**: stores configuration and precomputed statistics for each consumer group.
 
