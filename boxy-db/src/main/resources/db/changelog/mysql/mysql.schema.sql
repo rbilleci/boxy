@@ -62,6 +62,7 @@ CREATE TABLE subscription_offsets (
     id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
     subscription_id     BIGINT NOT NULL,
     partition_id        BIGINT NOT NULL,
+    random_key          DOUBLE NOT NULL DEFAULT (RAND()),
     committed_offset    BIGINT NOT NULL DEFAULT 0,
     FOREIGN KEY (subscription_id)   REFERENCES subscriptions (id) ON DELETE CASCADE,
     FOREIGN KEY (partition_id)      REFERENCES partitions (id) ON DELETE CASCADE,
@@ -70,6 +71,8 @@ CREATE TABLE subscription_offsets (
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
     COMMENT='Maintains the last committed offset per partition for each subscription';
+
+CREATE INDEX idx_subscription_offsets__random_key ON subscription_offsets(random_key);
 
 
 CREATE TABLE workers (

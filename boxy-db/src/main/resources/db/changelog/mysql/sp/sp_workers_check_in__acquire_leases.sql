@@ -6,27 +6,27 @@ CREATE PROCEDURE sp_workers_check_in__acquire_leases(
     OUT p_leases_acquired INT
 )
 BEGIN
-    DECLARE v_random_offset BIGINT;
+    DECLARE v_random_key DOUBLE;
     DECLARE p_limit INT;
     DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
 
     SET p_leases_acquired = 0;
 
-    -- First pass based on a random offset
+    -- First pass based on a random pivot
     IF p_current_leases < p_min_leases THEN
-        -- Generate a random offset for randomized scanning
-        SELECT FLOOR(RAND() * (SELECT MAX(id) FROM subscription_offsets)) INTO v_random_offset;
+        -- Generate a random key for randomized scanning
+        SET v_random_key = RAND();
         
         -- Find and acquire available leases starting from random offset
         SET p_limit = p_min_leases - p_current_leases;
         
-        -- First pass: acquire leases from random offset to end
+        -- First pass: acquire leases from random key to end
         INSERT INTO leases (subscription_offset_id, worker_id, state)
              SELECT id, p_worker_id, 'ACTIVE'
                FROM unleased_subscription_offsets_view
               WHERE consumer_group_id = p_consumer_group_id
-                AND id >= v_random_offset -- Start from a random offset
-           ORDER BY id
+                AND random_key >= v_random_key -- Start from a random pivot
+          ORDER BY random_key
               LIMIT p_limit
                  ON DUPLICATE KEY UPDATE
                     worker_id = VALUES(worker_id),
@@ -36,15 +36,15 @@ BEGIN
         SET p_leases_acquired = ROW_COUNT();
     END IF;
 
-    -- Second pass, based on a random offset (when needed)
+    -- Second pass, based on a random key (when needed)
     IF (p_leases_acquired + p_current_leases) < p_min_leases THEN
         SET p_limit = p_min_leases - p_current_leases - p_leases_acquired;
         INSERT INTO leases (subscription_offset_id, worker_id, state)
              SELECT id, p_worker_id, 'ACTIVE'
                FROM unleased_subscription_offsets_view
               WHERE consumer_group_id = p_consumer_group_id
-                AND id < v_random_offset -- Wrap around, fetching from the start
-           ORDER BY id
+                AND random_key < v_random_key -- Wrap around, fetching from the start
+          ORDER BY random_key
               LIMIT p_limit
                  ON DUPLICATE KEY UPDATE
                     worker_id = VALUES(worker_id),
