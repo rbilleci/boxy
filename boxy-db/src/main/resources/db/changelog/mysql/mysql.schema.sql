@@ -28,13 +28,13 @@ CREATE TABLE consumer_groups (
     id                              BIGINT AUTO_INCREMENT PRIMARY KEY,
     tenant                          VARCHAR(255) NOT NULL,
     name                            VARCHAR(255) NOT NULL,
-    heartbeat_interval_default      DOUBLE NOT NULL DEFAULT 3.0,
-    heartbeat_interval_min          DOUBLE NOT NULL DEFAULT 0.10,
-    heartbeat_interval_max          DOUBLE NOT NULL DEFAULT 1000.00,
     heartbeat_deadline_multiplier   DOUBLE NOT NULL DEFAULT 5.0,
+    heartbeat_interval_baseline     DOUBLE NOT NULL DEFAULT 3.0,
+    heartbeat_interval              DOUBLE NOT NULL DEFAULT 15.0,
+    heartbeat_interval_limit        DOUBLE NOT NULL DEFAULT 60.00,
     heartbeat_target_qps            DOUBLE NOT NULL DEFAULT 10.0,
-    statistics_refresh_interval     INT NOT NULL DEFAULT 3,
-    release_deadline                INT NOT NULL DEFAULT 10,
+    metrics_refresh_interval        INT NOT NULL DEFAULT 3,
+    lease_release_period            INT NOT NULL DEFAULT 10,
     active_partitions               INT NOT NULL DEFAULT 0,
     active_workers                  INT NOT NULL DEFAULT 0,
     active_workers_limit            INT NOT NULL DEFAULT 16,
@@ -102,6 +102,7 @@ CREATE TABLE leases (
     version                 BIGINT NOT NULL DEFAULT 1,
     acquired_at             DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     released_at             DATETIME(3) NULL,
+    release_deadline        DATETIME(3) NULL,
     state                   ENUM('ACTIVE', 'RELEASING') NOT NULL DEFAULT 'ACTIVE',
     INDEX idx_leases__state (subscription_offset_id, state),
     INDEX idx_leases__worker (worker_id),
@@ -167,5 +168,3 @@ CREATE OR REPLACE ALGORITHM = MERGE VIEW leased_subscription_offsets_view AS
      WHERE w.heartbeat_detected_at < w.heartbeat_deadline
        AND l.state = 'ACTIVE'
   ORDER BY worker_id, so.id;
-
-

@@ -13,7 +13,7 @@ import java.util.Optional;
 public final class WorkerRepository extends BaseRepository {
 
     private static final WorkerMapper WORKER_MAPPER = new WorkerMapper();
-    private static final CheckInResultMapper WORKER_CHECK_IN_RESULT_MAPPER = new CheckInResultMapper();
+    private static final CheckInResultMapper CHECK_IN_RESULT_MAPPER = new CheckInResultMapper();
     private static final SubscriptionOffsetMapper SUBSCRIPTION_OFFSET_MAPPER = new SubscriptionOffsetMapper();
 
     public WorkerRepository(DataSource ds) {
@@ -41,7 +41,7 @@ public final class WorkerRepository extends BaseRepository {
                                  long consumerGroupId,
                                  double weight) {
         try (final var connection = ds.getConnection();
-             final var statement = connection.prepareCall("{CALL sp_workers_check_in(?, ?, ?)}")) {
+             final var statement = connection.prepareCall("{CALL sp_workers__check_in(?, ?, ?)}")) {
             statement.setString(1, workerId);
             statement.setLong(2, consumerGroupId);
             statement.setDouble(3, weight);
@@ -58,7 +58,7 @@ public final class WorkerRepository extends BaseRepository {
                     throw new SQLException("No statistics found");
                 }
                 // Map the statistics
-                final var workerCheckInResult = WORKER_CHECK_IN_RESULT_MAPPER.map(rs);
+                final var workerCheckInResult = CHECK_IN_RESULT_MAPPER.map(rs);
                 // Record active leases
                 if (statement.getMoreResults()) {
                     try (final var leasesRs = statement.getResultSet()) {
@@ -78,7 +78,7 @@ public final class WorkerRepository extends BaseRepository {
 
 
     public void shutdown(long id) {
-        update("{CALL sp_workers_shutdown(?)}", id);
+        update("{CALL sp_workers__shutdown(?)}", id);
     }
 
 }

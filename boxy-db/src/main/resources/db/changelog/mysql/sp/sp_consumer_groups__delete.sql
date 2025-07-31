@@ -1,4 +1,4 @@
-CREATE PROCEDURE sp_consumer_groups_delete(
+CREATE PROCEDURE sp_consumer_groups__delete(
     IN p_tenant VARCHAR(255),
     IN p_name VARCHAR(255))
 BEGIN

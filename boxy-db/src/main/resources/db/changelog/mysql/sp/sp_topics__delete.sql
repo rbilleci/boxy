@@ -1,4 +1,4 @@
-CREATE PROCEDURE sp_topics_delete(
+CREATE PROCEDURE sp_topics__delete(
     IN p_tenant VARCHAR(255),
     IN p_name VARCHAR(255))
 BEGIN

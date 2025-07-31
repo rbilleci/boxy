@@ -1,4 +1,4 @@
-CREATE PROCEDURE sp_topics_create(
+CREATE PROCEDURE sp_topics__create(
     IN p_tenant VARCHAR(255),
     IN p_name VARCHAR(255),
     IN p_partitions INT)

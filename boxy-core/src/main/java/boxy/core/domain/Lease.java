@@ -8,6 +8,7 @@ public record Lease(
         long version,
         Instant acquiredAt,
         Instant releasedAt,
+        Instant releaseDeadline,
         LeaseState state) {
     
     public enum LeaseState {

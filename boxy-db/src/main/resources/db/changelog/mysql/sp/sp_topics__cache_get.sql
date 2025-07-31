@@ -1,4 +1,4 @@
-CREATE PROCEDURE sp_topics_cache_get(
+CREATE PROCEDURE sp_topics__cache_get(
   IN  p_tenant      VARCHAR(255),
   IN  p_topic       VARCHAR(255),
   OUT p_topic_id    BIGINT,

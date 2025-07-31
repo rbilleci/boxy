@@ -4,17 +4,14 @@ import java.time.Instant;
 import java.util.List;
 
 public record CheckInResult(
-        String workerId,
-        int activeWorkers,
-        double activeWorkersWeight,
-        int activeWorkersLimit,
-        int activePartitions,
-        double workerWeight,
-        double idealShare,
-        int currentLeases,
-        int minLeases,
-        int maxLeases,
         double heartbeatInterval,
         Instant heartbeatDeadline,
+        Status status,
         List<SubscriptionOffset> activeLeases) {
+
+    public enum Status {
+        ACCEPTED,
+        REJECTED
+    }
+
 }

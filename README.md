@@ -94,13 +94,13 @@ The `consumer_groups` table stores precomputed statistics that are updated with 
 - **active_workers**: Count of workers with valid heartbeats. 
 - **active_workers_weight**: Sum of weights of all active workers in the consumer group.
 - **last_updated**: Timestamp of the last statistics update.
-- **release_deadline**: Configurable deadline (in seconds) for how long a lease remains in the 'RELEASING' state before being deleted.
+- **lease_release_period**: Configurable period (in seconds) for how long a lease remains in the 'RELEASING' state before being deleted.
 
 These statistics are used for:
 
 1. **Fair Share Calculation**: The ideal share of leases for each worker is calculated as `(worker_weight / active_workers_weight) * active_partitions`.
 2. **Adaptive Heartbeat Intervals**: The heartbeat interval is adjusted based on the number of active workers to maintain a target QPS (queries per second) for the cluster.
-3. **Garbage Collection**: The release_deadline determines how long a lease remains in the 'RELEASING' state before being deleted.
+3. **Garbage Collection**: The lease_release_period determines how long a lease remains in the 'RELEASING' state before being deleted.
 
 Precomputing these statistics reduces the need for expensive queries during worker check-ins and ensures consistent fair share calculations across all workers.
 
@@ -236,7 +236,7 @@ Properties
   
 ## Work-Stealing Lease Protocol
 
-The work-stealing algorithm is implemented in the `sp_workers_check_in` stored procedure and its sub-procedures. The algorithm works as follows:
+The work-stealing algorithm is implemented in the `sp_workers__check_in` stored procedure and its sub-procedures. The algorithm works as follows:
 
 1. **Consumer Group Statistics Update**:
    - The procedure updates precomputed statistics in the `consumer_groups` table:
@@ -381,9 +381,9 @@ BoxyConsumerGroup consumerGroup = BoxyConsumerGroup.builder()
     .dataSource(dataSource)
     .tenant("mycompany")
     .name("order-processor")
-    .heartbeatIntervalDefault(3.0) // Default heartbeat interval in seconds
+    .heartbeatIntervalBaseline(3.0) // Default heartbeat interval in seconds
     .heartbeatTargetQPS(10.0)      // Target heartbeats per second for the cluster
-    .releaseDeadline(10)           // Seconds to wait before cleaning up releasing leases
+    .leaseReleasePeriod(10)           // Seconds to wait before cleaning up releasing leases
     .build();
 
 BoxyWorker worker = consumerGroup.createWorker(BoxyWorker.builder()

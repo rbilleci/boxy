@@ -1,4 +1,4 @@
-CREATE PROCEDURE sp_events_publish_advanced(
+CREATE PROCEDURE sp_events__publish_advanced(
     IN p_partition_id BIGINT,
     IN p_data JSON)
 BEGIN

@@ -15,48 +15,78 @@
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <!-- STORED PROCEDURES -->
-        <sqlFile path="sp/sp_consumer_groups_create.sql"
+        <!-- SP: WORKERS -->
+        <sqlFile path="sp/sp_workers__delete.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_consumer_groups_delete.sql"
+        <sqlFile path="sp/sp_workers__gc.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_workers_delete.sql"
+        <sqlFile path="sp/sp_workers__heartbeat.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_workers_shutdown.sql"
+        <sqlFile path="sp/sp_workers__refresh_metrics.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_topics_create.sql"
+        <sqlFile path="sp/sp_workers__shutdown.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_topics_delete.sql"
+        <sqlFile path="sp/sp_workers__check_in.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_topics_subscribe.sql"
+
+        <!-- SP: CONSUMER GROUPS -->
+        <sqlFile path="sp/sp_consumer_groups__refresh_metrics.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_topics_unsubscribe.sql"
+        <sqlFile path="sp/sp_consumer_groups__create.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_events_publish.sql"
+        <sqlFile path="sp/sp_consumer_groups__delete.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_events_publish_advanced.sql"
+
+        <!-- SP: TOPICS -->
+        <sqlFile path="sp/sp_topics__create.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_events_publish_multi.sql"
+        <sqlFile path="sp/sp_topics__delete.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_topics__subscribe.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_topics__unsubscribe.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_topics__cache_get.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+
+        <!-- SP: EVENTS -->
+        <sqlFile path="sp/sp_events__publish.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_events__publish_advanced.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_events__publish_multi.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
@@ -64,37 +94,20 @@
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_leases_release.sql"
+
+        <!-- LEASES -->
+        <sqlFile path="sp/sp_leases__release.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_topics_cache_get.sql"
+        <sqlFile path="sp/sp_leases__release_excess.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_workers_check_in__gc.sql"
+        <sqlFile path="sp/sp_leases__acquire.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_workers_check_in__heartbeat.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-        <sqlFile path="sp/sp_workers_check_in__update_stats.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-        <sqlFile path="sp/sp_workers_check_in__release_leases.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-        <sqlFile path="sp/sp_workers_check_in__acquire_leases.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-        <sqlFile path="sp/sp_workers_check_in.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
+
     </changeSet>
 </databaseChangeLog>

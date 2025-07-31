@@ -30,12 +30,11 @@ public class ConsumerGroupIT extends BaseIT {
         System.out.println("[DEBUG_LOG]   ID: " + consumerGroup.id());
         System.out.println("[DEBUG_LOG]   Tenant: " + consumerGroup.tenant());
         System.out.println("[DEBUG_LOG]   Name: " + consumerGroup.name());
-        System.out.println("[DEBUG_LOG]   Heartbeat Interval Default: " + consumerGroup.heartbeatIntervalDefault());
+        System.out.println("[DEBUG_LOG]   Heartbeat Interval Default: " + consumerGroup.heartbeatIntervalBaseline());
         System.out.println("[DEBUG_LOG]   Heartbeat Deadline Multiplier: " + consumerGroup.heartbeatDeadlineMultiplier());
-        System.out.println("[DEBUG_LOG]   Release Deadline: " + consumerGroup.releaseDeadline());
+        System.out.println("[DEBUG_LOG]   Lease Release Period: " + consumerGroup.leaseReleasePeriod());
         System.out.println("[DEBUG_LOG]   Heartbeat QPS Target: " + consumerGroup.heartbeatTargetQPS());
-        System.out.println("[DEBUG_LOG]   Heartbeat Interval Min: " + consumerGroup.heartbeatIntervalMin());
-        System.out.println("[DEBUG_LOG]   Heartbeat Interval Max: " + consumerGroup.heartbeatIntervalMax());
+        System.out.println("[DEBUG_LOG]   Heartbeat Interval Limit: " + consumerGroup.heartbeatIntervalLimit());
         System.out.println("[DEBUG_LOG]   Active Workers Count: " + consumerGroup.activeWorkers());
         System.out.println("[DEBUG_LOG]   Total Weight: " + consumerGroup.activeWorkersWeight());
         System.out.println("[DEBUG_LOG]   Active Partitions Count: " + consumerGroup.activePartitions());
