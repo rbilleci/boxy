@@ -1,4 +1,4 @@
-CREATE PROCEDURE sp_topics_unsubscribe(
+CREATE PROCEDURE sp_topics__unsubscribe(
     IN p_tenant VARCHAR(255),
     IN p_consumer_group VARCHAR(255),
     IN p_topic VARCHAR(255))

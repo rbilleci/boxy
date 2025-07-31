@@ -1,4 +1,4 @@
-CREATE PROCEDURE sp_topics_subscribe(
+CREATE PROCEDURE sp_topics__subscribe(
     IN p_tenant VARCHAR(255),
     IN p_consumer_group VARCHAR(255),
     IN p_topic VARCHAR(255))

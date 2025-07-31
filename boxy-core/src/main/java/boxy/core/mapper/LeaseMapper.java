@@ -14,6 +14,7 @@ public class LeaseMapper implements RowMapper<Lease> {
                 rs.getLong("version"),
                 rs.getTimestamp("acquired_at").toInstant(),
                 rs.getTimestamp("released_at") != null ? rs.getTimestamp("released_at").toInstant() : null,
+                rs.getTimestamp("release_deadline") != null ? rs.getTimestamp("release_deadline").toInstant() : null,
                 Lease.LeaseState.valueOf(rs.getString("state")));
     }
 }

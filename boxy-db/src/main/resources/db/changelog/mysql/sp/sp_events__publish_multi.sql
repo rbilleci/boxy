@@ -1,4 +1,4 @@
-CREATE PROCEDURE sp_events_publish_multi(
+CREATE PROCEDURE sp_events__publish_multi(
     IN p_events JSON)
 BEGIN
     DECLARE v_idx INT DEFAULT 0;
@@ -18,7 +18,7 @@ BEGIN
         SET v_topic  = JSON_UNQUOTE(JSON_EXTRACT(p_events, CONCAT('$[', v_idx, '].topic')));
         SET v_key    = JSON_UNQUOTE(JSON_EXTRACT(p_events, CONCAT('$[', v_idx, '].key')));
         SET v_data   = JSON_EXTRACT(p_events,    CONCAT('$[', v_idx, '].data'));
-        CALL sp_events_publish(v_tenant, v_topic, v_key, v_data);
+        CALL sp_events__publish(v_tenant, v_topic, v_key, v_data);
         SET v_idx = v_idx + 1;
     END WHILE;
 

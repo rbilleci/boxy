@@ -73,8 +73,8 @@ public record TestData(Topic topic,
 
         final var result1 = workerRepository.checkIn(PARTY_1, consumerGroups.get(0).id(), 1);
         final var result2 = workerRepository.checkIn(PARTY_2, consumerGroups.get(1).id(), 1);
-        final var worker1 = workerRepository.find(result1.workerId()).orElseThrow();
-        final var worker2 = workerRepository.find(result2.workerId()).orElseThrow();
+        final var worker1 = workerRepository.find(PARTY_1).orElseThrow();
+        final var worker2 = workerRepository.find(PARTY_2).orElseThrow();
 
         return new TestData(
                 topicA,

@@ -19,12 +19,12 @@ SQL code are **consistent**, **performant**, and **maintainable**.
 ## 2. Naming Conventions
 
 | Element          | Prefix | Style        | Example                     |
-| ---------------- | ------ | ------------ | --------------------------- |
+| ---------------- | ------ | ------------ |-----------------------------|
 | Input Parameter  | `p_`   | `snake_case` | `p_consumer_group_id`       |
 | Output Parameter | `p_`   | `snake_case` | `p_worker_id`               |
 | Local Variable   | `v_`   | `snake_case` | `v_current_count`           |
 | Temporary Table  | `tmp_` | `snake_case` | `tmp_leases_to_release`     |
-| Stored Procedure | —      | `snake_case` | `sp_workers_gc`             |
+| Stored Procedure | —      | `snake_case` | `sp_workers__gc`            |
 | View             | —      | `snake_case` | `subscription_offsets_view` |
 | Table            | —      | `snake_case` | `consumer_group_stats`      |
 
@@ -108,7 +108,7 @@ SQL code are **consistent**, **performant**, and **maintainable**.
 
 * **Single‐Pass Aggregation**: Use `COUNT(*)` and `MAX()` in one query to detect existence and timestamp, avoiding two separate lookups.
 * \*\*Avoid SELECT \***:** Explicitly list needed columns for clarity and to leverage covering indexes.
-* **DRY Config Values**: Fetch constants (e.g., `heartbeat_interval_default`) once at the top of procedures.
+* **DRY Config Values**: Fetch constants (e.g., `heartbeat_interval_baseline`) once at the top of procedures.
 * **Sort & Limit**: When releasing or acquiring items, push `ORDER BY` and `LIMIT` into the core `UPDATE` or `INSERT` to minimize intermediary data.
 
 ---
@@ -129,7 +129,7 @@ SQL code are **consistent**, **performant**, and **maintainable**.
 
 ```sql
 -- Heartbeat upsert with LAST_INSERT_ID
-CREATE PROCEDURE sp_workers_heartbeat(
+CREATE PROCEDURE sp_workers__heartbeat(
   IN p_worker_id VARCHAR(255),
   IN p_interval DOUBLE,
   OUT p_id BIGINT

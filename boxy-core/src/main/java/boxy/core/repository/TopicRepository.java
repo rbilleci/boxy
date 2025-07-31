@@ -15,7 +15,7 @@ public final class TopicRepository extends BaseRepository {
     }
 
     public long create(String tenant, String name, int partitions) {
-        return queryOne("{CALL sp_topics_create(?,?,?)}", rs -> rs.getLong(1), tenant, name, partitions).orElseThrow();
+        return queryOne("{CALL sp_topics__create(?,?,?)}", rs -> rs.getLong(1), tenant, name, partitions).orElseThrow();
     }
 
     public Optional<Topic> find(String tenant, String name) {
@@ -23,7 +23,7 @@ public final class TopicRepository extends BaseRepository {
     }
 
     public void delete(String tenant, String name) {
-        update("{CALL sp_topics_delete(?,?)}", tenant, name);
+        update("{CALL sp_topics__delete(?,?)}", tenant, name);
     }
 
 }
