@@ -4,7 +4,7 @@ import java.time.Instant;
 
 public record Worker(
         String id,
-        long consumerGroupId,
+        long subscriptionId,
         double weight,
         Instant heartbeatDetectedAt,
         double heartbeatInterval,

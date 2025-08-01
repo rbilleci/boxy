@@ -41,16 +41,26 @@
                  splitStatements="false"
                  stripComments="false"/>
 
-        <!-- SP: CONSUMER GROUPS -->
-        <sqlFile path="sp/sp_consumer_groups__refresh_metrics.sql"
+        <!-- SP: NAMESPACES -->
+        <sqlFile path="sp/sp_namespaces__create.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_consumer_groups__create.sql"
+        <sqlFile path="sp/sp_namespaces__delete.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_consumer_groups__delete.sql"
+
+        <!-- SP: SUBSCRIPTIONS -->
+        <sqlFile path="sp/sp_subscriptions__refresh_metrics.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_subscriptions__create.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_subscriptions__delete.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>

@@ -1,6 +1,6 @@
 CREATE PROCEDURE sp_workers__refresh_metrics(
     IN p_worker_id VARCHAR(255),
-    IN p_consumer_group_id BIGINT
+    IN p_subscription_id BIGINT
 )
 BEGIN
     DECLARE v_heartbeat_deadline_multiplier DOUBLE;
@@ -13,8 +13,8 @@ BEGIN
             heartbeat_interval
       INTO  v_heartbeat_deadline_multiplier,
             v_heartbeat_interval
-      FROM consumer_groups
-     WHERE id = p_consumer_group_id;
+      FROM subscriptions
+     WHERE id = p_subscription_id;
 
     -- WORKER UPDATE
     SET v_heartbeat_timeout_period = GREATEST(1, CEILING(v_heartbeat_interval * v_heartbeat_deadline_multiplier));

@@ -1,19 +1,19 @@
 package boxy.core.mapper;
 
-import boxy.core.domain.Topic;
+import boxy.core.domain.Namespace;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class TopicMapper implements RowMapper<Topic> {
+public class NamespaceMapper implements RowMapper<Namespace> {
     @Override
-    public Topic map(ResultSet rs) throws SQLException {
-        return new Topic(
+    public Namespace map(ResultSet rs) throws SQLException {
+        return new Namespace(
                 rs.getLong("id"),
-                rs.getLong("namespace_id"),
+                rs.getString("tenant"),
                 rs.getString("name"),
-                rs.getInt("partitions"),
                 rs.getTimestamp("created_at").toInstant(),
                 rs.getTimestamp("last_modified_at").toInstant());
     }
 }
+

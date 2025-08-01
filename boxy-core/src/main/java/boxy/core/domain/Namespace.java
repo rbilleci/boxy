@@ -2,11 +2,10 @@ package boxy.core.domain;
 
 import java.time.Instant;
 
-public record Topic(
+public record Namespace(
         long id,
-        long namespaceId,
+        String tenant,
         String name,
-        int partitions,
         Instant createdAt,
         Instant lastModifiedAt) {
 }

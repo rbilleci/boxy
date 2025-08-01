@@ -1,15 +1,29 @@
-
-CREATE TABLE topics (
-    id          BIGINT AUTO_INCREMENT PRIMARY KEY,
-    tenant      VARCHAR(255) NOT NULL,
-    name        VARCHAR(255) NOT NULL,
-    partitions  INT NOT NULL DEFAULT 16,
-    INDEX idx_topics__cover (tenant, name, id, partitions),
-    CONSTRAINT u_topics UNIQUE (tenant, name)
+CREATE TABLE namespaces (
+    id      BIGINT AUTO_INCREMENT PRIMARY KEY,
+    tenant  VARCHAR(255) NOT NULL,
+    name    VARCHAR(255) NOT NULL,
+    created_at          DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    last_modified_at    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    CONSTRAINT u_namespaces UNIQUE (tenant, name)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
-    COMMENT='Stores logical topics (namespaces) per tenant, each with a configurable number of partitions';
+    COMMENT='Stores namespaces per tenant';
+
+CREATE TABLE topics (
+    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
+    namespace_id        BIGINT NOT NULL,
+    name                VARCHAR(255) NOT NULL,
+    partitions          INT NOT NULL DEFAULT 16,
+    created_at          DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    last_modified_at    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    INDEX idx_topics__cover (namespace_id, name, id, partitions),
+    CONSTRAINT u_topics UNIQUE (namespace_id, name),
+    FOREIGN KEY (namespace_id) REFERENCES namespaces (id)
+) ENGINE=InnoDB
+    DEFAULT CHARSET=utf8mb4
+    COLLATE=utf8mb4_bin
+    COMMENT='Stores logical topics per namespace';
 
 CREATE TABLE partitions (
     id                  BIGINT AS ((topic_id << 16) + partition_number) STORED PRIMARY KEY,
@@ -22,9 +36,9 @@ CREATE TABLE partitions (
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
-    COMMENT='Tracks individual partitions for each topic, including the current high-watermark offset';
+    COMMENT='Tracks partitions for each topic';
 
-CREATE TABLE consumer_groups (
+CREATE TABLE subscriptions (
     id                              BIGINT AUTO_INCREMENT PRIMARY KEY,
     tenant                          VARCHAR(255) NOT NULL,
     name                            VARCHAR(255) NOT NULL,
@@ -39,62 +53,59 @@ CREATE TABLE consumer_groups (
     active_workers                  INT NOT NULL DEFAULT 0,
     active_workers_limit            INT NOT NULL DEFAULT 16,
     active_workers_weight           DOUBLE NOT NULL DEFAULT 0,
-    last_updated                    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    CONSTRAINT u_consumer_groups UNIQUE (tenant, name)
+    last_modified_at                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    CONSTRAINT u_subscriptions UNIQUE (tenant, name)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
-    COMMENT='Defines consumer groups per tenant, which will track offsets independently and store precomputed statistics';
+    COMMENT='Defines subscriptions per tenant which store consumption state';
 
-
-CREATE TABLE subscriptions (
-    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
-    consumer_group_id   BIGINT NOT NULL,
-    topic_id            BIGINT NOT NULL,
-    FOREIGN KEY (consumer_group_id) REFERENCES consumer_groups (id) ON DELETE CASCADE,
+CREATE TABLE subscription_topics (
+    id               BIGINT AUTO_INCREMENT PRIMARY KEY,
+    subscription_id  BIGINT NOT NULL,
+    topic_id         BIGINT NOT NULL,
+    created_at       DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    FOREIGN KEY (subscription_id) REFERENCES subscriptions (id) ON DELETE CASCADE,
     FOREIGN KEY (topic_id) REFERENCES topics (id) ON DELETE CASCADE,
-    CONSTRAINT u_subscriptions UNIQUE (consumer_group_id, topic_id),
-    INDEX idx_subscriptions__consumer_group (consumer_group_id, id)
+    CONSTRAINT u_subscription_topics UNIQUE (subscription_id, topic_id),
+    INDEX idx_subscription_topics__subscription (subscription_id, id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
-    COMMENT='Joins consumer groups to the topics they subscribe to';
-
+    COMMENT='Links subscriptions to the topics they consume';
 
 CREATE TABLE subscription_offsets (
-    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
-    subscription_id     BIGINT NOT NULL,
-    partition_id        BIGINT NOT NULL,
-    random_key          INT    NOT NULL,
-    committed_offset    BIGINT NOT NULL DEFAULT 0,
-    FOREIGN KEY (subscription_id)   REFERENCES subscriptions (id) ON DELETE CASCADE,
+    id               BIGINT AUTO_INCREMENT PRIMARY KEY,
+    subscription_id  BIGINT NOT NULL,
+    partition_id     BIGINT NOT NULL,
+    random_key       INT    NOT NULL,
+    committed_offset BIGINT NOT NULL DEFAULT 0,
+    FOREIGN KEY (subscription_id)   REFERENCES subscription_topics (id) ON DELETE CASCADE,
     FOREIGN KEY (partition_id)      REFERENCES partitions (id) ON DELETE CASCADE,
     CONSTRAINT u_subscription_offsets UNIQUE (subscription_id, partition_id),
-    -- Apply multiple indexes on the random key for now (let the optimizer choose the best)
     INDEX idx_subscription_offsets__random_1 (random_key, id),
     INDEX idx_subscription_offsets__random_2 (subscription_id, random_key, id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
-    COMMENT='Maintains the last committed offset per partition for each subscription';
+    COMMENT='Maintains the last committed offset per partition for each subscription/topic pair';
 
 CREATE INDEX idx_subscription_offsets__random_key ON subscription_offsets(random_key);
 
-
 CREATE TABLE workers (
     id                   VARCHAR(255) PRIMARY KEY,
-    consumer_group_id    BIGINT       NOT NULL,
+    subscription_id      BIGINT       NOT NULL,
     weight               DOUBLE       NOT NULL DEFAULT 1,
     heartbeat_detected_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     heartbeat_interval   DOUBLE       NOT NULL,
     heartbeat_deadline   DATETIME(3)  NOT NULL,
-    INDEX idx_workers__consumer_group (consumer_group_id),
-    INDEX idx_workers__heartbeat_detected_at (heartbeat_detected_at)
+    INDEX idx_workers__subscription (subscription_id),
+    INDEX idx_workers__heartbeat_detected_at (heartbeat_detected_at),
+    FOREIGN KEY (subscription_id) REFERENCES subscriptions(id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
-    COMMENT='Registered workers per consumer-group, with capacity weight and heartbeat timestamp';
-
+    COMMENT='Registered workers per subscription, with capacity weight and heartbeat timestamp';
 
 CREATE TABLE leases (
     subscription_offset_id  BIGINT PRIMARY KEY,
@@ -113,7 +124,6 @@ CREATE TABLE leases (
     COLLATE=utf8mb4_bin
     COMMENT='Implements distributed locking for processing offsets—tracks worker, version, and state';
 
-
 CREATE TABLE events (
     id              BIGINT AUTO_INCREMENT PRIMARY KEY,
     published_at    DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) NOT NULL,
@@ -126,24 +136,21 @@ CREATE TABLE events (
     ROW_FORMAT = DYNAMIC
     COMMENT='Append-only event store per partition; JSON payloads in sequence order';
 
-
 CREATE TABLE topics_cache (
-  tenant      VARCHAR(255)  NOT NULL,
-  topic       VARCHAR(255)  NOT NULL,
-  topic_id    BIGINT        NOT NULL,
-  partitions  INT NOT NULL,
-  PRIMARY KEY (tenant, topic)
+  tenant       VARCHAR(255)  NOT NULL,
+  namespace    VARCHAR(255)  NOT NULL,
+  topic        VARCHAR(255)  NOT NULL,
+  topic_id     BIGINT        NOT NULL,
+  partitions   INT NOT NULL,
+  PRIMARY KEY (tenant, namespace, topic)
 ) ENGINE=MEMORY;
-
 
 -- ========================================================
 -- VIEW: unleased_subscription_offsets_view
 -- List subscription offsets leases that are not leased and have active work to perform
 CREATE OR REPLACE ALGORITHM = MERGE VIEW unleased_subscription_offsets_view AS
-    SELECT so.*,
-           s.consumer_group_id
+    SELECT so.*
       FROM subscription_offsets so
-      JOIN subscriptions s  ON so.subscription_id = s.id
       JOIN partitions p     ON so.partition_id = p.id
  LEFT JOIN leases l         ON so.id = l.subscription_offset_id
  LEFT JOIN workers w        ON l.worker_id = w.id
@@ -152,7 +159,6 @@ CREATE OR REPLACE ALGORITHM = MERGE VIEW unleased_subscription_offsets_view AS
     -- 2. Or a lease exists but the worker has expired
      WHERE so.committed_offset < p.high_watermark
        AND (l.subscription_offset_id IS NULL OR w.heartbeat_detected_at < w.heartbeat_deadline);
-
 
 -- ========================================================
 -- VIEW: leased_subscription_offsets_view

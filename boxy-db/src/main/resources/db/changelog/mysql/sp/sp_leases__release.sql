@@ -6,10 +6,10 @@ BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
 
     -- GET THE RELEASE PERIOD
-    SELECT consumer_groups.lease_release_period
+    SELECT subscriptions.lease_release_period
       INTO v_release_period
       FROM workers
-      JOIN consumer_groups ON consumer_groups.id = workers.consumer_group_id
+      JOIN subscriptions ON subscriptions.id = workers.subscription_id
      WHERE workers.id = p_worker_id;
 
     -- RELEASE THE LEASE

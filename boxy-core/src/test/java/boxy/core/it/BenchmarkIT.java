@@ -3,6 +3,7 @@ package boxy.core.it;
 import boxy.core.repository.EventRepository;
 import boxy.core.repository.PartitionRepository;
 import boxy.core.repository.TopicRepository;
+import boxy.core.repository.NamespaceRepository;
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.fail;
 public class BenchmarkIT extends BaseIT {
 
     private static final String TENANT = UUID.randomUUID().toString();
+    private static final String NAMESPACE = "benchmark-ns";
     private static final String TOPIC = "this-is-topic-a";
     private static final int PARTITIONS = 16;
     private static final String DATA = "{\"key\": \"value\"}\n";
@@ -27,19 +29,22 @@ public class BenchmarkIT extends BaseIT {
     private EventRepository eventRepository;
     private TopicRepository topicRepository;
     private PartitionRepository partitionRepository;
+    private NamespaceRepository namespaceRepository;
 
     @BeforeEach
     void setup() {
         eventRepository = new EventRepository(dataSource);
         topicRepository = new TopicRepository(dataSource);
         partitionRepository = new PartitionRepository(dataSource);
+        namespaceRepository = new NamespaceRepository(dataSource);
+        namespaceRepository.create(TENANT, NAMESPACE);
         recorder = new Recorder(TimeUnit.SECONDS.toNanos(1), 3);
     }
 
     @Test
     void publishAdvanced_singleThreaded() {
-        topicRepository.create(TENANT, TOPIC, PARTITIONS);
-        final var partitionId = partitionRepository.find(TENANT, TOPIC, 0).orElseThrow().id();
+        topicRepository.create(TENANT, NAMESPACE, TOPIC, PARTITIONS);
+        final var partitionId = partitionRepository.find(TENANT, NAMESPACE, TOPIC, 0).orElseThrow().id();
 
         final var histogram = new Histogram(TimeUnit.SECONDS.toNanos(1), 3);
 
@@ -57,14 +62,14 @@ public class BenchmarkIT extends BaseIT {
 
     @Test
     void publish_singleThreaded() {
-        topicRepository.create(TENANT, TOPIC, PARTITIONS);
+        topicRepository.create(TENANT, NAMESPACE, TOPIC, PARTITIONS);
         final var histogram = new Histogram(TimeUnit.SECONDS.toNanos(1), 3);
 
         for (int run = 0; run < 4; run++) {
             histogram.reset();
             for (int i = 0; i < 10_000; i++) {
                 final var start = System.nanoTime();
-                eventRepository.publish(TENANT, TOPIC, "k" + i, DATA);
+                eventRepository.publish(TENANT, NAMESPACE, TOPIC, "k" + i, DATA);
                 histogram.recordValue(System.nanoTime() - start);
             }
             System.out.printf("Run #%d:%n", run);
@@ -74,7 +79,7 @@ public class BenchmarkIT extends BaseIT {
 
     @Test
     void publish_multiThreaded() throws InterruptedException, BrokenBarrierException {
-        topicRepository.create(TENANT, TOPIC, PARTITIONS);
+        topicRepository.create(TENANT, NAMESPACE, TOPIC, PARTITIONS);
         final var threadCount = 10;
         final var opsPerThread = 1_000;
 
@@ -89,7 +94,7 @@ public class BenchmarkIT extends BaseIT {
                             startBarrier.await();
                             for (int j = 0; j < opsPerThread; j++) {
                                 final var start = System.nanoTime();
-                                eventRepository.publish(TENANT, TOPIC, "k" + j, DATA);
+                                eventRepository.publish(TENANT, NAMESPACE, TOPIC, "k" + j, DATA);
                                 recorder.recordValue(System.nanoTime() - start);
                             }
                         } catch (ArrayIndexOutOfBoundsException | BrokenBarrierException | InterruptedException e) {
