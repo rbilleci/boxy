@@ -143,10 +143,8 @@ CREATE TABLE topics_cache (
 -- VIEW: unleased_subscription_offsets_view
 -- List subscription offsets leases that are not leased and have active work to perform
 CREATE OR REPLACE ALGORITHM = MERGE VIEW unleased_subscription_offsets_view AS
-    SELECT so.*,
-           st.subscription_id
+    SELECT so.*
       FROM subscription_offsets so
-      JOIN subscription_topics st  ON so.subscription_id = st.id
       JOIN partitions p     ON so.partition_id = p.id
  LEFT JOIN leases l         ON so.id = l.subscription_offset_id
  LEFT JOIN workers w        ON l.worker_id = w.id

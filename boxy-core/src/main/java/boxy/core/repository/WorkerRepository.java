@@ -8,6 +8,7 @@ import boxy.core.domain.CheckInResult;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Optional;
 
 public final class WorkerRepository extends BaseRepository {
@@ -23,6 +24,19 @@ public final class WorkerRepository extends BaseRepository {
     public Optional<Worker> find(String id) {
         return queryOne("SELECT * FROM workers WHERE id = ?", WORKER_MAPPER, id);
     }
+
+    public List<Worker> findAll(int limit, int offset) {
+        return query("SELECT * FROM workers ORDER BY id LIMIT ? OFFSET ?", WORKER_MAPPER, limit, offset);
+    }
+
+    public void delete(String id) {
+        update("{CALL sp_workers__delete(?)}", id);
+    }
+
+    public void shutdown(String id) {
+        update("{CALL sp_workers__shutdown(?)}", id);
+    }
+
 
     /**
      * Performs a worker check-in, which:
@@ -52,7 +66,6 @@ public final class WorkerRepository extends BaseRepository {
                 throw new SQLException("Expected statistics result set not returned");
             }
 
-            //
             try (final var rs = statement.getResultSet()) {
                 if (!rs.next()) {
                     throw new SQLException("No statistics found");
@@ -74,11 +87,6 @@ public final class WorkerRepository extends BaseRepository {
         } catch (SQLException e) {
             throw new RuntimeException("Error during worker check-in", e);
         }
-    }
-
-
-    public void shutdown(long id) {
-        update("{CALL sp_workers__shutdown(?)}", id);
     }
 
 }

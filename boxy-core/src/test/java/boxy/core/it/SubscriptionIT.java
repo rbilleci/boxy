@@ -2,6 +2,7 @@ package boxy.core.it;
 
 import boxy.core.repository.SubscriptionRepository;
 import boxy.core.domain.Subscription;
+import boxy.core.repository.WorkerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -13,11 +14,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class SubscriptionIT extends BaseIT {
 
     private SubscriptionRepository subscriptionRepository;
+    private WorkerRepository workerRepository;
     private TestData data;
 
     @BeforeEach
     void setup() {
         subscriptionRepository = new SubscriptionRepository(dataSource);
+        workerRepository = new WorkerRepository(dataSource);
         data = TestData.seed(dataSource);
     }
 
@@ -46,6 +49,7 @@ public class SubscriptionIT extends BaseIT {
     @Test
     void deleted_whenDeleted_isNotPresent() {
         subscriptionRepository.find(TENANT_1, SUBSCRIPTION_A).orElseThrow();
+        workerRepository.findAll(100, 0).forEach(w -> workerRepository.delete(w.id()));
         subscriptionRepository.delete(TENANT_1, SUBSCRIPTION_A);
         assertThat(subscriptionRepository.find(TENANT_1, SUBSCRIPTION_A)).isNotPresent();
     }
@@ -73,6 +77,7 @@ public class SubscriptionIT extends BaseIT {
 
     @Test
     void findAll_whenEmpty() {
+        workerRepository.findAll(100, 0).forEach(w -> workerRepository.delete(w.id()));
         subscriptionRepository.findAll(100, 0).forEach(s -> subscriptionRepository.delete(s.tenant(), s.name()));
         assertThat(subscriptionRepository.findAll(100, 0)).isEmpty();
     }
