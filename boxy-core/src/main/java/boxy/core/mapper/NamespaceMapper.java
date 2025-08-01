@@ -11,7 +11,9 @@ public class NamespaceMapper implements RowMapper<Namespace> {
         return new Namespace(
                 rs.getLong("id"),
                 rs.getString("tenant"),
-                rs.getString("name"));
+                rs.getString("name"),
+                rs.getTimestamp("created_at").toInstant(),
+                rs.getTimestamp("last_modified_at").toInstant());
     }
 }
 

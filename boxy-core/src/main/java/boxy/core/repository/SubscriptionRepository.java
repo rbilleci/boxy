@@ -1,5 +1,7 @@
 package boxy.core.repository;
 
+import boxy.core.mapper.IdMapper;
+import boxy.core.mapper.RowMapper;
 import boxy.core.mapper.SubscriptionMapper;
 import boxy.core.domain.Subscription;
 
@@ -10,13 +12,14 @@ import java.util.Optional;
 public final class SubscriptionRepository extends BaseRepository {
 
     private static final SubscriptionMapper SUBSCRIPTION_MAPPER = new SubscriptionMapper();
+    private static final RowMapper<Long> ID_MAPPER = new IdMapper();
 
     public SubscriptionRepository(DataSource ds) {
         super(ds);
     }
 
     public long create(String tenant, String name) {
-        return queryOne("{CALL sp_subscriptions__create(?, ?)}", rs -> rs.getLong(1), tenant, name)
+        return queryOne("{CALL sp_subscriptions__create(?, ?)}", ID_MAPPER, tenant, name)
                 .orElseThrow();
     }
 

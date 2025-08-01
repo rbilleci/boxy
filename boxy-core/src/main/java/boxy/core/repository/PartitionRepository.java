@@ -14,13 +14,19 @@ public final class PartitionRepository extends BaseRepository {
         super(ds);
     }
 
-    public Optional<Partition> find(long namespaceId, String topic, int partitionNumber) {
+    public Optional<Partition> find(String tenant, String namespace, String topic, int partitionNumber) {
         return queryOne("""
-                        SELECT * FROM partitions p JOIN topics t ON p.topic_id = t.id
-                        WHERE t.namespace_id = ? AND t.name = ? AND p.partition_number = ?
+                        SELECT p.*
+                          FROM partitions p
+                          JOIN topics t ON p.topic_id = t.id
+                          JOIN namespaces n ON t.namespace_id = n.id
+                         WHERE n.tenant = ?
+                           AND n.name = ?
+                           AND t.name = ?
+                           AND p.partition_number = ?
                         """,
                 PARTITION_MAPPER,
-                namespaceId, topic, partitionNumber);
+                tenant, namespace, topic, partitionNumber);
     }
 
 }

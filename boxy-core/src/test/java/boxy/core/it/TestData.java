@@ -47,11 +47,11 @@ public record TestData(Topic topic,
         final var namespaceBId = namespaceRepository.create(TENANT_2, NAMESPACE_B);
 
         // Create the topics
-        topicRepository.create(namespaceAId, TOPIC_A, DEFAULT_PARTITIONS);
-        topicRepository.create(namespaceAId, TOPIC_B, DEFAULT_PARTITIONS);
-        topicRepository.create(namespaceBId, TOPIC_C, DEFAULT_PARTITIONS);
-        topicRepository.create(namespaceBId, TOPIC_D, DEFAULT_PARTITIONS);
-        final var topicA = topicRepository.find(namespaceAId, TOPIC_A).orElseThrow();
+        topicRepository.create(TENANT_1, NAMESPACE_A, TOPIC_A, DEFAULT_PARTITIONS);
+        topicRepository.create(TENANT_1, NAMESPACE_A, TOPIC_B, DEFAULT_PARTITIONS);
+        topicRepository.create(TENANT_2, NAMESPACE_B, TOPIC_C, DEFAULT_PARTITIONS);
+        topicRepository.create(TENANT_2, NAMESPACE_B, TOPIC_D, DEFAULT_PARTITIONS);
+        final var topicA = topicRepository.find(TENANT_1, NAMESPACE_A, TOPIC_A).orElseThrow();
 
         // Create the subscriptions
         subscriptionRepository.create(TENANT_1, SUBSCRIPTION_A);
@@ -65,15 +65,15 @@ public record TestData(Topic topic,
         final var subscriptions = new ArrayList<>(subscriptionRepository.findAll(100, 0));
 
         // Subscribe topics
-        subscriptionTopicRepository.subscribe(TENANT_1, SUBSCRIPTION_A, namespaceAId, TOPIC_A);
-        subscriptionTopicRepository.subscribe(TENANT_1, SUBSCRIPTION_A, namespaceAId, TOPIC_B);
-        subscriptionTopicRepository.subscribe(TENANT_1, SUBSCRIPTION_B, namespaceAId, TOPIC_A);
-        subscriptionTopicRepository.subscribe(TENANT_1, SUBSCRIPTION_B, namespaceAId, TOPIC_B);
+        subscriptionTopicRepository.subscribe(TENANT_1, SUBSCRIPTION_A, NAMESPACE_A, TOPIC_A);
+        subscriptionTopicRepository.subscribe(TENANT_1, SUBSCRIPTION_A, NAMESPACE_A, TOPIC_B);
+        subscriptionTopicRepository.subscribe(TENANT_1, SUBSCRIPTION_B, NAMESPACE_A, TOPIC_A);
+        subscriptionTopicRepository.subscribe(TENANT_1, SUBSCRIPTION_B, NAMESPACE_A, TOPIC_B);
 
-        subscriptionTopicRepository.subscribe(TENANT_2, SUBSCRIPTION_A, namespaceBId, TOPIC_C);
-        subscriptionTopicRepository.subscribe(TENANT_2, SUBSCRIPTION_A, namespaceBId, TOPIC_D);
-        subscriptionTopicRepository.subscribe(TENANT_2, SUBSCRIPTION_B, namespaceBId, TOPIC_C);
-        subscriptionTopicRepository.subscribe(TENANT_2, SUBSCRIPTION_B, namespaceBId, TOPIC_D);
+        subscriptionTopicRepository.subscribe(TENANT_2, SUBSCRIPTION_A, NAMESPACE_B, TOPIC_C);
+        subscriptionTopicRepository.subscribe(TENANT_2, SUBSCRIPTION_A, NAMESPACE_B, TOPIC_D);
+        subscriptionTopicRepository.subscribe(TENANT_2, SUBSCRIPTION_B, NAMESPACE_B, TOPIC_C);
+        subscriptionTopicRepository.subscribe(TENANT_2, SUBSCRIPTION_B, NAMESPACE_B, TOPIC_D);
 
         final var subscriptionTopics = new SubscriptionTopicRepository(ds).findAll(100, 0);
         final var firstSubscriptionTopic = subscriptionTopics.getFirst();

@@ -94,7 +94,7 @@ The `consumer_groups` table stores precomputed statistics that are updated with 
 - **active_partitions**: Count of partitions with new events (high_watermark > committed_offset).
 - **active_workers**: Count of workers with valid heartbeats. 
 - **active_workers_weight**: Sum of weights of all active workers in the subscription.
-- **last_updated**: Timestamp of the last statistics update.
+- **last_modified_at**: Timestamp of the last statistics update.
 - **lease_release_period**: Configurable period (in seconds) for how long a lease remains in the 'RELEASING' state before being deleted.
 
 These statistics are used for:

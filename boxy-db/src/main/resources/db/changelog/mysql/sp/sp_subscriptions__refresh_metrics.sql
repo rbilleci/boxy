@@ -51,7 +51,7 @@ BEGIN
            active_workers_weight = v_active_workers_weight,
            active_partitions = v_active_partitions,
            heartbeat_interval = v_heartbeat_interval,
-           last_updated = CURRENT_TIMESTAMP(3)
+           last_modified_at = CURRENT_TIMESTAMP(3)
      WHERE id = p_subscription_id;
 
 END;

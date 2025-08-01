@@ -23,6 +23,6 @@ public class SubscriptionMapper implements RowMapper<Subscription> {
                 rs.getInt("active_workers"),
                 rs.getInt("active_workers_limit"),
                 rs.getDouble("active_workers_weight"),
-                rs.getTimestamp("last_updated").toInstant());
+                rs.getTimestamp("last_modified_at").toInstant());
     }
 }

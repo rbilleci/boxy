@@ -17,5 +17,5 @@ public record Subscription(
         int activeWorkers,
         int activeWorkersLimit,
         double activeWorkersWeight,
-        Instant lastUpdated) {
+        Instant lastModifiedAt) {
 }

@@ -29,8 +29,8 @@ public class SubscriptionTopicIT extends BaseIT {
 
     @Test
     void create_whenCreated_isPresent() {
-        final var subscriptionTopic = subscriptionTopicRepository.find(TENANT_1, SUBSCRIPTION_A, data.namespaceAId(), TOPIC_A);
-        final var topicId = topicRepository.find(data.namespaceAId(), TOPIC_A).orElseThrow().id();
+        final var subscriptionTopic = subscriptionTopicRepository.find(TENANT_1, SUBSCRIPTION_A, NAMESPACE_A, TOPIC_A);
+        final var topicId = topicRepository.find(TENANT_1, NAMESPACE_A, TOPIC_A).orElseThrow().id();
         final var subscriptionId = subscriptionRepository.find(TENANT_1, SUBSCRIPTION_A).orElseThrow().id();
         assertThat(subscriptionTopic).isPresent().get().extracting(SubscriptionTopic::topicId).isEqualTo(topicId);
         assertThat(subscriptionTopic).isPresent().get().extracting(SubscriptionTopic::subscriptionId).isEqualTo(subscriptionId);
@@ -44,13 +44,13 @@ public class SubscriptionTopicIT extends BaseIT {
     @Test
     void delete_whenDeleted_isNotPresent() {
         System.out.println(subscriptionTopicRepository.findAll(100, 0).size());
-        subscriptionTopicRepository.unsubscribe(TENANT_1, SUBSCRIPTION_A, data.namespaceAId(), TOPIC_A);
+        subscriptionTopicRepository.unsubscribe(TENANT_1, SUBSCRIPTION_A, NAMESPACE_A, TOPIC_A);
         System.out.println(subscriptionTopicRepository.findAll(100, 0).size());
-        subscriptionTopicRepository.unsubscribe(TENANT_1, SUBSCRIPTION_A, data.namespaceAId(), TOPIC_B);
+        subscriptionTopicRepository.unsubscribe(TENANT_1, SUBSCRIPTION_A, NAMESPACE_A, TOPIC_B);
         System.out.println(subscriptionTopicRepository.findAll(100, 0).size());
-        subscriptionTopicRepository.unsubscribe(TENANT_2, SUBSCRIPTION_A, data.namespaceBId(), TOPIC_C);
+        subscriptionTopicRepository.unsubscribe(TENANT_2, SUBSCRIPTION_A, NAMESPACE_B, TOPIC_C);
         System.out.println(subscriptionTopicRepository.findAll(100, 0).size());
-        subscriptionTopicRepository.unsubscribe(TENANT_2, SUBSCRIPTION_A, data.namespaceBId(), TOPIC_D);
+        subscriptionTopicRepository.unsubscribe(TENANT_2, SUBSCRIPTION_A, NAMESPACE_B, TOPIC_D);
         System.out.println(subscriptionTopicRepository.findAll(100, 0).size());
         assertThat(subscriptionTopicRepository.findAll(100, 0)).hasSize(4);
     }
@@ -62,19 +62,19 @@ public class SubscriptionTopicIT extends BaseIT {
                 .extracting(SubscriptionTopic::subscriptionId)
                 .containsAll(data.subscriptionTopics().stream().map(SubscriptionTopic::subscriptionId).toList());
         // UNSUBSCRIBE S1
-        subscriptionTopicRepository.unsubscribe(TENANT_1, SUBSCRIPTION_A, data.namespaceAId(), TOPIC_A);
-        subscriptionTopicRepository.unsubscribe(TENANT_1, SUBSCRIPTION_A, data.namespaceAId(), TOPIC_B);
-        subscriptionTopicRepository.unsubscribe(TENANT_2, SUBSCRIPTION_A, data.namespaceBId(), TOPIC_C);
-        subscriptionTopicRepository.unsubscribe(TENANT_2, SUBSCRIPTION_A, data.namespaceBId(), TOPIC_D);
+        subscriptionTopicRepository.unsubscribe(TENANT_1, SUBSCRIPTION_A, NAMESPACE_A, TOPIC_A);
+        subscriptionTopicRepository.unsubscribe(TENANT_1, SUBSCRIPTION_A, NAMESPACE_A, TOPIC_B);
+        subscriptionTopicRepository.unsubscribe(TENANT_2, SUBSCRIPTION_A, NAMESPACE_B, TOPIC_C);
+        subscriptionTopicRepository.unsubscribe(TENANT_2, SUBSCRIPTION_A, NAMESPACE_B, TOPIC_D);
         assertThat(subscriptionTopicRepository.findAll(100, 0)).hasSize(4);
     }
 
     @Test
     void findAll_whenLimitAndOffset_returnsCorrectItems() {
-        final var s1 = subscriptionTopicRepository.find(TENANT_1, SUBSCRIPTION_A, data.namespaceAId(), TOPIC_A).orElseThrow().id();
-        final var s2 = subscriptionTopicRepository.find(TENANT_1, SUBSCRIPTION_A, data.namespaceAId(), TOPIC_B).orElseThrow().id();
-        final var s3 = subscriptionTopicRepository.find(TENANT_1, SUBSCRIPTION_B, data.namespaceAId(), TOPIC_A).orElseThrow().id();
-        final var s4 = subscriptionTopicRepository.find(TENANT_1, SUBSCRIPTION_B, data.namespaceAId(), TOPIC_B).orElseThrow().id();
+        final var s1 = subscriptionTopicRepository.find(TENANT_1, SUBSCRIPTION_A, NAMESPACE_A, TOPIC_A).orElseThrow().id();
+        final var s2 = subscriptionTopicRepository.find(TENANT_1, SUBSCRIPTION_A, NAMESPACE_A, TOPIC_B).orElseThrow().id();
+        final var s3 = subscriptionTopicRepository.find(TENANT_1, SUBSCRIPTION_B, NAMESPACE_A, TOPIC_A).orElseThrow().id();
+        final var s4 = subscriptionTopicRepository.find(TENANT_1, SUBSCRIPTION_B, NAMESPACE_A, TOPIC_B).orElseThrow().id();
         // PAGE 1
         assertThat(new SubscriptionTopicRepository(dataSource).findAll(2, 0))
                 .extracting(SubscriptionTopic::id)

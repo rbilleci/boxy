@@ -1,17 +1,21 @@
 CREATE PROCEDURE sp_topics__subscribe(
     IN p_tenant VARCHAR(255),
     IN p_subscription VARCHAR(255),
-    IN p_namespace_id BIGINT,
+    IN p_namespace  VARCHAR(255),
     IN p_topic VARCHAR(255))
 BEGIN
     DECLARE v_subscription_id BIGINT;
     DECLARE v_topic_id BIGINT;
+    DECLARE v_namespace_id BIGINT;
     DECLARE v_id BIGINT;
     DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
 
     START TRANSACTION;
+        -- RESOLVE THE NAMESPACE ID
+        SELECT id INTO v_namespace_id FROM namespaces WHERE name = p_namespace AND tenant = p_tenant;
+
         -- RESOLVE THE TOPIC ID
-        SELECT id INTO v_topic_id FROM topics WHERE namespace_id = p_namespace_id AND name = p_topic;
+        SELECT id INTO v_topic_id FROM topics WHERE namespace_id = v_namespace_id AND name = p_topic;
 
         -- RESOLVE THE SUBSCRIPTION ID
         SELECT id INTO v_subscription_id FROM subscriptions WHERE tenant = p_tenant AND name = p_subscription;

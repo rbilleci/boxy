@@ -1,7 +1,9 @@
 package boxy.core.repository;
 
 import boxy.core.domain.Namespace;
+import boxy.core.mapper.IdMapper;
 import boxy.core.mapper.NamespaceMapper;
+import boxy.core.mapper.RowMapper;
 
 import javax.sql.DataSource;
 import java.util.Optional;
@@ -9,13 +11,14 @@ import java.util.Optional;
 public final class NamespaceRepository extends BaseRepository {
 
     private static final NamespaceMapper NAMESPACE_MAPPER = new NamespaceMapper();
+    private static final RowMapper<Long> ID_MAPPER = new IdMapper();
 
     public NamespaceRepository(DataSource ds) {
         super(ds);
     }
 
     public long create(String tenant, String name) {
-        return queryOne("{CALL sp_namespaces__create(?, ?)}", rs -> rs.getLong(1), tenant, name).orElseThrow();
+        return queryOne("{CALL sp_namespaces__create(?, ?)}", ID_MAPPER, tenant, name).orElseThrow();
     }
 
     public void delete(String tenant, String name) {

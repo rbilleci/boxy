@@ -32,9 +32,9 @@ public class ProcessorIT extends BaseIT {
 
     @Test
     void leasesAvailable_whenViewHasOneItem_returnsListWithOneItem() {
-        final var subscriptionId = subscriptionTopicRepository.find(TENANT_1, SUBSCRIPTION_A, data.namespaceAId(), TOPIC_A).orElseThrow().id();
+        final var subscriptionId = subscriptionTopicRepository.find(TENANT_1, SUBSCRIPTION_A, NAMESPACE_A, TOPIC_A).orElseThrow().id();
         // PUBLISH
-        eventRepository.publish(data.namespaceAId(), TOPIC_A, "partitionKey", DATA);
+        eventRepository.publish(TENANT_1, NAMESPACE_A, TOPIC_A, "partitionKey", DATA);
         // VALIDATE
         final var leasable = subscriptionOffsetRepository.findLeasable(subscriptionId, 100, 0);
         assertThat(leasable).hasSize(1);
@@ -46,14 +46,14 @@ public class ProcessorIT extends BaseIT {
     @Test
     void leasesAvailable_whenViewHasMultipleItems_returnsAllItems() {
         // PUBLISH
-        eventRepository.publish(data.namespaceAId(), TOPIC_A, "pk1", DATA);
-        eventRepository.publish(data.namespaceAId(), TOPIC_A, "pk2", DATA);
-        eventRepository.publish(data.namespaceAId(), TOPIC_B, "pk3", DATA);
-        eventRepository.publish(data.namespaceAId(), TOPIC_B, "pk4", DATA);
-        eventRepository.publish(data.namespaceBId(), TOPIC_C, "pk5", DATA);
-        eventRepository.publish(data.namespaceBId(), TOPIC_C, "pk6", DATA);
-        eventRepository.publish(data.namespaceBId(), TOPIC_D, "pk7", DATA);
-        eventRepository.publish(data.namespaceBId(), TOPIC_D, "pk8", DATA);
+        eventRepository.publish(TENANT_1, NAMESPACE_A, TOPIC_A, "pk1", DATA);
+        eventRepository.publish(TENANT_1, NAMESPACE_A, TOPIC_A, "pk2", DATA);
+        eventRepository.publish(TENANT_1, NAMESPACE_A, TOPIC_B, "pk3", DATA);
+        eventRepository.publish(TENANT_1, NAMESPACE_A, TOPIC_B, "pk4", DATA);
+        eventRepository.publish(TENANT_2, NAMESPACE_B, TOPIC_C, "pk5", DATA);
+        eventRepository.publish(TENANT_2, NAMESPACE_B, TOPIC_C, "pk6", DATA);
+        eventRepository.publish(TENANT_2, NAMESPACE_B, TOPIC_D, "pk7", DATA);
+        eventRepository.publish(TENANT_2, NAMESPACE_B, TOPIC_D, "pk8", DATA);
         // VALIDATE
         final var leasable = subscriptionOffsetRepository.findLeasable(100, 0);
         assertThat(leasable)

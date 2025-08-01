@@ -12,6 +12,8 @@ public class TopicMapper implements RowMapper<Topic> {
                 rs.getLong("id"),
                 rs.getLong("namespace_id"),
                 rs.getString("name"),
-                rs.getInt("partitions"));
+                rs.getInt("partitions"),
+                rs.getTimestamp("created_at").toInstant(),
+                rs.getTimestamp("last_modified_at").toInstant());
     }
 }

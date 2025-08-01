@@ -2,6 +2,8 @@ CREATE TABLE namespaces (
     id      BIGINT AUTO_INCREMENT PRIMARY KEY,
     tenant  VARCHAR(255) NOT NULL,
     name    VARCHAR(255) NOT NULL,
+    created_at          DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    last_modified_at    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     CONSTRAINT u_namespaces UNIQUE (tenant, name)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
@@ -9,10 +11,12 @@ CREATE TABLE namespaces (
     COMMENT='Stores namespaces per tenant';
 
 CREATE TABLE topics (
-    id            BIGINT AUTO_INCREMENT PRIMARY KEY,
-    namespace_id  BIGINT NOT NULL,
-    name          VARCHAR(255) NOT NULL,
-    partitions    INT NOT NULL DEFAULT 16,
+    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
+    namespace_id        BIGINT NOT NULL,
+    name                VARCHAR(255) NOT NULL,
+    partitions          INT NOT NULL DEFAULT 16,
+    created_at          DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    last_modified_at    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     INDEX idx_topics__cover (namespace_id, name, id, partitions),
     CONSTRAINT u_topics UNIQUE (namespace_id, name),
     FOREIGN KEY (namespace_id) REFERENCES namespaces (id)
@@ -49,7 +53,7 @@ CREATE TABLE subscriptions (
     active_workers                  INT NOT NULL DEFAULT 0,
     active_workers_limit            INT NOT NULL DEFAULT 16,
     active_workers_weight           DOUBLE NOT NULL DEFAULT 0,
-    last_updated                    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    last_modified_at                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     CONSTRAINT u_subscriptions UNIQUE (tenant, name)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
@@ -60,6 +64,7 @@ CREATE TABLE subscription_topics (
     id               BIGINT AUTO_INCREMENT PRIMARY KEY,
     subscription_id  BIGINT NOT NULL,
     topic_id         BIGINT NOT NULL,
+    created_at       DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     FOREIGN KEY (subscription_id) REFERENCES subscriptions (id) ON DELETE CASCADE,
     FOREIGN KEY (topic_id) REFERENCES topics (id) ON DELETE CASCADE,
     CONSTRAINT u_subscription_topics UNIQUE (subscription_id, topic_id),
@@ -132,11 +137,12 @@ CREATE TABLE events (
     COMMENT='Append-only event store per partition; JSON payloads in sequence order';
 
 CREATE TABLE topics_cache (
-  namespace_id BIGINT        NOT NULL,
+  tenant       VARCHAR(255)  NOT NULL,
+  namespace    VARCHAR(255)  NOT NULL,
   topic        VARCHAR(255)  NOT NULL,
   topic_id     BIGINT        NOT NULL,
   partitions   INT NOT NULL,
-  PRIMARY KEY (namespace_id, topic)
+  PRIMARY KEY (tenant, namespace, topic)
 ) ENGINE=MEMORY;
 
 -- ========================================================

@@ -11,6 +11,7 @@ public class SubscriptionTopicMapper implements RowMapper<SubscriptionTopic> {
         return new SubscriptionTopic(
                 rs.getLong("id"),
                 rs.getLong("subscription_id"),
-                rs.getLong("topic_id"));
+                rs.getLong("topic_id"),
+                rs.getTimestamp("created_at").toInstant());
     }
 }

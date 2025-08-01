@@ -41,7 +41,7 @@ public class SubscriptionIT extends BaseIT {
         System.out.println("[DEBUG_LOG]   Active Workers Count: " + subscription.activeWorkers());
         System.out.println("[DEBUG_LOG]   Total Weight: " + subscription.activeWorkersWeight());
         System.out.println("[DEBUG_LOG]   Active Partitions Count: " + subscription.activePartitions());
-        System.out.println("[DEBUG_LOG]   Last Updated: " + subscription.lastUpdated());
+        System.out.println("[DEBUG_LOG]   Last Modified At: " + subscription.lastModifiedAt());
         assertThat(subscription).extracting(Subscription::tenant).isEqualTo(TENANT_1);
         assertThat(subscription).extracting(Subscription::name).isEqualTo(SUBSCRIPTION_A);
     }
