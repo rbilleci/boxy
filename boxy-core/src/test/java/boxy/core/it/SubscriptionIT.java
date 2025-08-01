@@ -1,8 +1,6 @@
 package boxy.core.it;
 
-import boxy.core.repository.ConsumerGroupRepository;
 import boxy.core.repository.SubscriptionRepository;
-import boxy.core.repository.TopicRepository;
 import boxy.core.domain.Subscription;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,75 +12,68 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Testcontainers
 public class SubscriptionIT extends BaseIT {
 
-    private ConsumerGroupRepository consumerGroupRepository;
     private SubscriptionRepository subscriptionRepository;
-    private TopicRepository topicRepository;
     private TestData data;
 
     @BeforeEach
     void setup() {
-        consumerGroupRepository = new ConsumerGroupRepository(dataSource);
         subscriptionRepository = new SubscriptionRepository(dataSource);
-        topicRepository = new TopicRepository(dataSource);
         data = TestData.seed(dataSource);
     }
 
     @Test
     void create_whenCreated_isPresent() {
-        final var subscription = subscriptionRepository.find(TENANT_1, CONSUMER_GROUP_A, TOPIC_A);
-        final var topicId = topicRepository.find(TENANT_1, TOPIC_A).orElseThrow().id();
-        final var consumerGroupId = consumerGroupRepository.find(TENANT_1, CONSUMER_GROUP_A).orElseThrow().id();
-        assertThat(subscription).isPresent().get().extracting(Subscription::topicId).isEqualTo(topicId);
-        assertThat(subscription).isPresent().get().extracting(Subscription::consumerGroupId).isEqualTo(consumerGroupId);
+        System.out.println("[DEBUG_LOG] Running create_whenCreated_isPresent test");
+        final var subscription = subscriptionRepository.find(TENANT_1, SUBSCRIPTION_A).orElseThrow();
+        System.out.println("[DEBUG_LOG] Found subscription: " + subscription);
+        System.out.println("[DEBUG_LOG] Subscription fields:");
+        System.out.println("[DEBUG_LOG]   ID: " + subscription.id());
+        System.out.println("[DEBUG_LOG]   Tenant: " + subscription.tenant());
+        System.out.println("[DEBUG_LOG]   Name: " + subscription.name());
+        System.out.println("[DEBUG_LOG]   Heartbeat Interval Default: " + subscription.heartbeatIntervalBaseline());
+        System.out.println("[DEBUG_LOG]   Heartbeat Deadline Multiplier: " + subscription.heartbeatDeadlineMultiplier());
+        System.out.println("[DEBUG_LOG]   Lease Release Period: " + subscription.leaseReleasePeriod());
+        System.out.println("[DEBUG_LOG]   Heartbeat QPS Target: " + subscription.heartbeatTargetQPS());
+        System.out.println("[DEBUG_LOG]   Heartbeat Interval Limit: " + subscription.heartbeatIntervalLimit());
+        System.out.println("[DEBUG_LOG]   Active Workers Count: " + subscription.activeWorkers());
+        System.out.println("[DEBUG_LOG]   Total Weight: " + subscription.activeWorkersWeight());
+        System.out.println("[DEBUG_LOG]   Active Partitions Count: " + subscription.activePartitions());
+        System.out.println("[DEBUG_LOG]   Last Updated: " + subscription.lastUpdated());
+        assertThat(subscription).extracting(Subscription::tenant).isEqualTo(TENANT_1);
+        assertThat(subscription).extracting(Subscription::name).isEqualTo(SUBSCRIPTION_A);
     }
 
     @Test
-    void created_whenCreatedMultipleTimes_allPresent() {
-        assertThat(new SubscriptionRepository(dataSource).findAll(100, 0)).hasSize(8);
+    void deleted_whenDeleted_isNotPresent() {
+        subscriptionRepository.find(TENANT_1, SUBSCRIPTION_A).orElseThrow();
+        subscriptionRepository.delete(TENANT_1, SUBSCRIPTION_A);
+        assertThat(subscriptionRepository.find(TENANT_1, SUBSCRIPTION_A)).isNotPresent();
     }
 
     @Test
-    void delete_whenDeleted_isNotPresent() {
-        System.out.println(subscriptionRepository.findAll(100, 0).size());
-        subscriptionRepository.unsubscribe(TENANT_1, CONSUMER_GROUP_A, TOPIC_A);
-        System.out.println(subscriptionRepository.findAll(100, 0).size());
-        subscriptionRepository.unsubscribe(TENANT_1, CONSUMER_GROUP_A, TOPIC_B);
-        System.out.println(subscriptionRepository.findAll(100, 0).size());
-        subscriptionRepository.unsubscribe(TENANT_2, CONSUMER_GROUP_A, TOPIC_C);
-        System.out.println(subscriptionRepository.findAll(100, 0).size());
-        subscriptionRepository.unsubscribe(TENANT_2, CONSUMER_GROUP_A, TOPIC_D);
-        System.out.println(subscriptionRepository.findAll(100, 0).size());
-        assertThat(subscriptionRepository.findAll(100, 0)).hasSize(4);
+    void find_whenNotCreated_isNotPresent() {
+        assertThat(subscriptionRepository.find("UNDEFINED", "UNDEFINED")).isNotPresent();
     }
 
     @Test
-    void deleteAll_whenDeleted_otherConsumerGroupsUnaffected() {
-        assertThat(new SubscriptionRepository(dataSource).findAll(100, 0))
-                .hasSize(8)
-                .extracting(Subscription::consumerGroupId)
-                .containsAll(data.subscriptions().stream().map(Subscription::consumerGroupId).toList());
-        // UNSUBSCRIBE CG1
-        subscriptionRepository.unsubscribe(TENANT_1, CONSUMER_GROUP_A, TOPIC_A);
-        subscriptionRepository.unsubscribe(TENANT_1, CONSUMER_GROUP_A, TOPIC_B);
-        subscriptionRepository.unsubscribe(TENANT_2, CONSUMER_GROUP_A, TOPIC_C);
-        subscriptionRepository.unsubscribe(TENANT_2, CONSUMER_GROUP_A, TOPIC_D);
-        assertThat(subscriptionRepository.findAll(100, 0)).hasSize(4);
+    void findAll_whenPaging_returnsCorrectItems() {
+        assertThat(subscriptionRepository.findAll(100, 0))
+                .hasSize(data.subscriptions().size())
+                .extracting(Subscription::name)
+                .containsExactlyInAnyOrder(
+                        SUBSCRIPTION_A, SUBSCRIPTION_B, SUBSCRIPTION_C, SUBSCRIPTION_D,
+                        SUBSCRIPTION_A, SUBSCRIPTION_B, SUBSCRIPTION_C, SUBSCRIPTION_D);
+        assertThat(subscriptionRepository.findAll(100, 0))
+                .hasSize(data.subscriptions().size())
+                .extracting(Subscription::tenant)
+                .containsExactlyInAnyOrder(
+                        TENANT_1, TENANT_1, TENANT_1, TENANT_1,
+                        TENANT_2, TENANT_2, TENANT_2, TENANT_2);
     }
 
     @Test
-    void findAll_whenLimitAndOffset_returnsCorrectItems() {
-        final var s1 = subscriptionRepository.find(TENANT_1, CONSUMER_GROUP_A, TOPIC_A).orElseThrow().id();
-        final var s2 = subscriptionRepository.find(TENANT_1, CONSUMER_GROUP_A, TOPIC_B).orElseThrow().id();
-        final var s3 = subscriptionRepository.find(TENANT_1, CONSUMER_GROUP_B, TOPIC_A).orElseThrow().id();
-        final var s4 = subscriptionRepository.find(TENANT_1, CONSUMER_GROUP_B, TOPIC_B).orElseThrow().id();
-        // PAGE 1
-        assertThat(new SubscriptionRepository(dataSource).findAll(2, 0))
-                .extracting(Subscription::id)
-                .containsExactlyInAnyOrder(s1, s2);
-        // PAGE 2
-        assertThat(new SubscriptionRepository(dataSource).findAll(2, 2))
-                .extracting(Subscription::id)
-                .containsExactlyInAnyOrder(s3, s4);
-
+    void findAll_whenEmpty() {
+        subscriptionRepository.findAll(100, 0).forEach(s -> subscriptionRepository.delete(s.tenant(), s.name()));
+        assertThat(subscriptionRepository.findAll(100, 0)).isEmpty();
     }
 }

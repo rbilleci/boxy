@@ -15,29 +15,24 @@ public final class SubscriptionRepository extends BaseRepository {
         super(ds);
     }
 
-    public Optional<Subscription> find(String tenant, String consumerGroup, String topic) {
-        return queryOne("""
-                        SELECT * FROM subscriptions s
-                            JOIN consumer_groups cg ON s.consumer_group_id = cg.id
-                            JOIN topics t ON s.topic_id = t.id
-                            WHERE cg.tenant = ? AND
-                                cg.name = ? AND
-                                t.name = ?
-                        """, SUBSCRIPTION_MAPPER,
-                tenant, consumerGroup, topic);
-    }
-
-    public long subscribe(String tenant, String consumerGroup, String topic) {
-        return queryOne("{CALL sp_topics__subscribe(?,?,?)}", rs -> rs.getLong(1), tenant, consumerGroup, topic)
+    public long create(String tenant, String name) {
+        return queryOne("{CALL sp_subscriptions__create(?, ?)}", rs -> rs.getLong(1), tenant, name)
                 .orElseThrow();
     }
 
-    public void unsubscribe(String tenant, String consumerGroup, String topic) {
-        update("{CALL sp_topics__unsubscribe(?,?,?)}", tenant, consumerGroup, topic);
+    public void delete(String tenant, String name) {
+        update("{CALL sp_subscriptions__delete(?, ?)}", tenant, name);
+    }
+
+    public Optional<Subscription> find(String tenant, String name) {
+        return queryOne("SELECT * FROM subscriptions WHERE tenant = ? AND name = ?",
+                SUBSCRIPTION_MAPPER,
+                tenant, name);
     }
 
     public List<Subscription> findAll(int limit, int offset) {
-        return query("SELECT * FROM subscriptions ORDER BY id LIMIT ? OFFSET ?", SUBSCRIPTION_MAPPER, limit, offset);
+        return query("SELECT * FROM subscriptions ORDER BY id LIMIT ? OFFSET ?",
+                SUBSCRIPTION_MAPPER,
+                limit, offset);
     }
-
 }

@@ -10,7 +10,7 @@ public class WorkerMapper implements RowMapper<Worker> {
     public Worker map(ResultSet rs) throws SQLException {
         return new Worker(
                 rs.getString("id"),
-                rs.getLong("consumer_group_id"),
+                rs.getLong("subscription_id"),
                 rs.getDouble("weight"),
                 rs.getTimestamp("heartbeat_detected_at").toInstant(),
                 rs.getDouble("heartbeat_interval"),

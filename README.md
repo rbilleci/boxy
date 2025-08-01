@@ -44,7 +44,7 @@ Boxy is released under the **Apache License 2.0** and remains a work in progress
 
 ## Limits
 - Each topic has a practical limit of 1024 partitions, and a technical limit of 65536 partitions
-- Each consumer group has a practical limit of 1024 workers.
+- Each subscription has a practical limit of 1024 workers.
 
 ## Roadmap
 
@@ -70,9 +70,10 @@ erDiagram
     tenants ||--o{ topics : owns
     topics ||--o{ partitions : has
     partitions ||--o{ events : stores
-    consumer_groups ||--o{ subscriptions : owns
-    topics ||--o{ subscriptions : referenced_by
-    subscriptions ||--o{ subscription_offsets : offsets
+    tenants ||--o{ namespaces : owns
+    namespaces ||--o{ topics : owns
+    subscriptions ||--o{ subscription_topics : links
+    subscription_topics ||--o{ subscription_offsets : offsets
     subscription_offsets ||--o{ leases : locks
     workers ||--o{ leases : holds
 ```
@@ -84,7 +85,7 @@ erDiagram
   Each row is assigned a persistent `random_key` used for evenly
   distributing the start position when acquiring leases.
 - **leases**: one row per `subscription_offset` when a worker holds a lease, with `state` indicating whether it's 'ACTIVE' or 'RELEASING'.
-- **consumer_groups**: stores configuration and precomputed statistics for each consumer group.
+- **subscriptions**: stores configuration and precomputed statistics for each subscription.
 
 ### Consumer Group Statistics
 
@@ -92,7 +93,7 @@ The `consumer_groups` table stores precomputed statistics that are updated with 
 
 - **active_partitions**: Count of partitions with new events (high_watermark > committed_offset).
 - **active_workers**: Count of workers with valid heartbeats. 
-- **active_workers_weight**: Sum of weights of all active workers in the consumer group.
+- **active_workers_weight**: Sum of weights of all active workers in the subscription.
 - **last_updated**: Timestamp of the last statistics update.
 - **lease_release_period**: Configurable period (in seconds) for how long a lease remains in the 'RELEASING' state before being deleted.
 
@@ -331,6 +332,7 @@ BoxyProducer producer = BoxyProducer.create(dataSource);
 
 // Publish an event
 String tenant = "mycompany";
+String namespace = "team-a";
 String topic = "orders";
 Map<String, Object> event = Map.of(
     "orderId", "12345",
@@ -339,24 +341,24 @@ Map<String, Object> event = Map.of(
     "timestamp", System.currentTimeMillis()
 );
 
-producer.publish(tenant, topic, event);
+producer.publish(tenant, namespace, topic, event);
 ```
 
 ### Consumer Example
 
 ```java
-// Create a consumer group
+// Create a subscription
 DataSource dataSource = createDataSource(); // Your DataSource implementation
 String tenant = "mycompany";
-String consumerGroup = "order-processor";
-BoxyConsumerGroup consumerGroup = BoxyConsumerGroup.create(dataSource, tenant, consumerGroup);
+String subscription = "order-processor";
+BoxySubscription sub = BoxySubscription.create(dataSource, tenant, subscription);
 
 // Subscribe to a topic
-consumerGroup.subscribe("orders");
+sub.subscribe("team-a", "orders");
 
 // Create a worker
 String id = "worker-1";
-BoxyWorker worker = consumerGroup.createWorker(id);
+BoxyWorker worker = sub.createWorker(id);
 
 // Register event handler
 worker.registerHandler("orders", event -> {
@@ -377,7 +379,7 @@ Runtime.getRuntime().addShutdownHook(new Thread(worker::shutdown));
 You can configure various aspects of Boxy:
 
 ```java
-BoxyConsumerGroup consumerGroup = BoxyConsumerGroup.builder()
+BoxySubscription subscription = BoxySubscription.builder()
     .dataSource(dataSource)
     .tenant("mycompany")
     .name("order-processor")
@@ -386,7 +388,7 @@ BoxyConsumerGroup consumerGroup = BoxyConsumerGroup.builder()
     .leaseReleasePeriod(10)           // Seconds to wait before cleaning up releasing leases
     .build();
 
-BoxyWorker worker = consumerGroup.createWorker(BoxyWorker.builder()
+BoxyWorker worker = subscription.createWorker(BoxyWorker.builder()
     .id("worker-1")
     .weight(2)                     // Higher weight gets proportionally more partitions
     .build());

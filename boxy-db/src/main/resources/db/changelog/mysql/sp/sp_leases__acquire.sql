@@ -1,6 +1,6 @@
 CREATE PROCEDURE sp_leases__acquire(
     IN p_worker_id VARCHAR(255),
-    IN p_consumer_group_id BIGINT,
+    IN p_subscription_id BIGINT,
     IN p_leases_to_acquire INT
 )
 BEGIN
@@ -15,7 +15,7 @@ BEGIN
     INSERT INTO leases (subscription_offset_id, worker_id, state)
          SELECT id, p_worker_id, 'ACTIVE'
            FROM unleased_subscription_offsets_view
-          WHERE consumer_group_id = p_consumer_group_id
+          WHERE subscription_id = p_subscription_id
             AND random_key >= v_random_key -- Start from a random pivot
       ORDER BY random_key, id
           LIMIT v_limit
@@ -32,7 +32,7 @@ BEGIN
         INSERT INTO leases (subscription_offset_id, worker_id, state)
              SELECT id, p_worker_id, 'ACTIVE'
                FROM unleased_subscription_offsets_view
-              WHERE consumer_group_id = p_consumer_group_id
+              WHERE subscription_id = p_subscription_id
                 AND random_key < v_random_key
           ORDER BY random_key, id
               LIMIT v_limit

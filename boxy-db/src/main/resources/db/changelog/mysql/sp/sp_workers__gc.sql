@@ -1,4 +1,4 @@
-CREATE PROCEDURE sp_workers__gc(IN p_consumer_group_id BIGINT)
+CREATE PROCEDURE sp_workers__gc(IN p_subscription_id BIGINT)
 BEGIN
     DECLARE v_worker_id VARCHAR(255);
     DECLARE done INT DEFAULT FALSE;
@@ -8,7 +8,7 @@ BEGIN
         SELECT id
           FROM workers
          WHERE CURRENT_TIMESTAMP(3) >= heartbeat_deadline
-           AND workers.consumer_group_id = p_consumer_group_id
+           AND workers.subscription_id = p_subscription_id
       ORDER BY heartbeat_deadline
          LIMIT 10;
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
@@ -18,10 +18,10 @@ BEGIN
     DELETE leases
       FROM leases
            JOIN subscription_offsets ON subscription_offsets.id = leases.subscription_offset_id
-           JOIN subscriptions ON subscriptions.id = subscription_offsets.id
+           JOIN subscription_topics st ON st.id = subscription_offsets.subscription_id
           WHERE state = 'RELEASING'
             AND CURRENT_TIMESTAMP(3) >= release_deadline
-            AND subscriptions.consumer_group_id = p_consumer_group_id;
+            AND st.subscription_id = p_subscription_id;
 
     -- WORKERS / GARBAGE COLLECTION
     OPEN worker_cursor;

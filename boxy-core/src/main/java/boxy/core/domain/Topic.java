@@ -2,7 +2,7 @@ package boxy.core.domain;
 
 public record Topic(
         long id,
-        String tenant,
+        long namespaceId,
         String name,
         int partitions) {
 }

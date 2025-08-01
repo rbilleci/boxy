@@ -1,22 +1,23 @@
 CREATE PROCEDURE sp_topics__subscribe(
     IN p_tenant VARCHAR(255),
-    IN p_consumer_group VARCHAR(255),
+    IN p_subscription VARCHAR(255),
+    IN p_namespace_id BIGINT,
     IN p_topic VARCHAR(255))
 BEGIN
-    DECLARE v_consumer_group_id BIGINT;
+    DECLARE v_subscription_id BIGINT;
     DECLARE v_topic_id BIGINT;
     DECLARE v_id BIGINT;
     DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
 
     START TRANSACTION;
         -- RESOLVE THE TOPIC ID
-        SELECT id INTO v_topic_id FROM topics WHERE tenant = p_tenant AND name = p_topic;
+        SELECT id INTO v_topic_id FROM topics WHERE namespace_id = p_namespace_id AND name = p_topic;
 
-        -- RESOLVE THE CONSUMER GROUP ID
-        SELECT id INTO v_consumer_group_id FROM consumer_groups WHERE tenant = p_tenant AND name = p_consumer_group;
+        -- RESOLVE THE SUBSCRIPTION ID
+        SELECT id INTO v_subscription_id FROM subscriptions WHERE tenant = p_tenant AND name = p_subscription;
 
-        -- INSERT SUBSCRIPTION
-        INSERT INTO subscriptions(consumer_group_id, topic_id) VALUES (v_consumer_group_id, v_topic_id);
+        -- LINK SUBSCRIPTION TO TOPIC
+        INSERT INTO subscription_topics(subscription_id, topic_id) VALUES (v_subscription_id, v_topic_id);
 
         -- INSERT OFFSETS
         SET v_id = LAST_INSERT_ID();

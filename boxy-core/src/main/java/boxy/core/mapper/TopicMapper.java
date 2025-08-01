@@ -10,7 +10,7 @@ public class TopicMapper implements RowMapper<Topic> {
     public Topic map(ResultSet rs) throws SQLException {
         return new Topic(
                 rs.getLong("id"),
-                rs.getString("tenant"),
+                rs.getLong("namespace_id"),
                 rs.getString("name"),
                 rs.getInt("partitions"));
     }

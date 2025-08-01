@@ -1,5 +1,5 @@
 CREATE PROCEDURE sp_topics__create(
-    IN p_tenant VARCHAR(255),
+    IN p_namespace_id BIGINT,
     IN p_name VARCHAR(255),
     IN p_partitions INT)
 BEGIN
@@ -7,7 +7,7 @@ BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; END;
 
     START TRANSACTION;
-        INSERT INTO topics (tenant, name, partitions) VALUES (p_tenant, p_name, p_partitions);
+        INSERT INTO topics (namespace_id, name, partitions) VALUES (p_namespace_id, p_name, p_partitions);
         SET v_topic_id = LAST_INSERT_ID();
 
         -- INSERT THE PARTITIONS

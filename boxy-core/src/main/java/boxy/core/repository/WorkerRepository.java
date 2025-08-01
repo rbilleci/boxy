@@ -32,18 +32,18 @@ public final class WorkerRepository extends BaseRepository {
      * 4. Releases excess leases or acquires new ones as needed
      * 5. Returns statistics and all active leases
      *
-     * @param workerId          The worker identifier
-     * @param consumerGroupId The consumer group ID
-     * @param weight          The worker's weight
+     * @param workerId       The worker identifier
+     * @param subscriptionId The subscription ID
+     * @param weight         The worker's weight
      * @return A WorkerCheckInResult containing statistics and all active leases
      */
     public CheckInResult checkIn(String workerId,
-                                 long consumerGroupId,
+                                 long subscriptionId,
                                  double weight) {
         try (final var connection = ds.getConnection();
              final var statement = connection.prepareCall("{CALL sp_workers__check_in(?, ?, ?)}")) {
             statement.setString(1, workerId);
-            statement.setLong(2, consumerGroupId);
+            statement.setLong(2, subscriptionId);
             statement.setDouble(3, weight);
 
             // Execute, then process the results

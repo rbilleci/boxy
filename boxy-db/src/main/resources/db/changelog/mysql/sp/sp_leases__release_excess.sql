@@ -1,6 +1,6 @@
 CREATE PROCEDURE sp_leases__release_excess(
     IN p_worker_id VARCHAR(255),
-    IN p_consumer_group_id BIGINT,
+    IN p_subscription_id BIGINT,
     IN p_leases_to_release INT
 )
 BEGIN
@@ -10,8 +10,8 @@ BEGIN
     -- GET THE RELEASE PERIOD
     SELECT lease_release_period
       INTO v_release_period
-      FROM consumer_groups
-     WHERE id = p_consumer_group_id;
+      FROM subscriptions
+     WHERE id = p_subscription_id;
 
     -- Release leases when we have too many
     -- Among the leases held, identify:
