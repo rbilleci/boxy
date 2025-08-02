@@ -7,7 +7,7 @@ public record CheckInResult(
         double heartbeatInterval,
         Instant heartbeatDeadline,
         Status status,
-        List<Cursor> activeLeases) {
+        List<Cursor> leasedCursors) {
 
     public enum Status {
         ACCEPTED,

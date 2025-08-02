@@ -18,15 +18,15 @@ SQL code are **consistent**, **performant**, and **maintainable**.
 
 ## 2. Naming Conventions
 
-| Element          | Prefix | Style        | Example                     |
-| ---------------- | ------ | ------------ |-----------------------------|
-| Input Parameter  | `p_`   | `snake_case` | `p_consumer_group_id`       |
-| Output Parameter | `p_`   | `snake_case` | `p_worker_id`               |
-| Local Variable   | `v_`   | `snake_case` | `v_current_count`           |
-| Temporary Table  | `tmp_` | `snake_case` | `tmp_leases_to_release`     |
-| Stored Procedure | —      | `snake_case` | `sp_workers__gc`            |
-| View             | —      | `snake_case` | `subscription_offsets_view` |
-| Table            | —      | `snake_case` | `consumer_group_stats`      |
+| Element          | Prefix | Style        | Example                 |
+| ---------------- | ------ | ------------ |-------------------------|
+| Input Parameter  | `p_`   | `snake_case` | `p_consumer_group_id`   |
+| Output Parameter | `p_`   | `snake_case` | `p_worker_id`           |
+| Local Variable   | `v_`   | `snake_case` | `v_current_count`       |
+| Temporary Table  | `tmp_` | `snake_case` | `tmp_leases_to_release` |
+| Stored Procedure | —      | `snake_case` | `sp_workers__gc`        |
+| View             | —      | `snake_case` | `cursors_view`          |
+| Table            | —      | `snake_case` | `consumer_group_stats`  |
 
 > **Tip:** Avoid reusing parameter names for local variables to prevent confusion.
 
@@ -93,10 +93,10 @@ SQL code are **consistent**, **performant**, and **maintainable**.
    ```sql
    INSERT INTO leases (...)
    SELECT ...
-   FROM subscription_offsets_view so
+   FROM cursors_view c
    WHERE NOT EXISTS (
      SELECT 1 FROM leases l
-      WHERE l.subscription_id = so.subscription_id
+      WHERE l.subscription_id = c.subscription_id
    )
    ORDER BY RAND()
    LIMIT v_to_acquire;
