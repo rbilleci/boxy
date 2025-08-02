@@ -1,6 +1,6 @@
 package boxy.core.repository;
 
-import boxy.core.mapper.SubscriptionOffsetMapper;
+import boxy.core.mapper.CursorMapper;
 import boxy.core.mapper.CheckInResultMapper;
 import boxy.core.mapper.WorkerMapper;
 import boxy.core.domain.Worker;
@@ -15,7 +15,7 @@ public final class WorkerRepository extends BaseRepository {
 
     private static final WorkerMapper WORKER_MAPPER = new WorkerMapper();
     private static final CheckInResultMapper CHECK_IN_RESULT_MAPPER = new CheckInResultMapper();
-    private static final SubscriptionOffsetMapper SUBSCRIPTION_OFFSET_MAPPER = new SubscriptionOffsetMapper();
+    private static final CursorMapper CURSOR_MAPPER = new CursorMapper();
 
     public WorkerRepository(DataSource ds) {
         super(ds);
@@ -29,31 +29,7 @@ public final class WorkerRepository extends BaseRepository {
         return query("SELECT * FROM workers ORDER BY id LIMIT ? OFFSET ?", WORKER_MAPPER, limit, offset);
     }
 
-    public void delete(String id) {
-        update("{CALL sp_workers__delete(?)}", id);
-    }
-
-    public void shutdown(String id) {
-        update("{CALL sp_workers__shutdown(?)}", id);
-    }
-
-
-    /**
-     * Performs a worker check-in, which:
-     * 1. Updates the worker's heartbeat
-     * 2. Cleans up expired workers
-     * 3. Calculates fair share of leases
-     * 4. Releases excess leases or acquires new ones as needed
-     * 5. Returns statistics and all active leases
-     *
-     * @param workerId       The worker identifier
-     * @param subscriptionId The subscription ID
-     * @param weight         The worker's weight
-     * @return A WorkerCheckInResult containing statistics and all active leases
-     */
-    public CheckInResult checkIn(String workerId,
-                                 long subscriptionId,
-                                 double weight) {
+    public CheckInResult checkIn(String workerId, long subscriptionId, double weight) {
         try (final var connection = ds.getConnection();
              final var statement = connection.prepareCall("{CALL sp_workers__check_in(?, ?, ?)}")) {
             statement.setString(1, workerId);
@@ -74,9 +50,9 @@ public final class WorkerRepository extends BaseRepository {
                 final var workerCheckInResult = CHECK_IN_RESULT_MAPPER.map(rs);
                 // Record active leases
                 if (statement.getMoreResults()) {
-                    try (final var leasesRs = statement.getResultSet()) {
-                        while (leasesRs.next()) {
-                            workerCheckInResult.activeLeases().add(SUBSCRIPTION_OFFSET_MAPPER.map(leasesRs));
+                    try (final var leasedCursorsRS = statement.getResultSet()) {
+                        while (leasedCursorsRS.next()) {
+                            workerCheckInResult.leasedCursors().add(CURSOR_MAPPER.map(leasedCursorsRS));
                         }
                     }
                 }
@@ -87,6 +63,14 @@ public final class WorkerRepository extends BaseRepository {
         } catch (SQLException e) {
             throw new RuntimeException("Error during worker check-in", e);
         }
+    }
+
+    public void delete(String id) {
+        update("{CALL sp_workers__delete(?)}", id);
+    }
+
+    public void shutdown(String id) {
+        update("{CALL sp_workers__shutdown(?)}", id);
     }
 
 }

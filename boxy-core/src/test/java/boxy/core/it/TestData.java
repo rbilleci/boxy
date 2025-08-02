@@ -14,7 +14,7 @@ public record TestData(Topic topic,
                        long namespaceBId,
                        List<Subscription> subscriptions,
                        List<SubscriptionTopic> subscriptionTopics,
-                       SubscriptionOffset subscriptionOffset,
+                       Cursor cursor,
                        Worker worker1,
                        Worker worker2) {
 
@@ -39,7 +39,7 @@ public record TestData(Topic topic,
         final var topicRepository = new TopicRepository(ds);
         final var subscriptionRepository = new SubscriptionRepository(ds);
         final var subscriptionTopicRepository = new SubscriptionTopicRepository(ds);
-        final var subscriptionOffsetRepository = new SubscriptionOffsetRepository(ds);
+        final var cursorRepository = new CursorRepository(ds);
         final var workerRepository = new WorkerRepository(ds);
 
         // Create the namespaces
@@ -77,7 +77,7 @@ public record TestData(Topic topic,
 
         final var subscriptionTopics = new SubscriptionTopicRepository(ds).findAll(100, 0);
         final var firstSubscriptionTopic = subscriptionTopics.getFirst();
-        final var subscriptionOffset = subscriptionOffsetRepository.findAll(firstSubscriptionTopic.id()).getFirst();
+        final var cursor = cursorRepository.findAll(firstSubscriptionTopic.id()).getFirst();
 
         workerRepository.checkIn(PARTY_1, subscriptions.get(0).id(), 1);
         workerRepository.checkIn(PARTY_2, subscriptions.get(1).id(), 1);
@@ -90,7 +90,7 @@ public record TestData(Topic topic,
                 namespaceBId,
                 subscriptions,
                 subscriptionTopics,
-                subscriptionOffset,
+                cursor,
                 worker1,
                 worker2);
     }

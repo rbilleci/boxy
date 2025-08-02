@@ -74,7 +74,7 @@ CREATE TABLE subscription_topics (
     COLLATE=utf8mb4_bin
     COMMENT='Links subscriptions to the topics they consume';
 
-CREATE TABLE subscription_offsets (
+CREATE TABLE cursors (
     id               BIGINT AUTO_INCREMENT PRIMARY KEY,
     subscription_id  BIGINT NOT NULL,
     partition_id     BIGINT NOT NULL,
@@ -82,15 +82,15 @@ CREATE TABLE subscription_offsets (
     committed_offset BIGINT NOT NULL DEFAULT 0,
     FOREIGN KEY (subscription_id)   REFERENCES subscription_topics (id) ON DELETE CASCADE,
     FOREIGN KEY (partition_id)      REFERENCES partitions (id) ON DELETE CASCADE,
-    CONSTRAINT u_subscription_offsets UNIQUE (subscription_id, partition_id),
-    INDEX idx_subscription_offsets__random_1 (random_key, id),
-    INDEX idx_subscription_offsets__random_2 (subscription_id, random_key, id)
+    CONSTRAINT u_cursors UNIQUE (subscription_id, partition_id),
+    INDEX idx_cursors__random_1 (random_key, id),
+    INDEX idx_cursors__random_2 (subscription_id, random_key, id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
     COMMENT='Maintains the last committed offset per partition for each subscription/topic pair';
 
-CREATE INDEX idx_subscription_offsets__random_key ON subscription_offsets(random_key);
+CREATE INDEX idx_cursors__random_key ON cursors(random_key);
 
 CREATE TABLE workers (
     id                   VARCHAR(255) PRIMARY KEY,
@@ -108,16 +108,16 @@ CREATE TABLE workers (
     COMMENT='Registered workers per subscription, with capacity weight and heartbeat timestamp';
 
 CREATE TABLE leases (
-    subscription_offset_id  BIGINT PRIMARY KEY,
+    cursor_id              BIGINT PRIMARY KEY,
     worker_id               VARCHAR(255) NOT NULL,
     version                 BIGINT NOT NULL DEFAULT 1,
     acquired_at             DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     released_at             DATETIME(3) NULL,
     release_deadline        DATETIME(3) NULL,
     state                   ENUM('ACTIVE', 'RELEASING') NOT NULL DEFAULT 'ACTIVE',
-    INDEX idx_leases__state (subscription_offset_id, state),
+    INDEX idx_leases__state (cursor_id, state),
     INDEX idx_leases__worker (worker_id),
-    FOREIGN KEY (subscription_offset_id) REFERENCES subscription_offsets(id),
+    FOREIGN KEY (cursor_id) REFERENCES cursors(id),
     FOREIGN KEY (worker_id) REFERENCES workers(id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
@@ -146,31 +146,31 @@ CREATE TABLE topics_cache (
 ) ENGINE=MEMORY;
 
 -- ========================================================
--- VIEW: unleased_subscription_offsets_view
--- List subscription offsets leases that are not leased and have active work to perform
-CREATE OR REPLACE ALGORITHM = MERGE VIEW unleased_subscription_offsets_view AS
-    SELECT so.*
-      FROM subscription_offsets so
-      JOIN partitions p     ON so.partition_id = p.id
- LEFT JOIN leases l         ON so.id = l.subscription_offset_id
+-- VIEW: unleased_cursors_view
+-- List cursors leases that are not leased and have active work to perform
+CREATE OR REPLACE ALGORITHM = MERGE VIEW unleased_cursors_view AS
+    SELECT c.*
+      FROM cursors c
+      JOIN partitions p     ON c.partition_id = p.id
+ LEFT JOIN leases l         ON c.id = l.cursor_id
  LEFT JOIN workers w        ON l.worker_id = w.id
     -- A lease is available if:
-    -- 1. No lease exists for this subscription offset (l.subscription_offset_id IS NULL)
+    -- 1. No lease exists for this cursor (l.cursor_id IS NULL)
     -- 2. Or a lease exists but the worker has expired
-     WHERE so.committed_offset < p.high_watermark
-       AND (l.subscription_offset_id IS NULL OR w.heartbeat_detected_at < w.heartbeat_deadline);
+     WHERE c.committed_offset < p.high_watermark
+       AND (l.cursor_id IS NULL OR w.heartbeat_detected_at < w.heartbeat_deadline);
 
 -- ========================================================
--- VIEW: leased_subscription_offsets_view
+-- VIEW: leased_cursors_view
 -- List active leases. Normal use will filter by worker_id
-CREATE OR REPLACE ALGORITHM = MERGE VIEW leased_subscription_offsets_view AS
-    SELECT so.*,
+CREATE OR REPLACE ALGORITHM = MERGE VIEW leased_cursors_view AS
+    SELECT c.*,
            w.id AS worker_id,
-           l.subscription_offset_id AS lease_id,
+           l.cursor_id AS lease_id,
            l.acquired_at
       FROM workers w
       JOIN leases l ON w.id = l.worker_id
-      JOIN subscription_offsets so ON l.subscription_offset_id = so.id
+      JOIN cursors c ON l.cursor_id = c.id
      WHERE w.heartbeat_detected_at < w.heartbeat_deadline
        AND l.state = 'ACTIVE'
-  ORDER BY worker_id, so.id;
+  ORDER BY worker_id, c.id;

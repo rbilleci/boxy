@@ -2,9 +2,9 @@ package boxy.core.it;
 
 import boxy.core.repository.EventRepository;
 import boxy.core.repository.SubscriptionTopicRepository;
-import boxy.core.repository.SubscriptionOffsetRepository;
+import boxy.core.repository.CursorRepository;
 import boxy.core.domain.SubscriptionTopic;
-import boxy.core.domain.SubscriptionOffset;
+import boxy.core.domain.Cursor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -18,14 +18,14 @@ public class ProcessorIT extends BaseIT {
     private static final String DATA = "{\"key\": \"value\"}\n";
 
     private SubscriptionTopicRepository subscriptionTopicRepository;
-    private SubscriptionOffsetRepository subscriptionOffsetRepository;
+    private CursorRepository cursorRepository;
     private EventRepository eventRepository;
     private TestData data;
 
     @BeforeEach
     void setup() {
         subscriptionTopicRepository = new SubscriptionTopicRepository(dataSource);
-        subscriptionOffsetRepository = new SubscriptionOffsetRepository(dataSource);
+        cursorRepository = new CursorRepository(dataSource);
         eventRepository = new EventRepository(dataSource);
         data = TestData.seed(dataSource);
     }
@@ -36,7 +36,7 @@ public class ProcessorIT extends BaseIT {
         // PUBLISH
         eventRepository.publish(TENANT_1, NAMESPACE_A, TOPIC_A, "partitionKey", DATA);
         // VALIDATE
-        final var leasable = subscriptionOffsetRepository.findLeasable(subscriptionId, 100, 0);
+        final var leasable = cursorRepository.findLeasable(subscriptionId, 100, 0);
         assertThat(leasable).hasSize(1);
         final var result = leasable.getFirst();
         assertThat(result.subscriptionId()).isEqualTo(subscriptionId);
@@ -55,10 +55,10 @@ public class ProcessorIT extends BaseIT {
         eventRepository.publish(TENANT_2, NAMESPACE_B, TOPIC_D, "pk7", DATA);
         eventRepository.publish(TENANT_2, NAMESPACE_B, TOPIC_D, "pk8", DATA);
         // VALIDATE
-        final var leasable = subscriptionOffsetRepository.findLeasable(100, 0);
+        final var leasable = cursorRepository.findLeasable(100, 0);
         assertThat(leasable)
                 .hasSize(16)
-                .extracting(SubscriptionOffset::subscriptionId)
+                .extracting(Cursor::subscriptionId)
                 .containsAll(data.subscriptionTopics().stream().map(SubscriptionTopic::subscriptionId).toList());
     }
 }

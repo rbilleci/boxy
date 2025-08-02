@@ -1,14 +1,14 @@
 package boxy.core.mapper;
 
-import boxy.core.domain.SubscriptionOffset;
+import boxy.core.domain.Cursor;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class SubscriptionOffsetMapper implements RowMapper<SubscriptionOffset> {
+public class CursorMapper implements RowMapper<Cursor> {
     @Override
-    public SubscriptionOffset map(ResultSet rs) throws SQLException {
-        return new SubscriptionOffset(
+    public Cursor map(ResultSet rs) throws SQLException {
+        return new Cursor(
                 rs.getLong("id"),
                 rs.getLong("subscription_id"),
                 rs.getLong("partition_id"),

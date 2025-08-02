@@ -3,7 +3,7 @@ package boxy.core.domain;
 import java.time.Instant;
 
 public record Lease(
-        long subscriptionOffsetId,
+        long cursorId,
         String workerId,
         long version,
         Instant acquiredAt,

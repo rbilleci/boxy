@@ -15,12 +15,12 @@ public final class LeaseRepository extends BaseRepository {
         super(ds);
     }
 
-    public Optional<Lease> find(long subscriptionOffsetId) {
-        return queryOne("SELECT * FROM leases WHERE subscription_offset_id = ?", LEASE_MAPPER, subscriptionOffsetId);
+    public Optional<Lease> find(long cursorId) {
+        return queryOne("SELECT * FROM leases WHERE cursor_id = ?", LEASE_MAPPER, cursorId);
     }
 
-    public void release(long subscriptionOffsetId, String workerId) {
-        update("{CALL sp_leases__release(?,?)}", subscriptionOffsetId, workerId);
+    public void release(long cursorId, String workerId) {
+        update("{CALL sp_leases__release(?,?)}", cursorId, workerId);
     }
 
 }

@@ -12,9 +12,9 @@ BEGIN
 
     -- PASS 1: RANDOM PIVOT
     SET v_random_key = fn_random_int();
-    INSERT INTO leases (subscription_offset_id, worker_id, state)
+    INSERT INTO leases (cursor_id, worker_id, state)
          SELECT id, p_worker_id, 'ACTIVE'
-           FROM unleased_subscription_offsets_view
+           FROM unleased_cursors_view
           WHERE subscription_id = p_subscription_id
             AND random_key >= v_random_key -- Start from a random pivot
       ORDER BY random_key, id
@@ -29,9 +29,9 @@ BEGIN
 
     -- PASS 2: WRAP AROUND FROM THE START
     IF (v_limit > 0) THEN
-        INSERT INTO leases (subscription_offset_id, worker_id, state)
+        INSERT INTO leases (cursor_id, worker_id, state)
              SELECT id, p_worker_id, 'ACTIVE'
-               FROM unleased_subscription_offsets_view
+               FROM unleased_cursors_view
               WHERE subscription_id = p_subscription_id
                 AND random_key < v_random_key
           ORDER BY random_key, id

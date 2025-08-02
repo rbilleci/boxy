@@ -23,9 +23,9 @@ BEGIN
         -- LINK SUBSCRIPTION TO TOPIC
         INSERT INTO subscription_topics(subscription_id, topic_id) VALUES (v_subscription_id, v_topic_id);
 
-        -- INSERT OFFSETS
+        -- INSERT CURSORS
         SET v_id = LAST_INSERT_ID();
-        INSERT INTO subscription_offsets(subscription_id, partition_id, random_key, committed_offset)
+        INSERT INTO cursors(subscription_id, partition_id, random_key, committed_offset)
              SELECT v_id, id, fn_random_int(), 0
                FROM partitions
               WHERE topic_id = v_topic_id;
