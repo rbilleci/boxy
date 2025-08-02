@@ -1,37 +1,32 @@
 CREATE PROCEDURE sp_workers__gc(IN p_subscription_id BIGINT)
 BEGIN
-    DECLARE v_worker_id VARCHAR(255);
-    DECLARE done INT DEFAULT FALSE;
+    DECLARE v_timestamp TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3);
 
-    -- CURSOR / DELETE: OLDEST HEARTBEAT FIRST
-    DECLARE worker_cursor CURSOR FOR
-        SELECT id
-          FROM workers
-         WHERE CURRENT_TIMESTAMP(3) >= heartbeat_deadline
-           AND workers.subscription_id = p_subscription_id
-      ORDER BY heartbeat_deadline
-         LIMIT 10;
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
+    -- DELETE EXPIRED LEASES
+    DELETE l
+      FROM leases l
+ LEFT JOIN cursors c ON c.id = l.cursor_id
+ LEFT JOIN workers w ON w.id = l.worker_id
+     WHERE
+        -- CURSOR IS DELETED OR ITS FOR THIS SUBSCRIPTION
+           (c.id IS NULL OR c.subscription_id = p_subscription_id)
+       AND (
+            -- WORKER DELETED OR EXPIRED
+            w.id IS NULL
+            -- WORKER EXPIRED
+            OR v_timestamp >= w.heartbeat_deadline
+            -- LEASE RELEASE PERIOD EXHAUSTED
+            OR ((l.state = 'RELEASING') AND (v_timestamp >= l.release_deadline))
+            );
 
-    -- LEASES / GARBAGE COLLECTION
-    DELETE leases
-      FROM leases
-           JOIN cursors ON cursors.id = leases.cursor_id
-           JOIN subscription_topics st ON st.id = cursors.subscription_id
-          WHERE state = 'RELEASING'
-            AND CURRENT_TIMESTAMP(3) >= release_deadline
-            AND st.subscription_id = p_subscription_id;
-
-    -- WORKERS / GARBAGE COLLECTION
-    OPEN worker_cursor;
-        read_loop: LOOP
-            FETCH worker_cursor INTO v_worker_id;
-            IF done THEN
-                LEAVE read_loop;
-            END IF;
-            CALL sp_workers__delete(v_worker_id);
-        END LOOP;
-    CLOSE worker_cursor;
+    -- DELETE EXPIRED WORKERS
+    DELETE w
+      FROM workers w
+ LEFT JOIN subscriptions s ON s.id = w.subscription_id
+     WHERE
+        -- RESTRICT TO THIS SUBSCRIPTION
+           w.subscription_id = p_subscription_id
+        -- WORKER EXPIRED OR SUBSCRIPTION DELETED
+       AND ((v_timestamp >= w.heartbeat_deadline) OR (s.id IS NULL));
 
 END;

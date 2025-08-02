@@ -1,6 +1,7 @@
 CREATE PROCEDURE sp_subscriptions__refresh_metrics(IN p_subscription_id BIGINT)
 BEGIN
     -- Variables for the aggregates
+    DECLARE v_timestamp TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3);
     DECLARE v_active_workers INT DEFAULT 0;
     DECLARE v_active_workers_weight DOUBLE DEFAULT 0;
     DECLARE v_active_partitions INT DEFAULT 0;
@@ -18,7 +19,7 @@ BEGIN
       INTO v_active_workers, v_active_workers_weight
       FROM workers w
      WHERE w.subscription_id = p_subscription_id
-       AND CURRENT_TIMESTAMP(3) < w.heartbeat_deadline;
+       AND v_timestamp < w.heartbeat_deadline;
 
     -- ACTIVE PARTITIONS
     SELECT COUNT(1)

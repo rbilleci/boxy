@@ -5,6 +5,7 @@
     OUT p_status VARCHAR(255)
 )
 BEGIN
+    DECLARE v_timestamp TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3);
     DECLARE v_exists BOOLEAN;
     DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
 
@@ -14,7 +15,7 @@ BEGIN
         -- UPDATE WORKER
         UPDATE workers w
            SET w.weight = p_weight,
-               w.heartbeat_detected_at = CURRENT_TIMESTAMP(3)
+               w.heartbeat_detected_at = v_timestamp
          WHERE w.id = p_worker_id;
         SET p_status = 'ACCEPTED';
 
@@ -25,7 +26,7 @@ BEGIN
                p_subscription_id,
                p_weight,
                heartbeat_interval_baseline,
-               CURRENT_TIMESTAMP(3) + INTERVAL 1 SECOND
+               v_timestamp + INTERVAL 1 SECOND
           FROM subscriptions
          WHERE active_workers < active_workers_limit
            AND id = p_subscription_id;
