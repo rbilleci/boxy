@@ -73,18 +73,18 @@ erDiagram
     tenants ||--o{ namespaces : owns
     namespaces ||--o{ topics : owns
     subscriptions ||--o{ subscription_topics : links
-    subscription_topics ||--o{ subscription_offsets : offsets
-    subscription_offsets ||--o{ leases : locks
+    subscription_topics ||--o{ cursors : offsets
+    cursors ||--o{ leases : locks
     workers ||--o{ leases : holds
 ```
 
 ### Key Tables and Views
 
 - **workers**: registers each worker’s `consumer_group`, `weight`, and `heartbeat_detected_at`.
-- **subscription_offsets**: tracks the committed offset per (subscription, partition).
+- **cursors**: tracks the committed offset per (subscription, partition).
   Each row is assigned a persistent `random_key` used for evenly
   distributing the start position when acquiring leases.
-- **leases**: one row per `subscription_offset` when a worker holds a lease, with `state` indicating whether it's 'ACTIVE' or 'RELEASING'.
+- **leases**: one row per `cursor` when a worker holds a lease, with `state` indicating whether it's 'ACTIVE' or 'RELEASING'.
 - **subscriptions**: stores configuration and precomputed statistics for each subscription.
 
 ### Consumer Group Statistics
@@ -117,7 +117,7 @@ classDiagram
         +double weight
         +Instant lastHeartbeat
     }
-    class SubscriptionOffset {
+    class Cursor {
         +long id
         +long subscriptionId
         +long partitionId
@@ -125,7 +125,7 @@ classDiagram
         +long highWatermark
     }
     class Lease {
-        +long subscriptionOffsetId
+        +long cursorId
         +long workerId
         +long version
         +Instant acquiredAt
@@ -138,7 +138,7 @@ classDiagram
         RELEASING
     }
     Worker --> "*" Lease
-    SubscriptionOffset --> "0..1" Lease
+    Cursor --> "0..1" Lease
     Lease --> "1" LeaseState
 ```
 
@@ -174,7 +174,7 @@ Each lease row goes through the following states:
 
       [Available] ──(INSERT/UPSERT)──> [ACTIVE] ──(UPDATE)──> [RELEASING] ──(DELETE)──> [Available]
 
-**Available (unleased_subscription_offsets_view)**
+**Available (unleased_cursors_view)**
 
 - Partition is active (high_watermark > committed_offset) but unleased.
 - Any under-loaded worker can pick it up via a randomized grab.
@@ -210,7 +210,7 @@ Releasing --> Idle       : delete lease
       t=0–2s  A processes events 101–105 → in-flight
       t=3s    A commits offset=105, no more in-flight → transition to Releasing
       t=3s    A issues DELETE FROM leases WHERE X → lease row gone
-      t=4s    New event arrives in P42 → shows up in unleased_subscription_offsets_view
+      t=4s    New event arrives in P42 → shows up in unleased_cursors_view
       t=5s    Worker B grabs lease on P42 → begins Processing
 
 
@@ -257,7 +257,7 @@ The work-stealing algorithm is implemented in the `sp_workers__check_in` stored 
    - Released leases are not immediately deleted but enter a 'RELEASING' state with a timestamp.
 
 4. **Grab More**: 
-   - If held leases < Min leases, acquire more leases from the `unleased_subscription_offsets_view`.
+   - If held leases < Min leases, acquire more leases from the `unleased_cursors_view`.
    - The algorithm uses a randomized pivot point to minimize contention.
    - It performs two passes if necessary: first from the pivot to the end, then from the beginning to the pivot.
    - Leases are acquired with state='ACTIVE' and no released_at timestamp.

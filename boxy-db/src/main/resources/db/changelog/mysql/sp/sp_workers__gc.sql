@@ -17,8 +17,8 @@ BEGIN
     -- LEASES / GARBAGE COLLECTION
     DELETE leases
       FROM leases
-           JOIN subscription_offsets ON subscription_offsets.id = leases.subscription_offset_id
-           JOIN subscription_topics st ON st.id = subscription_offsets.subscription_id
+           JOIN cursors ON cursors.id = leases.cursor_id
+           JOIN subscription_topics st ON st.id = cursors.subscription_id
           WHERE state = 'RELEASING'
             AND CURRENT_TIMESTAMP(3) >= release_deadline
             AND st.subscription_id = p_subscription_id;

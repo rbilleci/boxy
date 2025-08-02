@@ -9,7 +9,7 @@ public class LeaseMapper implements RowMapper<Lease> {
     @Override
     public Lease map(ResultSet rs) throws SQLException {
         return new Lease(
-                rs.getLong("subscription_offset_id"),
+                rs.getLong("cursor_id"),
                 rs.getString("worker_id"),
                 rs.getLong("version"),
                 rs.getTimestamp("acquired_at").toInstant(),

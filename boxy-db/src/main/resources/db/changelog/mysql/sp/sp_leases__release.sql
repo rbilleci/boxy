@@ -1,5 +1,5 @@
 CREATE PROCEDURE sp_leases__release(
-    IN p_subscription_offset_id BIGINT,
+    IN p_cursor_id BIGINT,
     IN p_worker_id VARCHAR(255))
 BEGIN
     DECLARE v_release_period INT;
@@ -17,6 +17,6 @@ BEGIN
        SET state = 'RELEASING',
            released_at = CURRENT_TIMESTAMP(3),
            release_deadline = CURRENT_TIMESTAMP(3) + INTERVAL v_release_period SECOND
-     WHERE subscription_offset_id = p_subscription_offset_id
+     WHERE cursor_id = p_cursor_id
        AND worker_id = p_worker_id;
 END;

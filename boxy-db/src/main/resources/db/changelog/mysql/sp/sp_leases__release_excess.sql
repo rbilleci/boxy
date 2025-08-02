@@ -27,14 +27,14 @@ BEGIN
           (p.high_watermark - lsov.committed_offset) AS lag_metric,
           ROW_NUMBER() OVER (ORDER BY (p.high_watermark - lsov.committed_offset) ASC) AS rn,
           COUNT(1) OVER () AS total_leases
-        FROM leased_subscription_offsets_view lsov
+        FROM leased_cursors_view lsov
         JOIN partitions p ON lsov.partition_id = p.id
         WHERE lsov.worker_id = p_worker_id
       ) t
       WHERE t.rn <= CEIL(t.total_leases * 0.5)
       ORDER BY t.acquired_at DESC
       LIMIT p_leases_to_release
-    ) th ON l.subscription_offset_id = th.id
+    ) th ON l.cursor_id = th.id
     SET l.state = 'RELEASING',
         l.released_at = CURRENT_TIMESTAMP(3),
         l.release_deadline = CURRENT_TIMESTAMP(3) + INTERVAL v_release_period SECOND;

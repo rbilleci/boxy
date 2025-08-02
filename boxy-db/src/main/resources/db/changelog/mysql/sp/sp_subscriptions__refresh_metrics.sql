@@ -24,9 +24,9 @@ BEGIN
     SELECT COUNT(1)
       INTO v_active_partitions
       FROM subscription_topics st
-      JOIN subscription_offsets so ON st.id = so.subscription_id
-      JOIN partitions p ON so.partition_id = p.id
-     WHERE so.committed_offset < p.high_watermark
+      JOIN cursors c ON st.id = c.subscription_id
+      JOIN partitions p ON c.partition_id = p.id
+     WHERE c.committed_offset < p.high_watermark
        AND st.subscription_id = p_subscription_id;
 
     -- METRICS

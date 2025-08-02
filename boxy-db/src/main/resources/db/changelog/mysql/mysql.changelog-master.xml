@@ -100,7 +100,7 @@
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_commit_offset.sql"
+        <sqlFile path="sp/sp_commit_cursor.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>

@@ -1,6 +1,6 @@
 package boxy.core.repository;
 
-import boxy.core.mapper.SubscriptionOffsetMapper;
+import boxy.core.mapper.CursorMapper;
 import boxy.core.mapper.CheckInResultMapper;
 import boxy.core.mapper.WorkerMapper;
 import boxy.core.domain.Worker;
@@ -15,7 +15,7 @@ public final class WorkerRepository extends BaseRepository {
 
     private static final WorkerMapper WORKER_MAPPER = new WorkerMapper();
     private static final CheckInResultMapper CHECK_IN_RESULT_MAPPER = new CheckInResultMapper();
-    private static final SubscriptionOffsetMapper SUBSCRIPTION_OFFSET_MAPPER = new SubscriptionOffsetMapper();
+    private static final CursorMapper CURSOR_MAPPER = new CursorMapper();
 
     public WorkerRepository(DataSource ds) {
         super(ds);
@@ -76,7 +76,7 @@ public final class WorkerRepository extends BaseRepository {
                 if (statement.getMoreResults()) {
                     try (final var leasesRs = statement.getResultSet()) {
                         while (leasesRs.next()) {
-                            workerCheckInResult.activeLeases().add(SUBSCRIPTION_OFFSET_MAPPER.map(leasesRs));
+                            workerCheckInResult.activeLeases().add(CURSOR_MAPPER.map(leasesRs));
                         }
                     }
                 }

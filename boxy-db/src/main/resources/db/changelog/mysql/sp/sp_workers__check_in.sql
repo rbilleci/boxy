@@ -65,7 +65,7 @@ BEGIN
 
     -- RETURN ACTIVE LEASES
     SELECT *
-      FROM leased_subscription_offsets_view
+      FROM leased_cursors_view
      WHERE worker_id = p_worker_id;
 
 END;
