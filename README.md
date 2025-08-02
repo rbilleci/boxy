@@ -2,7 +2,7 @@
 # Boxy
 <img src="docs/images/boxy-logo.png" alt="Boxy Logo" style="width:50%" align="right"/>
 
-Boxy is a multi-tenant event streaming library that exposes Kafka-like semantics directly over a database’s transactional outbox. It targets monolithic applications that need event streaming without taking on the operational cost of complex systems like Kafka or Pulsar. Boxy turns your transactional outbox into an event-stream, and allows you to build asynchronous workers in your favorite language to consume events. Boxy is **not** intended as a central event streaming platform.
+Boxy is a multi-tenant event streaming library modeled after Apache Pulsar that exposes Pulsar-like semantics directly over a database’s transactional outbox. It targets monolithic applications that need event streaming without taking on the operational cost of running a full Pulsar deployment. Boxy turns your transactional outbox into an event stream and allows you to build asynchronous workers in your favorite language to consume events. Boxy is **not** intended as a central event streaming platform.
 
 Boxy is released under the **Apache License 2.0** and remains a work in progress.
 
@@ -14,7 +14,7 @@ Boxy is released under the **Apache License 2.0** and remains a work in progress
 - [Roadmap](#roadmap)
 - [Boxy Core and Boxy DB Overview](#boxy-core-and-boxy-db-overview)
   - [Key Tables and Views](#key-tables-and-views)
-  - [Consumer Group Statistics](#consumer-group-statistics)
+  - [Subscription Statistics](#subscription-statistics)
 - [Domain Classes](#domain-classes)
 - [Worker State](#worker-state)
 - [Lease State](#lease-state)
@@ -63,15 +63,13 @@ Boxy is released under the **Apache License 2.0** and remains a work in progress
 
 ## Boxy Core and Boxy DB Overview
 
-Liquibase migrations for the schema are under `boxy-core/src/main/resources/db/changelog`. The schema models:
+Liquibase migrations for the schema are under `boxy-db/src/main/resources/db/changelog`. The schema models:
 
 ```mermaid
 erDiagram
-    tenants ||--o{ topics : owns
+    namespaces ||--o{ topics : owns
     topics ||--o{ partitions : has
     partitions ||--o{ events : stores
-    tenants ||--o{ namespaces : owns
-    namespaces ||--o{ topics : owns
     subscriptions ||--o{ subscription_topics : links
     subscription_topics ||--o{ cursors : positions
     cursors ||--o{ leases : locks
@@ -80,16 +78,22 @@ erDiagram
 
 ### Key Tables and Views
 
-- **workers**: registers each worker’s `consumer_group`, `weight`, and `heartbeat_detected_at`.
+- **namespaces**: tenant-scoped containers for topics.
+- **topics**: belong to namespaces and declare a partition count.
+- **partitions**: per-topic shards that track a `high_watermark`.
+- **events**: append-only records stored per partition.
+- **subscription_topics**: links subscriptions to the topics they consume.
 - **cursors**: tracks the position per (subscription, partition).
   Each row is assigned a persistent `random_key` used for evenly
   distributing the start position when acquiring leases.
+- **workers**: registers each worker’s `subscription_id`, `weight`, and `heartbeat_detected_at`.
 - **leases**: one row per `cursor` when a worker holds a lease, with `state` indicating whether it's 'ACTIVE' or 'RELEASING'.
 - **subscriptions**: stores configuration and precomputed statistics for each subscription.
+- **topics_cache**: in-memory table for quick topic lookups.
 
-### Consumer Group Statistics
+### Subscription Statistics
 
-The `consumer_groups` table stores precomputed statistics that are updated with each worker check-in:
+The `subscriptions` table stores precomputed statistics that are updated with each worker check-in:
 
 - **active_partitions**: Count of partitions with new events (high_watermark > position).
 - **active_workers**: Count of workers with valid heartbeats. 
@@ -112,24 +116,27 @@ The Boxy Core module uses Java records to model the schema. Relevant classes:
 ```mermaid
 classDiagram
     class Worker {
-        +long id
-        +long consumerGroupId
+        +String id
+        +long subscriptionId
         +double weight
-        +Instant lastHeartbeat
+        +Instant heartbeatDetectedAt
+        +double heartbeatInterval
+        +Instant heartbeatDeadline
     }
     class Cursor {
         +long id
         +long subscriptionId
         +long partitionId
+        +int randomKey
         +long position
-        +long highWatermark
     }
     class Lease {
         +long cursorId
-        +long workerId
+        +String workerId
         +long version
         +Instant acquiredAt
         +Instant releasedAt
+        +Instant releaseDeadline
         +LeaseState state
     }
     class LeaseState {
@@ -239,8 +246,8 @@ Properties
 
 The work-stealing algorithm is implemented in the `sp_workers__check_in` stored procedure and its sub-procedures. The algorithm works as follows:
 
-1. **Consumer Group Statistics Update**:
-   - The procedure updates precomputed statistics in the `consumer_groups` table:
+1. **Subscription Statistics Update**:
+   - The procedure updates precomputed statistics in the `subscriptions` table:
      - `active_partitions`: Count of partitions with new events (high_watermark > position)
      - `active_workers`: Count of workers with valid heartbeats    
      - `active_workers_weight`: Sum of weights of all active workers
