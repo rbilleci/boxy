@@ -13,7 +13,6 @@ BEGIN
     IF v_exists THEN
         -- UPDATE WORKER
         UPDATE workers w
-          JOIN subscriptions s ON s.id = w.subscription_id
            SET w.weight = p_weight,
                w.heartbeat_detected_at = CURRENT_TIMESTAMP(3)
          WHERE w.id = p_worker_id;
