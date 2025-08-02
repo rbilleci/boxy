@@ -4,8 +4,10 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet id="1" author="richard.billeci" dbms="mysql">
+
         <!-- SQL SCHEMA -->
         <sqlFile path="mysql.schema.sql" relativeToChangelogFile="true"/>
+
         <!-- FUNCTIONS -->
         <sqlFile path="fn/fn_resolve_partition_id.sql"
                  relativeToChangelogFile="true"
@@ -15,6 +17,7 @@
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
+
         <!-- SP: WORKERS -->
         <sqlFile path="sp/sp_workers__delete.sql"
                  relativeToChangelogFile="true"
@@ -100,7 +103,9 @@
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_commit_cursor.sql"
+
+        <!-- CURSORS -->
+        <sqlFile path="sp/sp_cursors__commit.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>

@@ -40,7 +40,7 @@ public class ProcessorIT extends BaseIT {
         assertThat(leasable).hasSize(1);
         final var result = leasable.getFirst();
         assertThat(result.subscriptionId()).isEqualTo(subscriptionId);
-        assertThat(result.committedOffset()).isEqualTo(0L);
+        assertThat(result.position()).isEqualTo(0L);
     }
 
     @Test

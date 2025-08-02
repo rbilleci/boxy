@@ -24,8 +24,8 @@ BEGIN
         SELECT
           lsov.id,
           lsov.acquired_at,
-          (p.high_watermark - lsov.committed_offset) AS lag_metric,
-          ROW_NUMBER() OVER (ORDER BY (p.high_watermark - lsov.committed_offset) ASC) AS rn,
+          (p.high_watermark - lsov.position) AS lag_metric,
+          ROW_NUMBER() OVER (ORDER BY (p.high_watermark - lsov.position) ASC) AS rn,
           COUNT(1) OVER () AS total_leases
         FROM leased_cursors_view lsov
         JOIN partitions p ON lsov.partition_id = p.id

@@ -22,7 +22,7 @@ public class CursorIT extends BaseIT {
     }
 
     @Test
-    void commit_whenOffsetDoesNotExist_insertsNewRow() {
+    void commit_whenPositionDoesNotExist_insertsNewRow() {
         final var cursor = data.cursor();
         final var subscriptionId = cursor.subscriptionId();
         final var partitionId = cursor.partitionId();
@@ -32,12 +32,12 @@ public class CursorIT extends BaseIT {
         assertThat(cursorRepository.find(subscriptionId, partitionId))
                 .isPresent()
                 .get()
-                .extracting(Cursor::committedOffset)
+                .extracting(Cursor::position)
                 .isEqualTo(100L);
     }
 
     @Test
-    void commit_whenOffsetIsHigher_updatesExistingRow() {
+    void commit_whenPositionIsGreater_updatesExistingRow() {
         final var cursor = data.cursor();
         final var subscriptionId = cursor.subscriptionId();
         final var partitionId = cursor.partitionId();
@@ -49,12 +49,12 @@ public class CursorIT extends BaseIT {
         assertThat(cursorRepository.find(subscriptionId, partitionId))
                 .isPresent()
                 .get()
-                .extracting(Cursor::committedOffset)
+                .extracting(Cursor::position)
                 .isEqualTo(102L);
     }
 
     @Test
-    void commit_whenOffsetIsLower_doesNotUpdateExistingRow() {
+    void commit_whenPositionIsLower_doesNotUpdateExistingRow() {
         final var cursor = data.cursor();
         final var subscriptionId = cursor.subscriptionId();
         final var partitionId = cursor.partitionId();
@@ -65,12 +65,12 @@ public class CursorIT extends BaseIT {
         assertThat(cursorRepository.find(subscriptionId, partitionId))
                 .isPresent()
                 .get()
-                .extracting(Cursor::committedOffset)
+                .extracting(Cursor::position)
                 .isEqualTo(100L);
     }
 
     @Test
-    void commit_whenOffsetIsEqual_doesNotUpdateExistingRow() {
+    void commit_whenPositionIsEqual_doesNotUpdateExistingRow() {
         final var cursor = data.cursor();
         final var subscriptionId = cursor.subscriptionId();
         final var partitionId = cursor.partitionId();
@@ -81,7 +81,7 @@ public class CursorIT extends BaseIT {
         assertThat(cursorRepository.find(subscriptionId, partitionId))
                 .isPresent()
                 .get()
-                .extracting(Cursor::committedOffset)
+                .extracting(Cursor::position)
                 .isEqualTo(100L);
 
     }

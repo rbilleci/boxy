@@ -25,7 +25,7 @@ BEGIN
 
         -- INSERT CURSORS
         SET v_id = LAST_INSERT_ID();
-        INSERT INTO cursors(subscription_id, partition_id, random_key, committed_offset)
+        INSERT INTO cursors(subscription_id, partition_id, random_key, position)
              SELECT v_id, id, fn_random_int(), 0
                FROM partitions
               WHERE topic_id = v_topic_id;

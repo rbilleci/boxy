@@ -26,7 +26,7 @@ BEGIN
       FROM subscription_topics st
       JOIN cursors c ON st.id = c.subscription_id
       JOIN partitions p ON c.partition_id = p.id
-     WHERE c.committed_offset < p.high_watermark
+     WHERE c.position < p.high_watermark
        AND st.subscription_id = p_subscription_id;
 
     -- METRICS

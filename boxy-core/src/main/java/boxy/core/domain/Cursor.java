@@ -5,5 +5,5 @@ public record Cursor(
         long subscriptionId,
         long partitionId,
         int randomKey,
-        long committedOffset) {
+        long position) {
 }

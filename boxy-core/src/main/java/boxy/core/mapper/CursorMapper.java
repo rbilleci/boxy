@@ -13,6 +13,6 @@ public class CursorMapper implements RowMapper<Cursor> {
                 rs.getLong("subscription_id"),
                 rs.getLong("partition_id"),
                 rs.getInt("random_key"),
-                rs.getLong("committed_offset"));
+                rs.getLong("position"));
     }
 }

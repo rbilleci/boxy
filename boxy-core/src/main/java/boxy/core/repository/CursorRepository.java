@@ -15,8 +15,8 @@ public final class CursorRepository extends BaseRepository {
         super(ds);
     }
 
-    public void commit(long id, long offset) {
-        update("{CALL sp_commit_cursor(?,?)}", id, offset);
+    public void commit(long id, long position) {
+        update("{CALL sp_cursors__commit(?,?)}", id, position);
     }
 
     public Optional<Cursor> find(long id) {

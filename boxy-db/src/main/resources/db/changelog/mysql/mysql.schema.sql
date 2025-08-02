@@ -79,7 +79,7 @@ CREATE TABLE cursors (
     subscription_id  BIGINT NOT NULL,
     partition_id     BIGINT NOT NULL,
     random_key       INT    NOT NULL,
-    committed_offset BIGINT NOT NULL DEFAULT 0,
+    position BIGINT NOT NULL DEFAULT 0,
     FOREIGN KEY (subscription_id)   REFERENCES subscription_topics (id) ON DELETE CASCADE,
     FOREIGN KEY (partition_id)      REFERENCES partitions (id) ON DELETE CASCADE,
     CONSTRAINT u_cursors UNIQUE (subscription_id, partition_id),
@@ -88,7 +88,7 @@ CREATE TABLE cursors (
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
-    COMMENT='Maintains the last committed offset per partition for each subscription/topic pair';
+    COMMENT='Maintains the last cursor position for each subscription/topic-partition';
 
 CREATE INDEX idx_cursors__random_key ON cursors(random_key);
 
@@ -122,7 +122,7 @@ CREATE TABLE leases (
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
-    COMMENT='Implements distributed locking for processing offsets—tracks worker, version, and state';
+    COMMENT='Implements distributed locking for processing cursor positions—tracks worker, version, and state';
 
 CREATE TABLE events (
     id              BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -157,7 +157,7 @@ CREATE OR REPLACE ALGORITHM = MERGE VIEW unleased_cursors_view AS
     -- A lease is available if:
     -- 1. No lease exists for this cursor (l.cursor_id IS NULL)
     -- 2. Or a lease exists but the worker has expired
-     WHERE c.committed_offset < p.high_watermark
+     WHERE c.position < p.high_watermark
        AND (l.cursor_id IS NULL OR w.heartbeat_detected_at < w.heartbeat_deadline);
 
 -- ========================================================

@@ -73,7 +73,7 @@ erDiagram
     tenants ||--o{ namespaces : owns
     namespaces ||--o{ topics : owns
     subscriptions ||--o{ subscription_topics : links
-    subscription_topics ||--o{ cursors : offsets
+    subscription_topics ||--o{ cursors : positions
     cursors ||--o{ leases : locks
     workers ||--o{ leases : holds
 ```
@@ -81,7 +81,7 @@ erDiagram
 ### Key Tables and Views
 
 - **workers**: registers each worker’s `consumer_group`, `weight`, and `heartbeat_detected_at`.
-- **cursors**: tracks the committed offset per (subscription, partition).
+- **cursors**: tracks the position per (subscription, partition).
   Each row is assigned a persistent `random_key` used for evenly
   distributing the start position when acquiring leases.
 - **leases**: one row per `cursor` when a worker holds a lease, with `state` indicating whether it's 'ACTIVE' or 'RELEASING'.
@@ -91,7 +91,7 @@ erDiagram
 
 The `consumer_groups` table stores precomputed statistics that are updated with each worker check-in:
 
-- **active_partitions**: Count of partitions with new events (high_watermark > committed_offset).
+- **active_partitions**: Count of partitions with new events (high_watermark > position).
 - **active_workers**: Count of workers with valid heartbeats. 
 - **active_workers_weight**: Sum of weights of all active workers in the subscription.
 - **last_modified_at**: Timestamp of the last statistics update.
@@ -121,7 +121,7 @@ classDiagram
         +long id
         +long subscriptionId
         +long partitionId
-        +long committedOffset
+        +long position
         +long highWatermark
     }
     class Lease {
@@ -156,12 +156,12 @@ Each worker runs in one of three high-level states with respect to a given parti
 
 **Processing**
 - Lease acquired with state='ACTIVE' and an event batch is in-flight.
-- Worker reads events, calls handlers, and updates the offset as it goes.
+- Worker reads events, calls handlers, and updates the position as it goes.
 
 **Releasing**
-- Release can occur in two scenarios: 1) all in-flight work is done and the final offset is committed, 2) the worker is determined to have an unfair share of leases.
+- Release can occur in two scenarios: 1) all in-flight work is done and the cursor position is update, 2) the worker is determined to have an unfair share of leases.
 - The lease is marked as state='RELEASING' with a timestamp in released_at.
-- The worker must finish its current batch and commit offsets before the lease is fully released.
+- The worker must finish its current batch and commit positions before the lease is fully released.
 - After a configurable deadline (default 10 seconds), the lease is deleted by the garbage collection process.
 - This controlled release is intended to reduce the occurrence of duplicate message processing.
 - Once the lease is deleted, the worker transitions back to Idle.
@@ -176,7 +176,7 @@ Each lease row goes through the following states:
 
 **Available (unleased_cursors_view)**
 
-- Partition is active (high_watermark > committed_offset) but unleased.
+- Partition is active (high_watermark > position) but unleased.
 - Any under-loaded worker can pick it up via a randomized grab.
 
 **ACTIVE (leases row exists with state='ACTIVE')**
@@ -193,7 +193,7 @@ Each lease row goes through the following states:
 stateDiagram-v2
 [*] --> Idle
 Idle --> Processing      : grab lease
-Processing --> Releasing : commit final offset
+Processing --> Releasing : commit final positions
 Releasing --> Idle       : delete lease
 
     state Processing {
@@ -208,7 +208,7 @@ Releasing --> Idle       : delete lease
 
       t=0s    Worker A grabs lease on P42 → state Idle→Processing, lease created
       t=0–2s  A processes events 101–105 → in-flight
-      t=3s    A commits offset=105, no more in-flight → transition to Releasing
+      t=3s    A commits position=105, no more in-flight → transition to Releasing
       t=3s    A issues DELETE FROM leases WHERE X → lease row gone
       t=4s    New event arrives in P42 → shows up in unleased_cursors_view
       t=5s    Worker B grabs lease on P42 → begins Processing
@@ -241,7 +241,7 @@ The work-stealing algorithm is implemented in the `sp_workers__check_in` stored 
 
 1. **Consumer Group Statistics Update**:
    - The procedure updates precomputed statistics in the `consumer_groups` table:
-     - `active_partitions`: Count of partitions with new events (high_watermark > committed_offset)
+     - `active_partitions`: Count of partitions with new events (high_watermark > position)
      - `active_workers`: Count of workers with valid heartbeats    
      - `active_workers_weight`: Sum of weights of all active workers
    - These statistics are used for fair share calculation and adaptive heartbeat intervals.
@@ -253,7 +253,7 @@ The work-stealing algorithm is implemented in the `sp_workers__check_in` stored 
 
 3. **Release Excess**: 
    - If held leases > Max leases, mark the least-backlogged leases as 'RELEASING'.
-   - Leases are prioritized for release based on the smallest backlog (high_watermark - committed_offset).
+   - Leases are prioritized for release based on the smallest backlog (high_watermark - position).
    - Released leases are not immediately deleted but enter a 'RELEASING' state with a timestamp.
 
 4. **Grab More**: 
@@ -263,7 +263,7 @@ The work-stealing algorithm is implemented in the `sp_workers__check_in` stored 
    - Leases are acquired with state='ACTIVE' and no released_at timestamp.
 
 5. **Process**: 
-   - For each held lease in the 'ACTIVE' state, read events > `committed_offset`, process in-order, then update `committed_offset`.
+   - For each held lease in the 'ACTIVE' state, read events > `position`, process in-order, then update `position`.
    - Leases in the 'RELEASING' state are allowed to finish processing before being deleted.
 
 6. **Garbage Collection**:
@@ -323,56 +323,6 @@ GRANT ALL PRIVILEGES ON events_db.* TO 'user'@'localhost';
 mvn liquibase:update -Dliquibase.url=jdbc:mysql://localhost:3306/events_db -Dliquibase.username=user -Dliquibase.password=password
 ```
 
-### Producer Example
-
-```java
-// Create a producer
-DataSource dataSource = createDataSource(); // Your DataSource implementation
-BoxyProducer producer = BoxyProducer.create(dataSource);
-
-// Publish an event
-String tenant = "mycompany";
-String namespace = "team-a";
-String topic = "orders";
-Map<String, Object> event = Map.of(
-    "orderId", "12345",
-    "customerId", "67890",
-    "amount", 99.99,
-    "timestamp", System.currentTimeMillis()
-);
-
-producer.publish(tenant, namespace, topic, event);
-```
-
-### Consumer Example
-
-```java
-// Create a subscription
-DataSource dataSource = createDataSource(); // Your DataSource implementation
-String tenant = "mycompany";
-String subscription = "order-processor";
-BoxySubscription sub = BoxySubscription.create(dataSource, tenant, subscription);
-
-// Subscribe to a topic
-sub.subscribe("team-a", "orders");
-
-// Create a worker
-String id = "worker-1";
-BoxyWorker worker = sub.createWorker(id);
-
-// Register event handler
-worker.registerHandler("orders", event -> {
-    System.out.println("Processing order: " + event.get("orderId"));
-    // Process the event
-    return true; // Return true to commit the offset
-});
-
-// Start the worker
-worker.start();
-
-// Shutdown hook
-Runtime.getRuntime().addShutdownHook(new Thread(worker::shutdown));
-```
 
 ### Advanced Configuration
 
