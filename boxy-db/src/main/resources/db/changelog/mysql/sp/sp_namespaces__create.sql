@@ -1,7 +1,4 @@
-CREATE PROCEDURE sp_namespaces__create(
-  IN p_path      VARCHAR(4000),
-  IN p_separator VARCHAR(10)
-)
+CREATE PROCEDURE sp_namespaces__create(IN p_path VARCHAR(4000), IN p_separator VARCHAR(10))
 BEGIN
     DECLARE v_name        VARCHAR(500);
     DECLARE v_parent_path VARCHAR(4000);
@@ -33,22 +30,14 @@ BEGIN
         SET v_parent_id = NULL;
     ELSE
         SET v_parent_path = LEFT(p_path, CHAR_LENGTH(p_path) - v_sep_len - CHAR_LENGTH(v_name));
-        IF TRIM(v_parent_path) = '' THEN
-            SET v_parent_id = NULL;
-        ELSE
-            SELECT id INTO v_parent_id FROM namespaces WHERE path = v_parent_path;
-            IF v_parent_id IS NULL THEN
-                SET v_error = CONCAT('Parent path not found: ', v_parent_path);
-                SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_error;
-            END IF;
-        END IF;
+        SET v_parent_id = fn_resolve_namespace_id(v_parent_path);
     END IF;
 
     -- INSERT THE NAMESPACE RECORD
     INSERT INTO namespaces(name, parent_id, path) VALUES(v_name, v_parent_id, p_path);
     SET v_id = LAST_INSERT_ID();
 
-    -- INSERT INT THE CLOSURE TABLE
+    -- INSERT INTO THE CLOSURE TABLE
     INSERT INTO namespace_closures(ancestor_id, descendant_id, depth) VALUES (v_id, v_id, 0);
     IF v_parent_id IS NOT NULL THEN
         INSERT INTO namespace_closures(ancestor_id, descendant_id, depth)

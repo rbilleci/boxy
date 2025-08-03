@@ -1,11 +1,9 @@
 CREATE PROCEDURE sp_leases__release_excess(
     IN p_worker_id VARCHAR(36),
     IN p_subscription_id BIGINT,
-    IN p_leases_to_release INT
-)
+    IN p_leases_to_release INT)
 BEGIN
     DECLARE v_release_period INT;
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
 
     -- GET THE RELEASE PERIOD
     SELECT lease_release_period

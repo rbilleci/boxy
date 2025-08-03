@@ -5,16 +5,11 @@ CREATE PROCEDURE sp_topics__subscribe(
 BEGIN
     DECLARE v_subscription_id BIGINT;
     DECLARE v_topic_id BIGINT;
-    DECLARE v_namespace_id BIGINT;
     DECLARE v_id BIGINT;
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
 
     START TRANSACTION;
-        -- RESOLVE THE NAMESPACE ID
-        SELECT id INTO v_namespace_id FROM namespaces WHERE path = p_path;
-
         -- RESOLVE THE TOPIC ID
-        SELECT id INTO v_topic_id FROM topics WHERE namespace_id = v_namespace_id AND name = p_topic;
+        SELECT id INTO v_topic_id FROM topics WHERE namespace_id = fn_resolve_namespace_id(p_path) AND name = p_topic;
 
         -- RESOLVE THE SUBSCRIPTION ID
         SELECT id INTO v_subscription_id FROM subscriptions WHERE name = p_subscription;

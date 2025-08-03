@@ -27,10 +27,11 @@ public final class TopicRepository extends BaseRepository {
                         SELECT t.*
                           FROM topics t
                           JOIN namespaces n ON n.id = t.namespace_id
-                         WHERE n.path = ?
-                           AND t.name = ?
+                         WHERE n.path_hash = UNHEX(MD5(?))
+                           AND n.path      = ?
+                           AND t.name      = ?
                         """,
-                TOPIC_MAPPER, path, name);
+                TOPIC_MAPPER, path, path, name);
     }
 
     public void delete(String path, String name) {

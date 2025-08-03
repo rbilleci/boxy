@@ -1,4 +1,4 @@
-    CREATE PROCEDURE sp_workers__heartbeat(
+CREATE PROCEDURE sp_workers__heartbeat(
     IN p_worker_id VARCHAR(36),
     IN p_subscription_id BIGINT,
     IN p_weight DOUBLE,
@@ -7,7 +7,6 @@
 BEGIN
     DECLARE v_timestamp TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3);
     DECLARE v_exists BOOLEAN;
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
 
     -- UPDATE WORKER
     SELECT EXISTS(SELECT 1 FROM workers WHERE id = p_worker_id) INTO v_exists;

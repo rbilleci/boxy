@@ -20,12 +20,13 @@ public final class PartitionRepository extends BaseRepository {
                           FROM partitions p
                           JOIN topics t ON p.topic_id = t.id
                           JOIN namespaces n ON n.id = t.namespace_id
-                         WHERE n.path = ?
-                           AND t.name = ?
+                         WHERE n.path_hash       = UNHEX(MD5(?))
+                           AND n.path            = ?
+                           AND t.name            = ?
                            AND p.partition_number = ?
                         """,
                 PARTITION_MAPPER,
-                path, topic, partitionNumber);
+                path, path, topic, partitionNumber);
     }
 
 }

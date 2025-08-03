@@ -7,7 +7,6 @@ BEGIN
     DECLARE v_random_key INT;
     DECLARE p_limit INT;
     DECLARE v_limit INT;
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
     SET v_limit = p_leases_to_acquire;
 
     -- PASS 1: RANDOM PIVOT

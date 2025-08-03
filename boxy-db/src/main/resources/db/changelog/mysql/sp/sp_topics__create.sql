@@ -3,16 +3,13 @@ CREATE PROCEDURE sp_topics__create(
     IN p_name VARCHAR(500),
     IN p_partitions INT)
 BEGIN
-    DECLARE v_namespace_id BIGINT;
     DECLARE v_topic_id BIGINT;
     DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; END;
 
     START TRANSACTION;
-        -- RESOLVE THE NAMESPACE ID
-        SELECT id INTO v_namespace_id FROM namespaces WHERE path = p_path;
 
         -- CREATE THE TOPIC
-        INSERT INTO topics (namespace_id, name, partitions) VALUES (v_namespace_id, p_name, p_partitions);
+        INSERT INTO topics (namespace_id, name, partitions) VALUES (fn_resolve_namespace_id(p_path), p_name, p_partitions);
         SET v_topic_id = LAST_INSERT_ID();
 
         -- INSERT THE PARTITIONS

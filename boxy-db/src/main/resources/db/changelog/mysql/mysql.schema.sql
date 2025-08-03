@@ -6,6 +6,7 @@ CREATE TABLE namespaces (
     path_hash        BINARY(16)      GENERATED ALWAYS AS (UNHEX(MD5(path))) STORED,
     created_at       DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     last_modified_at DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+    INDEX idx_namespaces__path_hash (path_hash),
     CONSTRAINT u_namespaces__parent UNIQUE (parent_id, name),
     FOREIGN KEY (parent_id) REFERENCES namespaces(id) ON DELETE CASCADE
 ) ENGINE=InnoDB

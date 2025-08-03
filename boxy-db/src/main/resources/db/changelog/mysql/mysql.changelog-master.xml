@@ -9,6 +9,10 @@
         <sqlFile path="mysql.schema.sql" relativeToChangelogFile="true"/>
 
         <!-- FUNCTIONS -->
+        <sqlFile path="fn/fn_resolve_namespace_id.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
         <sqlFile path="fn/fn_resolve_partition_id.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
@@ -46,10 +50,6 @@
 
         <!-- SP: NAMESPACES -->
         <sqlFile path="sp/sp_namespaces__create.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-        <sqlFile path="sp/sp_namespaces__resolve_id.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>

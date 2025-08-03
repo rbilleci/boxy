@@ -1,12 +1,8 @@
-CREATE PROCEDURE sp_workers__refresh_metrics(
-    IN p_worker_id VARCHAR(36),
-    IN p_subscription_id BIGINT
-)
+CREATE PROCEDURE sp_workers__refresh_metrics(IN p_worker_id VARCHAR(36), IN p_subscription_id BIGINT)
 BEGIN
     DECLARE v_heartbeat_deadline_multiplier DOUBLE;
     DECLARE v_heartbeat_timeout_period DOUBLE;
     DECLARE v_heartbeat_interval DOUBLE;
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
 
     -- GET METRICS
     SELECT  heartbeat_deadline_multiplier,
