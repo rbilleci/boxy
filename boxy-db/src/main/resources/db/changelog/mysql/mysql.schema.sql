@@ -3,7 +3,7 @@ CREATE TABLE namespaces (
     parent_id        BIGINT NULL,
     name             VARCHAR(500)    NOT NULL,
     created_at       DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    last_modified_at DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    last_modified_at DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     CONSTRAINT u_namespaces__parent UNIQUE (parent_id, name),
     FOREIGN KEY (parent_id) REFERENCES namespaces(id) ON DELETE CASCADE
 ) ENGINE=InnoDB
@@ -31,7 +31,7 @@ CREATE TABLE topics (
     name                VARCHAR(500) NOT NULL,
     partitions          INT NOT NULL DEFAULT 1,
     created_at          DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    last_modified_at    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    last_modified_at    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     INDEX idx_topics__cover (namespace_id, name, id, partitions),
     CONSTRAINT u_topics UNIQUE (namespace_id, name),
     FOREIGN KEY (namespace_id) REFERENCES namespaces (id)
@@ -67,7 +67,7 @@ CREATE TABLE subscriptions (
     active_workers                  INT NOT NULL DEFAULT 0,
     active_workers_limit            INT NOT NULL DEFAULT 16,
     active_workers_weight           DOUBLE NOT NULL DEFAULT 0,
-    last_modified_at                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    last_modified_at                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     CONSTRAINT u_subscriptions UNIQUE (name)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
@@ -186,5 +186,5 @@ CREATE OR REPLACE ALGORITHM = MERGE VIEW leased_cursors_view AS
       JOIN leases l ON w.id = l.worker_id
       JOIN cursors c ON l.cursor_id = c.id
      WHERE w.heartbeat_detected_at < w.heartbeat_deadline
-      AND l.state = 'ACTIVE'
+       AND l.state = 'ACTIVE'
   ORDER BY worker_id, c.id;

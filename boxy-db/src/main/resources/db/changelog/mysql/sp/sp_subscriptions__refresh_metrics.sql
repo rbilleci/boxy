@@ -51,8 +51,7 @@ BEGIN
        SET active_workers = v_active_workers,
            active_workers_weight = v_active_workers_weight,
            active_partitions = v_active_partitions,
-           heartbeat_interval = v_heartbeat_interval,
-           last_modified_at = CURRENT_TIMESTAMP(3)
+           heartbeat_interval = v_heartbeat_interval
      WHERE id = p_subscription_id;
 
 END;

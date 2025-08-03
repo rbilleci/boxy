@@ -21,13 +21,13 @@ BEGIN
 
     SET v_sep_len = CHAR_LENGTH(p_separator);
 
-  -- pull off the last segment
+    -- GET THE LAST PATH ELEMENT (THE NEW NAMESPACE)
     SET v_name = SUBSTRING_INDEX(p_path, p_separator, -1);
-        IF TRIM(v_name) = '' THEN
+    IF TRIM(v_name) = '' THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Invalid path: trailing or empty segment';
     END IF;
 
-  -- 3) figure out the parent path & resolve its ID
+    -- RESOLVE THE PARENT NAMESPACE
     IF CHAR_LENGTH(p_path) = CHAR_LENGTH(v_name) THEN
         SET v_parent_id = NULL;
     ELSE
@@ -43,11 +43,12 @@ BEGIN
         END IF;
     END IF;
 
-    -- INSERT
+    -- INSERT THE NAMESPACE RECORD
     INSERT INTO namespaces(name, parent_id) VALUES(v_name, v_parent_id);
     SET v_id = LAST_INSERT_ID();
-    INSERT INTO namespace_closure(ancestor_id, descendant_id, depth)
-        VALUES (v_id, v_id, 0);
+
+    -- INSERT INT THE CLOSURE TABLE
+    INSERT INTO namespace_closure(ancestor_id, descendant_id, depth) VALUES (v_id, v_id, 0);
     IF v_parent_id IS NOT NULL THEN
         INSERT INTO namespace_closure(ancestor_id, descendant_id, depth)
             SELECT ancestor_id, v_id, depth + 1
