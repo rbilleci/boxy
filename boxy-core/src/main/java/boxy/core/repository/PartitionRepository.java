@@ -19,8 +19,7 @@ public final class PartitionRepository extends BaseRepository {
                         SELECT p.*
                           FROM partitions p
                           JOIN topics t ON p.topic_id = t.id
-                          JOIN namespaces n ON t.namespace_id = n.id
-                         WHERE n.path = ?
+                         WHERE t.namespace_id = fn_resolve_namespace_id(?)
                            AND t.name = ?
                            AND p.partition_number = ?
                         """,
