@@ -12,6 +12,7 @@ BEGIN
   BEGIN
     SET p_topic_id   = NULL;
     SET p_partitions = NULL;
+    SET v_namespace_id = NULL;
   END;
 
   SET v_path_hash = UNHEX(MD5(p_path));
@@ -26,7 +27,7 @@ BEGIN
 
   IF p_topic_id IS NULL THEN
     -- cache miss: fetch the "real" value
-    CALL sp_namespaces__resolve_id(p_path, '/', v_namespace_id);
+    SELECT id INTO v_namespace_id FROM namespaces WHERE path = p_path;
 
     SELECT id, partitions
       INTO p_topic_id, p_partitions

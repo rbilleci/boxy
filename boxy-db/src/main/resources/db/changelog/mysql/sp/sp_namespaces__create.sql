@@ -9,6 +9,7 @@ BEGIN
     DECLARE v_sep_len     INT;
     DECLARE v_error       VARCHAR(1000);
     DECLARE v_id          BIGINT;
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_parent_id = NULL;
 
     -- VALIDATE INPUTS
     IF p_path IS NULL OR TRIM(p_path) = '' THEN
@@ -35,7 +36,7 @@ BEGIN
         IF TRIM(v_parent_path) = '' THEN
             SET v_parent_id = NULL;
         ELSE
-            CALL sp_namespaces__resolve_id(v_parent_path, p_separator, v_parent_id);
+            SELECT id INTO v_parent_id FROM namespaces WHERE path = v_parent_path;
             IF v_parent_id IS NULL THEN
                 SET v_error = CONCAT('Parent path not found: ', v_parent_path);
                 SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_error;
@@ -44,7 +45,7 @@ BEGIN
     END IF;
 
     -- INSERT THE NAMESPACE RECORD
-    INSERT INTO namespaces(name, parent_id) VALUES(v_name, v_parent_id);
+    INSERT INTO namespaces(name, parent_id, path) VALUES(v_name, v_parent_id, p_path);
     SET v_id = LAST_INSERT_ID();
 
     -- INSERT INT THE CLOSURE TABLE
