@@ -26,7 +26,21 @@ public final class NamespaceRepository extends BaseRepository {
     }
 
     public Optional<Namespace> find(String path) {
-        return queryOne("SELECT * from namespaces_with_path_view WHERE path = ?", NAMESPACE_MAPPER, path);
+        return queryOne("""
+                        WITH ns AS (
+                            SELECT d.id,
+                                   d.parent_id,
+                                   d.name,
+                                   GROUP_CONCAT(a.name ORDER BY c.depth DESC SEPARATOR '/') AS path,
+                                   d.created_at,
+                                   d.last_modified_at
+                              FROM namespaces d
+                              JOIN namespace_closure c ON c.descendant_id = d.id
+                              JOIN namespaces a ON a.id = c.ancestor_id
+                             GROUP BY d.id
+                        )
+                        SELECT * FROM ns WHERE path = ?
+                        """, NAMESPACE_MAPPER, path);
     }
 }
 

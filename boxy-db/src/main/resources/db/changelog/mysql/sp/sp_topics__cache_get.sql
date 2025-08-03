@@ -26,7 +26,7 @@ BEGIN
 
   IF p_topic_id IS NULL THEN
     -- cache miss: fetch the "real" value
-    SET v_namespace_id = fn_resolve_namespace_id(p_path, '/');
+    CALL sp_namespaces__resolve_id(p_path, '/', v_namespace_id);
 
     SELECT id, partitions
       INTO p_topic_id, p_partitions

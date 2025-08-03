@@ -11,6 +11,20 @@ CREATE TABLE namespaces (
     COLLATE=utf8mb4_bin
     COMMENT='Stores namespaces hierarchically';
 
+CREATE TABLE namespace_closure (
+    ancestor_id   BIGINT NOT NULL,
+    descendant_id BIGINT NOT NULL,
+    depth         INT    NOT NULL,
+    PRIMARY KEY (ancestor_id, descendant_id),
+    INDEX idx_namespace_closure_ancestor (ancestor_id),
+    INDEX idx_namespace_closure_descendant (descendant_id),
+    FOREIGN KEY (ancestor_id) REFERENCES namespaces(id) ON DELETE CASCADE,
+    FOREIGN KEY (descendant_id) REFERENCES namespaces(id) ON DELETE CASCADE
+) ENGINE=InnoDB
+    DEFAULT CHARSET=utf8mb4
+    COLLATE=utf8mb4_bin
+    COMMENT='Closure table for namespaces';
+
 CREATE TABLE topics (
     id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
     namespace_id        BIGINT NOT NULL,
@@ -172,22 +186,5 @@ CREATE OR REPLACE ALGORITHM = MERGE VIEW leased_cursors_view AS
       JOIN leases l ON w.id = l.worker_id
       JOIN cursors c ON l.cursor_id = c.id
      WHERE w.heartbeat_detected_at < w.heartbeat_deadline
-       AND l.state = 'ACTIVE'
+      AND l.state = 'ACTIVE'
   ORDER BY worker_id, c.id;
-
-
--- ========================================================
--- VIEW: namespaces, with the 'path'
-CREATE OR REPLACE ALGORITHM=MERGE VIEW namespaces_with_path_view AS
-    WITH RECURSIVE tree AS (
-        -- 1) anchor: every root node
-        SELECT id, parent_id, name, name AS path
-          FROM namespaces
-         WHERE parent_id IS NULL
-        UNION ALL
-        -- 2) recurse: append each child’s name to its parent’s path
-        SELECT n.id, n.parent_id, n.name, CONCAT(tree.path, '/', n.name) AS path
-          FROM namespaces n
-          JOIN tree ON n.parent_id = tree.id
-    )
-    SELECT * FROM tree;

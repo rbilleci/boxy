@@ -3,7 +3,7 @@ CREATE PROCEDURE sp_namespaces__delete(
 BEGIN
     DECLARE v_id BIGINT;
     DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
-    SET v_id = fn_resolve_namespace_id(p_path, '/');
+    CALL sp_namespaces__resolve_id(p_path, '/', v_id);
     IF v_id IS NOT NULL THEN
         DELETE FROM namespaces WHERE id = v_id;
     END IF;

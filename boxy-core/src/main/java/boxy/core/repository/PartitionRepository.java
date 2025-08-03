@@ -16,11 +16,18 @@ public final class PartitionRepository extends BaseRepository {
 
     public Optional<Partition> find(String path, String topic, int partitionNumber) {
         return queryOne("""
+                        WITH ns AS (
+                            SELECT nc.descendant_id AS id,
+                                   GROUP_CONCAT(a.name ORDER BY nc.depth DESC SEPARATOR '/') AS path
+                              FROM namespace_closure nc
+                              JOIN namespaces a ON a.id = nc.ancestor_id
+                             GROUP BY nc.descendant_id
+                        )
                         SELECT p.*
                           FROM partitions p
                           JOIN topics t ON p.topic_id = t.id
-                          JOIN namespaces_with_path_view n ON n.id = t.namespace_id
-                         WHERE n.path = ?
+                          JOIN ns ON ns.id = t.namespace_id
+                         WHERE ns.path = ?
                            AND t.name = ?
                            AND p.partition_number = ?
                         """,

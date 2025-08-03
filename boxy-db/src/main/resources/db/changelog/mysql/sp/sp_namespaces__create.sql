@@ -8,6 +8,7 @@ BEGIN
     DECLARE v_parent_id   BIGINT;
     DECLARE v_sep_len     INT;
     DECLARE v_error       VARCHAR(1000);
+    DECLARE v_id          BIGINT;
 
     -- VALIDATE INPUTS
     IF p_path IS NULL OR TRIM(p_path) = '' THEN
@@ -34,7 +35,7 @@ BEGIN
         IF TRIM(v_parent_path) = '' THEN
             SET v_parent_id = NULL;
         ELSE
-            SET v_parent_id = fn_resolve_namespace_id(v_parent_path, p_separator);
+            CALL sp_namespaces__resolve_id(v_parent_path, p_separator, v_parent_id);
             IF v_parent_id IS NULL THEN
                 SET v_error = CONCAT('Parent path not found: ', v_parent_path);
                 SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_error;
@@ -44,5 +45,14 @@ BEGIN
 
     -- INSERT
     INSERT INTO namespaces(name, parent_id) VALUES(v_name, v_parent_id);
-    SELECT LAST_INSERT_ID() AS id;
+    SET v_id = LAST_INSERT_ID();
+    INSERT INTO namespace_closure(ancestor_id, descendant_id, depth)
+        VALUES (v_id, v_id, 0);
+    IF v_parent_id IS NOT NULL THEN
+        INSERT INTO namespace_closure(ancestor_id, descendant_id, depth)
+            SELECT ancestor_id, v_id, depth + 1
+              FROM namespace_closure
+             WHERE descendant_id = v_parent_id;
+    END IF;
+    SELECT v_id AS id;
 END;
