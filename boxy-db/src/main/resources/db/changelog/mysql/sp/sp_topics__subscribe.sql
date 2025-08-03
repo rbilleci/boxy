@@ -11,7 +11,7 @@ BEGIN
 
     START TRANSACTION;
         -- RESOLVE THE NAMESPACE ID
-        SELECT id INTO v_namespace_id FROM namespaces WHERE path = p_path;
+        SET v_namespace_id = fn_resolve_namespace_id(p_path);
 
         -- RESOLVE THE TOPIC ID
         SELECT id INTO v_topic_id FROM topics WHERE namespace_id = v_namespace_id AND name = p_topic;

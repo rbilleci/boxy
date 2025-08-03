@@ -2,10 +2,8 @@ CREATE TABLE namespaces (
     id               BIGINT AUTO_INCREMENT PRIMARY KEY,
     name             VARCHAR(255)   NOT NULL,
     parent_id        BIGINT         NULL,
-    path             VARCHAR(1024)  NOT NULL,
     created_at       DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     last_modified_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    CONSTRAINT u_namespaces__path UNIQUE (path),
     CONSTRAINT u_namespaces__parent UNIQUE (parent_id, name),
     FOREIGN KEY (parent_id) REFERENCES namespaces(id) ON DELETE CASCADE
 ) ENGINE=InnoDB
@@ -139,11 +137,12 @@ CREATE TABLE events (
     COMMENT='Append-only event store per partition; JSON payloads in sequence order';
 
 CREATE TABLE topics_cache (
+  path_hash    BINARY(16)    NOT NULL,
   path         VARCHAR(1024) NOT NULL,
   topic        VARCHAR(255)  NOT NULL,
   topic_id     BIGINT        NOT NULL,
   partitions   INT NOT NULL,
-  PRIMARY KEY (path, topic)
+  PRIMARY KEY (path_hash, topic)
 ) ENGINE=MEMORY;
 
 -- ========================================================
