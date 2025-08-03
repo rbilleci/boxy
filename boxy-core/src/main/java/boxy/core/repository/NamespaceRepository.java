@@ -18,14 +18,7 @@ public final class NamespaceRepository extends BaseRepository {
     }
 
     public long create(final String path) {
-        var parent = (String) null;
-        var name = path;
-        final var idx = path.lastIndexOf('/');
-        if (idx >= 0) {
-            parent = path.substring(0, idx);
-            name = path.substring(idx + 1);
-        }
-        return queryOne("{CALL sp_namespaces__create(?,?)}", ID_MAPPER, parent, name).orElseThrow();
+        return queryOne("{CALL sp_namespaces__create(?, '/')}", ID_MAPPER, path).orElseThrow();
     }
 
     public void delete(String path) {
