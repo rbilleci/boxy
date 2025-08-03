@@ -10,7 +10,6 @@ public class SubscriptionMapper implements RowMapper<Subscription> {
     public Subscription map(ResultSet rs) throws SQLException {
         return new Subscription(
                 rs.getLong("id"),
-                rs.getString("tenant"),
                 rs.getString("name"),
                 rs.getDouble("heartbeat_deadline_multiplier"),
                 rs.getDouble("heartbeat_interval_baseline"),

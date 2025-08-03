@@ -18,27 +18,26 @@ public final class SubscriptionTopicRepository extends BaseRepository {
         super(ds);
     }
 
-    public Optional<SubscriptionTopic> find(String tenant, String subscription, String namespace, String topic) {
+    public Optional<SubscriptionTopic> find(String subscription, String path, String topic) {
         return queryOne("""
                         SELECT st.* FROM subscription_topics st
                             JOIN subscriptions s ON st.subscription_id = s.id
                             JOIN topics t ON st.topic_id = t.id
                             JOIN namespaces n ON t.namespace_id = n.id
-                            WHERE s.tenant = ? AND
-                                  s.name = ? AND
-                                  n.name = ? AND
+                            WHERE s.name = ? AND
+                                  n.path = ? AND
                                   t.name = ?
                         """, SUBSCRIPTION_TOPIC_MAPPER,
-                tenant, subscription, namespace, topic);
+                subscription, path, topic);
     }
 
-    public long subscribe(String tenant, String subscription, String namespace, String topic) {
-        return queryOne("{CALL sp_topics__subscribe(?,?,?,?)}", ID_MAPPER, tenant, subscription, namespace, topic)
+    public long subscribe(String subscription, String path, String topic) {
+        return queryOne("{CALL sp_topics__subscribe(?,?,?)}", ID_MAPPER, subscription, path, topic)
                 .orElseThrow();
     }
 
-    public void unsubscribe(String tenant, String subscription, String namespace, String topic) {
-        update("{CALL sp_topics__unsubscribe(?,?,?,?)}", tenant, subscription, namespace, topic);
+    public void unsubscribe(String subscription, String path, String topic) {
+        update("{CALL sp_topics__unsubscribe(?,?,?)}", subscription, path, topic);
     }
 
     public List<SubscriptionTopic> findAll(int limit, int offset) {

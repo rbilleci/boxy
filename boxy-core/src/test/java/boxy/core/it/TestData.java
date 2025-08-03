@@ -23,10 +23,8 @@ public record TestData(Topic topic,
     public static final String SUBSCRIPTION_B = "sub-b";
     public static final String SUBSCRIPTION_C = "sub-c";
     public static final String SUBSCRIPTION_D = "sub-d";
-    public static final String TENANT_1 = "t-1";
-    public static final String TENANT_2 = "t-2";
-    public static final String NAMESPACE_A = "ns-a";
-    public static final String NAMESPACE_B = "ns-b";
+    public static final String PATH_A = "ns-a";
+    public static final String PATH_B = "ns-a/ns-b";
     public static final String TOPIC_A = "topic-a";
     public static final String TOPIC_B = "topic-b";
     public static final String TOPIC_C = "topic-c";
@@ -43,37 +41,33 @@ public record TestData(Topic topic,
         final var workerRepository = new WorkerRepository(ds);
 
         // Create the namespaces
-        final var namespaceAId = namespaceRepository.create(TENANT_1, NAMESPACE_A);
-        final var namespaceBId = namespaceRepository.create(TENANT_2, NAMESPACE_B);
+        final var namespaceAId = namespaceRepository.create(PATH_A);
+        final var namespaceBId = namespaceRepository.create(PATH_B);
 
         // Create the topics
-        topicRepository.create(TENANT_1, NAMESPACE_A, TOPIC_A, DEFAULT_PARTITIONS);
-        topicRepository.create(TENANT_1, NAMESPACE_A, TOPIC_B, DEFAULT_PARTITIONS);
-        topicRepository.create(TENANT_2, NAMESPACE_B, TOPIC_C, DEFAULT_PARTITIONS);
-        topicRepository.create(TENANT_2, NAMESPACE_B, TOPIC_D, DEFAULT_PARTITIONS);
-        final var topicA = topicRepository.find(TENANT_1, NAMESPACE_A, TOPIC_A).orElseThrow();
+        topicRepository.create(PATH_A, TOPIC_A, DEFAULT_PARTITIONS);
+        topicRepository.create(PATH_A, TOPIC_B, DEFAULT_PARTITIONS);
+        topicRepository.create(PATH_B, TOPIC_C, DEFAULT_PARTITIONS);
+        topicRepository.create(PATH_B, TOPIC_D, DEFAULT_PARTITIONS);
+        final var topicA = topicRepository.find(PATH_A, TOPIC_A).orElseThrow();
 
         // Create the subscriptions
-        subscriptionRepository.create(TENANT_1, SUBSCRIPTION_A);
-        subscriptionRepository.create(TENANT_1, SUBSCRIPTION_B);
-        subscriptionRepository.create(TENANT_1, SUBSCRIPTION_C);
-        subscriptionRepository.create(TENANT_1, SUBSCRIPTION_D);
-        subscriptionRepository.create(TENANT_2, SUBSCRIPTION_A);
-        subscriptionRepository.create(TENANT_2, SUBSCRIPTION_B);
-        subscriptionRepository.create(TENANT_2, SUBSCRIPTION_C);
-        subscriptionRepository.create(TENANT_2, SUBSCRIPTION_D);
+        subscriptionRepository.create(SUBSCRIPTION_A);
+        subscriptionRepository.create(SUBSCRIPTION_B);
+        subscriptionRepository.create(SUBSCRIPTION_C);
+        subscriptionRepository.create(SUBSCRIPTION_D);
         final var subscriptions = new ArrayList<>(subscriptionRepository.findAll(100, 0));
 
         // Subscribe topics
-        subscriptionTopicRepository.subscribe(TENANT_1, SUBSCRIPTION_A, NAMESPACE_A, TOPIC_A);
-        subscriptionTopicRepository.subscribe(TENANT_1, SUBSCRIPTION_A, NAMESPACE_A, TOPIC_B);
-        subscriptionTopicRepository.subscribe(TENANT_1, SUBSCRIPTION_B, NAMESPACE_A, TOPIC_A);
-        subscriptionTopicRepository.subscribe(TENANT_1, SUBSCRIPTION_B, NAMESPACE_A, TOPIC_B);
+        subscriptionTopicRepository.subscribe(SUBSCRIPTION_A, PATH_A, TOPIC_A);
+        subscriptionTopicRepository.subscribe(SUBSCRIPTION_A, PATH_A, TOPIC_B);
+        subscriptionTopicRepository.subscribe(SUBSCRIPTION_B, PATH_A, TOPIC_A);
+        subscriptionTopicRepository.subscribe(SUBSCRIPTION_B, PATH_A, TOPIC_B);
 
-        subscriptionTopicRepository.subscribe(TENANT_2, SUBSCRIPTION_A, NAMESPACE_B, TOPIC_C);
-        subscriptionTopicRepository.subscribe(TENANT_2, SUBSCRIPTION_A, NAMESPACE_B, TOPIC_D);
-        subscriptionTopicRepository.subscribe(TENANT_2, SUBSCRIPTION_B, NAMESPACE_B, TOPIC_C);
-        subscriptionTopicRepository.subscribe(TENANT_2, SUBSCRIPTION_B, NAMESPACE_B, TOPIC_D);
+        subscriptionTopicRepository.subscribe(SUBSCRIPTION_C, PATH_B, TOPIC_C);
+        subscriptionTopicRepository.subscribe(SUBSCRIPTION_C, PATH_B, TOPIC_D);
+        subscriptionTopicRepository.subscribe(SUBSCRIPTION_D, PATH_B, TOPIC_C);
+        subscriptionTopicRepository.subscribe(SUBSCRIPTION_D, PATH_B, TOPIC_D);
 
         final var subscriptionTopics = new SubscriptionTopicRepository(ds).findAll(100, 0);
         final var firstSubscriptionTopic = subscriptionTopics.getFirst();

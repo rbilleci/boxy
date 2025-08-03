@@ -1,14 +1,17 @@
 CREATE TABLE namespaces (
-    id      BIGINT AUTO_INCREMENT PRIMARY KEY,
-    tenant  VARCHAR(255) NOT NULL,
-    name    VARCHAR(255) NOT NULL,
-    created_at          DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    last_modified_at    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    CONSTRAINT u_namespaces UNIQUE (tenant, name)
+    id               BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name             VARCHAR(255)   NOT NULL,
+    parent_id        BIGINT         NULL,
+    path             VARCHAR(1024)  NOT NULL,
+    created_at       DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    last_modified_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    CONSTRAINT u_namespaces__path UNIQUE (path),
+    CONSTRAINT u_namespaces__parent UNIQUE (parent_id, name),
+    FOREIGN KEY (parent_id) REFERENCES namespaces(id) ON DELETE CASCADE
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
-    COMMENT='Stores namespaces per tenant';
+    COMMENT='Stores namespaces hierarchically';
 
 CREATE TABLE topics (
     id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -40,7 +43,6 @@ CREATE TABLE partitions (
 
 CREATE TABLE subscriptions (
     id                              BIGINT AUTO_INCREMENT PRIMARY KEY,
-    tenant                          VARCHAR(255) NOT NULL,
     name                            VARCHAR(255) NOT NULL,
     heartbeat_deadline_multiplier   DOUBLE NOT NULL DEFAULT 5.0,
     heartbeat_interval_baseline     DOUBLE NOT NULL DEFAULT 3.0,
@@ -54,11 +56,11 @@ CREATE TABLE subscriptions (
     active_workers_limit            INT NOT NULL DEFAULT 16,
     active_workers_weight           DOUBLE NOT NULL DEFAULT 0,
     last_modified_at                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    CONSTRAINT u_subscriptions UNIQUE (tenant, name)
+    CONSTRAINT u_subscriptions UNIQUE (name)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
-    COMMENT='Defines subscriptions per tenant which store consumption state';
+    COMMENT='Defines subscriptions which store consumption state';
 
 CREATE TABLE subscription_topics (
     id               BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -137,12 +139,11 @@ CREATE TABLE events (
     COMMENT='Append-only event store per partition; JSON payloads in sequence order';
 
 CREATE TABLE topics_cache (
-  tenant       VARCHAR(255)  NOT NULL,
-  namespace    VARCHAR(255)  NOT NULL,
+  path         VARCHAR(1024) NOT NULL,
   topic        VARCHAR(255)  NOT NULL,
   topic_id     BIGINT        NOT NULL,
   partitions   INT NOT NULL,
-  PRIMARY KEY (tenant, namespace, topic)
+  PRIMARY KEY (path, topic)
 ) ENGINE=MEMORY;
 
 -- ========================================================

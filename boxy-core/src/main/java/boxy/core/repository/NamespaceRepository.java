@@ -17,16 +17,23 @@ public final class NamespaceRepository extends BaseRepository {
         super(ds);
     }
 
-    public long create(String tenant, String name) {
-        return queryOne("{CALL sp_namespaces__create(?, ?)}", ID_MAPPER, tenant, name).orElseThrow();
+    public long create(String path) {
+        String parent = null;
+        String name = path;
+        int idx = path.lastIndexOf('/');
+        if (idx >= 0) {
+            parent = path.substring(0, idx);
+            name = path.substring(idx + 1);
+        }
+        return queryOne("{CALL sp_namespaces__create(?,?)}", ID_MAPPER, parent, name).orElseThrow();
     }
 
-    public void delete(String tenant, String name) {
-        update("{CALL sp_namespaces__delete(?, ?)}", tenant, name);
+    public void delete(String path) {
+        update("{CALL sp_namespaces__delete(?)}", path);
     }
 
-    public Optional<Namespace> find(String tenant, String name) {
-        return queryOne("SELECT * FROM namespaces WHERE tenant = ? AND name = ?", NAMESPACE_MAPPER, tenant, name);
+    public Optional<Namespace> find(String path) {
+        return queryOne("SELECT * FROM namespaces WHERE path = ?", NAMESPACE_MAPPER, path);
     }
 }
 

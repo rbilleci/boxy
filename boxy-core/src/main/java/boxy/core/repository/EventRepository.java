@@ -8,8 +8,8 @@ public final class EventRepository extends BaseRepository {
         super(ds);
     }
 
-    public void publish(String tenant, String namespace, String topic, String key, String data) {
-        update("{CALL sp_events__publish(?,?,?,?,?)}", tenant, namespace, topic, key, data);
+    public void publish(String path, String topic, String key, String data) {
+        update("{CALL sp_events__publish(?,?,?,?)}", path, topic, key, data);
     }
 
     public void publishAdvanced(long partitionId, String data) {

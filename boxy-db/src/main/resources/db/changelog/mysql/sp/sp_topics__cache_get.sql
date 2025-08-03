@@ -1,6 +1,5 @@
 CREATE PROCEDURE sp_topics__cache_get(
-  IN  p_tenant       VARCHAR(255),
-  IN  p_namespace    VARCHAR(255),
+  IN  p_path         VARCHAR(1024),
   IN  p_topic        VARCHAR(255),
   OUT p_topic_id     BIGINT,
   OUT p_partitions   INT
@@ -18,13 +17,12 @@ BEGIN
   SELECT topic_id, partitions
     INTO p_topic_id, p_partitions
     FROM topics_cache
-   WHERE tenant = p_tenant
-     AND namespace = p_namespace
+   WHERE path = p_path
      AND topic  = p_topic;
 
   IF p_topic_id IS NULL THEN
     -- cache miss: fetch the “real” value
-    SELECT id INTO v_namespace_id FROM namespaces WHERE name = p_namespace AND tenant = p_tenant;
+    SELECT id INTO v_namespace_id FROM namespaces WHERE path = p_path;
 
     SELECT id, partitions
       INTO p_topic_id, p_partitions
@@ -33,8 +31,8 @@ BEGIN
        AND name         = p_topic;
 
     IF p_topic_id IS NOT NULL THEN
-      INSERT INTO topics_cache (tenant, namespace, topic, topic_id, partitions)
-        VALUES (p_tenant, p_namespace, p_topic, p_topic_id, p_partitions)
+      INSERT INTO topics_cache (path, topic, topic_id, partitions)
+        VALUES (p_path, p_topic, p_topic_id, p_partitions)
       ON DUPLICATE KEY UPDATE
         topic_id   = VALUES(topic_id),
         partitions = VALUES(partitions);
