@@ -14,7 +14,7 @@ CREATE TABLE namespaces (
 CREATE TABLE namespace_closures (
     ancestor_id   BIGINT NOT NULL,
     descendant_id BIGINT NOT NULL,
-    depth         INT    NOT NULL,
+    depth         TINYINT NOT NULL,
     PRIMARY KEY (ancestor_id, descendant_id),
     INDEX idx_namespace_closures_ancestor (ancestor_id),
     INDEX idx_namespace_closures_descendant (descendant_id),
