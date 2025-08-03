@@ -15,7 +15,7 @@ CREATE TABLE topics (
     id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
     namespace_id        BIGINT NOT NULL,
     name                VARCHAR(500) NOT NULL,
-    partitions          INT NOT NULL DEFAULT 16,
+    partitions          INT NOT NULL DEFAULT 1,
     created_at          DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     last_modified_at    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     INDEX idx_topics__cover (namespace_id, name, id, partitions),
