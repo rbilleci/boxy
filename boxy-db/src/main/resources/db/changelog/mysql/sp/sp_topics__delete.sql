@@ -5,7 +5,7 @@ BEGIN
     DECLARE v_namespace_id BIGINT;
     DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
     -- RESOLVE THE NAMESPACE ID
-    CALL sp_namespaces__resolve_id(p_path, '/', v_namespace_id);
+    SELECT id INTO v_namespace_id FROM namespaces WHERE path = p_path;
     -- DELETE
     DELETE FROM topics WHERE namespace_id = v_namespace_id AND name = p_name;
 END;

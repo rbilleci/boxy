@@ -20,19 +20,12 @@ public final class SubscriptionTopicRepository extends BaseRepository {
 
     public Optional<SubscriptionTopic> find(String subscription, String path, String topic) {
         return queryOne("""
-                        WITH ns AS (
-                            SELECT nc.descendant_id AS id,
-                                   GROUP_CONCAT(a.name ORDER BY nc.depth DESC SEPARATOR '/') AS path
-                              FROM namespace_closures nc
-                              JOIN namespaces a ON a.id = nc.ancestor_id
-                             GROUP BY nc.descendant_id
-                        )
                         SELECT st.* FROM subscription_topics st
                             JOIN subscriptions s ON st.subscription_id = s.id
                             JOIN topics t ON st.topic_id = t.id
-                            JOIN ns ON ns.id = t.namespace_id
+                            JOIN namespaces n ON n.id = t.namespace_id
                             WHERE s.name = ?
-                              AND ns.path = ?
+                              AND n.path = ?
                               AND t.name = ?
                         """, SUBSCRIPTION_TOPIC_MAPPER,
                 subscription, path, topic);
