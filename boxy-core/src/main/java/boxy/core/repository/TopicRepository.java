@@ -24,10 +24,17 @@ public final class TopicRepository extends BaseRepository {
 
     public Optional<Topic> find(String path, String name) {
         return queryOne("""
+                        WITH ns AS (
+                            SELECT nc.descendant_id AS id,
+                                   GROUP_CONCAT(a.name ORDER BY nc.depth DESC SEPARATOR '/') AS path
+                              FROM namespace_closures nc
+                              JOIN namespaces a ON a.id = nc.ancestor_id
+                             GROUP BY nc.descendant_id
+                        )
                         SELECT t.*
                           FROM topics t
-                          JOIN namespaces_with_path_view n ON n.id = t.namespace_id
-                         WHERE n.path = ?
+                          JOIN ns ON ns.id = t.namespace_id
+                         WHERE ns.path = ?
                            AND t.name = ?
                         """,
                 TOPIC_MAPPER, path, name);

@@ -3,7 +3,7 @@ CREATE TABLE namespaces (
     parent_id        BIGINT NULL,
     name             VARCHAR(500)    NOT NULL,
     created_at       DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    last_modified_at DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    last_modified_at DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     CONSTRAINT u_namespaces__parent UNIQUE (parent_id, name),
     FOREIGN KEY (parent_id) REFERENCES namespaces(id) ON DELETE CASCADE
 ) ENGINE=InnoDB
@@ -11,13 +11,27 @@ CREATE TABLE namespaces (
     COLLATE=utf8mb4_bin
     COMMENT='Stores namespaces hierarchically';
 
+CREATE TABLE namespace_closures (
+    ancestor_id   BIGINT NOT NULL,
+    descendant_id BIGINT NOT NULL,
+    depth         TINYINT NOT NULL,
+    PRIMARY KEY (ancestor_id, descendant_id),
+    INDEX idx_namespace_closures_ancestor (ancestor_id),
+    INDEX idx_namespace_closures_descendant (descendant_id),
+    FOREIGN KEY (ancestor_id) REFERENCES namespaces(id) ON DELETE CASCADE,
+    FOREIGN KEY (descendant_id) REFERENCES namespaces(id) ON DELETE CASCADE
+) ENGINE=InnoDB
+    DEFAULT CHARSET=utf8mb4
+    COLLATE=utf8mb4_bin
+    COMMENT='Closure table for namespaces';
+
 CREATE TABLE topics (
     id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
     namespace_id        BIGINT NOT NULL,
     name                VARCHAR(500) NOT NULL,
     partitions          INT NOT NULL DEFAULT 1,
     created_at          DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    last_modified_at    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    last_modified_at    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     INDEX idx_topics__cover (namespace_id, name, id, partitions),
     CONSTRAINT u_topics UNIQUE (namespace_id, name),
     FOREIGN KEY (namespace_id) REFERENCES namespaces (id)
@@ -53,7 +67,7 @@ CREATE TABLE subscriptions (
     active_workers                  INT NOT NULL DEFAULT 0,
     active_workers_limit            INT NOT NULL DEFAULT 16,
     active_workers_weight           DOUBLE NOT NULL DEFAULT 0,
-    last_modified_at                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    last_modified_at                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     CONSTRAINT u_subscriptions UNIQUE (name)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
@@ -174,20 +188,3 @@ CREATE OR REPLACE ALGORITHM = MERGE VIEW leased_cursors_view AS
      WHERE w.heartbeat_detected_at < w.heartbeat_deadline
        AND l.state = 'ACTIVE'
   ORDER BY worker_id, c.id;
-
-
--- ========================================================
--- VIEW: namespaces, with the 'path'
-CREATE OR REPLACE ALGORITHM=MERGE VIEW namespaces_with_path_view AS
-    WITH RECURSIVE tree AS (
-        -- 1) anchor: every root node
-        SELECT id, parent_id, name, name AS path
-          FROM namespaces
-         WHERE parent_id IS NULL
-        UNION ALL
-        -- 2) recurse: append each child’s name to its parent’s path
-        SELECT n.id, n.parent_id, n.name, CONCAT(tree.path, '/', n.name) AS path
-          FROM namespaces n
-          JOIN tree ON n.parent_id = tree.id
-    )
-    SELECT * FROM tree;
