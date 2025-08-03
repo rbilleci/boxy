@@ -10,8 +10,8 @@ public class NamespaceMapper implements RowMapper<Namespace> {
     public Namespace map(ResultSet rs) throws SQLException {
         return new Namespace(
                 rs.getLong("id"),
-                rs.getString("name"),
                 rs.getObject("parent_id", Long.class),
+                rs.getString("name"),
                 rs.getString("path"),
                 rs.getTimestamp("created_at").toInstant(),
                 rs.getTimestamp("last_modified_at").toInstant());

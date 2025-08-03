@@ -1,9 +1,9 @@
 -- FUNCTION TO DERIVE A PARTITION ID FROM A TOPIC ID AND P NUMBER
-CREATE FUNCTION fn_resolve_partition_id(
-    topic_id BIGINT,
-    partition_number INT)
-RETURNS BIGINT
-DETERMINISTIC
+CREATE FUNCTION fn_resolve_partition_id(topic_id BIGINT, partition_number INT)
+    RETURNS BIGINT
+    NO SQL
+    DETERMINISTIC
+    SQL SECURITY INVOKER
 BEGIN
     IF partition_number < 0 OR partition_number >= 65536 THEN
     SIGNAL SQLSTATE '45000'
