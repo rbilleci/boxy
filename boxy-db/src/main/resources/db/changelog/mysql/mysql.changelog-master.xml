@@ -53,6 +53,14 @@
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
+        <sqlFile path="sp/sp_namespaces__rename.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_namespaces__move.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
         <sqlFile path="sp/sp_namespaces__delete.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
