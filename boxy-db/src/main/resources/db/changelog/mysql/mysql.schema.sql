@@ -11,13 +11,13 @@ CREATE TABLE namespaces (
     COLLATE=utf8mb4_bin
     COMMENT='Stores namespaces hierarchically';
 
-CREATE TABLE namespace_closure (
+CREATE TABLE namespace_closures (
     ancestor_id   BIGINT NOT NULL,
     descendant_id BIGINT NOT NULL,
     depth         INT    NOT NULL,
     PRIMARY KEY (ancestor_id, descendant_id),
-    INDEX idx_namespace_closure_ancestor (ancestor_id),
-    INDEX idx_namespace_closure_descendant (descendant_id),
+    INDEX idx_namespace_closures_ancestor (ancestor_id),
+    INDEX idx_namespace_closures_descendant (descendant_id),
     FOREIGN KEY (ancestor_id) REFERENCES namespaces(id) ON DELETE CASCADE,
     FOREIGN KEY (descendant_id) REFERENCES namespaces(id) ON DELETE CASCADE
 ) ENGINE=InnoDB

@@ -19,7 +19,7 @@ public final class PartitionRepository extends BaseRepository {
                         WITH ns AS (
                             SELECT nc.descendant_id AS id,
                                    GROUP_CONCAT(a.name ORDER BY nc.depth DESC SEPARATOR '/') AS path
-                              FROM namespace_closure nc
+                              FROM namespace_closures nc
                               JOIN namespaces a ON a.id = nc.ancestor_id
                              GROUP BY nc.descendant_id
                         )

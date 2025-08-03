@@ -35,7 +35,7 @@ public final class NamespaceRepository extends BaseRepository {
                                    d.created_at,
                                    d.last_modified_at
                               FROM namespaces d
-                              JOIN namespace_closure c ON c.descendant_id = d.id
+                              JOIN namespace_closures c ON c.descendant_id = d.id
                               JOIN namespaces a ON a.id = c.ancestor_id
                              GROUP BY d.id
                         )

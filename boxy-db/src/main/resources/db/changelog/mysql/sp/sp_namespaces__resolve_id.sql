@@ -10,7 +10,7 @@ BEGIN
         SELECT
             d.id,
             REPLACE(GROUP_CONCAT(a.name ORDER BY c.depth DESC SEPARATOR '###'), '###', p_separator) AS full_path
-        FROM namespace_closure c
+        FROM namespace_closures c
         JOIN namespaces a ON c.ancestor_id = a.id
         JOIN namespaces d ON c.descendant_id = d.id
         GROUP BY d.id

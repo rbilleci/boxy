@@ -48,11 +48,11 @@ BEGIN
     SET v_id = LAST_INSERT_ID();
 
     -- INSERT INT THE CLOSURE TABLE
-    INSERT INTO namespace_closure(ancestor_id, descendant_id, depth) VALUES (v_id, v_id, 0);
+    INSERT INTO namespace_closures(ancestor_id, descendant_id, depth) VALUES (v_id, v_id, 0);
     IF v_parent_id IS NOT NULL THEN
-        INSERT INTO namespace_closure(ancestor_id, descendant_id, depth)
+        INSERT INTO namespace_closures(ancestor_id, descendant_id, depth)
             SELECT ancestor_id, v_id, depth + 1
-              FROM namespace_closure
+              FROM namespace_closures
              WHERE descendant_id = v_parent_id;
     END IF;
     SELECT v_id AS id;
