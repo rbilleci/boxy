@@ -25,6 +25,14 @@ public final class NamespaceRepository extends BaseRepository {
         update("{CALL sp_namespaces__delete(?)}", path);
     }
 
+    public void rename(String path, String newName) {
+        update("{CALL sp_namespaces__rename(?, ?)}", path, newName);
+    }
+
+    public void move(String path, String newParentPath) {
+        update("{CALL sp_namespaces__move(?, ?)}", path, newParentPath);
+    }
+
     public Optional<Namespace> find(String path) {
         return queryOne("SELECT * FROM namespaces WHERE path_hash = UNHEX(MD5(?)) AND path = ?", NAMESPACE_MAPPER, path, path);
     }
