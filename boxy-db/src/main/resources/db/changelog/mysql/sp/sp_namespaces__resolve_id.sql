@@ -4,10 +4,17 @@ CREATE PROCEDURE sp_namespaces__resolve_id(
     OUT p_id BIGINT
 )
 BEGIN
-    SELECT d.id INTO p_id
-      FROM namespace_closure c
-      JOIN namespaces a ON c.ancestor_id = a.id
-      JOIN namespaces d ON c.descendant_id = d.id
-     GROUP BY d.id
-    HAVING GROUP_CONCAT(a.name ORDER BY c.depth DESC SEPARATOR p_separator) = p_path;
+    -- Try to find a namespace ID by path, supporting variable separator
+    SELECT x.id INTO p_id
+      FROM (
+        SELECT
+            d.id,
+            REPLACE(GROUP_CONCAT(a.name ORDER BY c.depth DESC SEPARATOR '###'), '###', p_separator) AS full_path
+        FROM namespace_closure c
+        JOIN namespaces a ON c.ancestor_id = a.id
+        JOIN namespaces d ON c.descendant_id = d.id
+        GROUP BY d.id
+      ) x
+     WHERE x.full_path = p_path
+     LIMIT 1;
 END;
