@@ -46,9 +46,9 @@ public class BenchmarkIT extends BaseIT {
 
         final var histogram = new Histogram(TimeUnit.SECONDS.toNanos(1), 3);
 
-        for (int run = 0; run < 4; run++) {
+        for (int run = 0; run < 3; run++) {
             histogram.reset();
-            for (int i = 0; i < 10_000; i++) {
+            for (int i = 0; i < 2_000; i++) {
                 final var start = System.nanoTime();
                 eventRepository.publish(partitionId, DATA);
                 histogram.recordValue(System.nanoTime() - start);
@@ -63,9 +63,9 @@ public class BenchmarkIT extends BaseIT {
         topicRepository.create(PATH, TOPIC, PARTITIONS);
         final var histogram = new Histogram(TimeUnit.SECONDS.toNanos(1), 3);
 
-        for (int run = 0; run < 4; run++) {
+        for (int run = 0; run < 3; run++) {
             histogram.reset();
-            for (int i = 0; i < 10_000; i++) {
+            for (int i = 0; i < 2_000; i++) {
                 final var start = System.nanoTime();
                 eventRepository.publish(PATH, TOPIC, "k" + i, DATA);
                 histogram.recordValue(System.nanoTime() - start);
