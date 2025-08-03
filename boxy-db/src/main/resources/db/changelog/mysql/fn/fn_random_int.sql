@@ -1,7 +1,7 @@
 CREATE FUNCTION fn_random_int()
     RETURNS INT
-    NO SQL
     NOT DETERMINISTIC
+    NO SQL
     SQL SECURITY INVOKER
 BEGIN
   -- RAND() ∈ [0,1)

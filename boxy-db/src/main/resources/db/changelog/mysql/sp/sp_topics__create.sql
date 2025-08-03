@@ -9,7 +9,7 @@ BEGIN
 
     START TRANSACTION;
         -- RESOLVE THE NAMESPACE ID
-        SET v_namespace_id = fn_resolve_namespace_id(p_path);
+        SET v_namespace_id = fn_resolve_namespace_id(p_path, '/');
 
         -- CREATE THE TOPIC
         INSERT INTO topics (namespace_id, name, partitions) VALUES (v_namespace_id, p_name, p_partitions);
