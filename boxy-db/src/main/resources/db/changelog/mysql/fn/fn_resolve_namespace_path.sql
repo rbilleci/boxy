@@ -4,26 +4,22 @@ CREATE FUNCTION fn_resolve_namespace_path(p_id BIGINT)
     READS SQL DATA
     SQL SECURITY INVOKER
 BEGIN
-    DECLARE v_name VARCHAR(500);
-    DECLARE v_parent BIGINT;
-    DECLARE v_path VARCHAR(4000) DEFAULT '';
-    DECLARE v_id BIGINT;
-    DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_id = NULL;
+    DECLARE v_path VARCHAR(4000);
 
-    SET v_id = p_id;
+    WITH RECURSIVE ancestry AS (
 
-    WHILE v_id IS NOT NULL DO
-        SELECT name, parent_id INTO v_name, v_parent FROM namespaces WHERE id = v_id;
-        IF v_name IS NULL THEN
-            RETURN NULL;
-        END IF;
-        IF v_path = '' THEN
-            SET v_path = v_name;
-        ELSE
-            SET v_path = CONCAT(v_name, '/', v_path);
-        END IF;
-        SET v_id = v_parent;
-    END WHILE;
+    -- ANCHOR start at the given node
+    SELECT id, parent_id, name, name AS segment_path, 1 AS lvl
+      FROM namespaces
+     WHERE id = p_id
 
-    RETURN v_path;
+    UNION ALL
+
+    -- RECURSE: climb up one parent at a time, prepending each name
+    SELECT n.id, n.parent_id, n.name, CONCAT(n.name, '/', a.segment_path), a.lvl + 1
+      FROM namespaces n
+      JOIN ancestry a ON a.parent_id = n.id
+  )
+  SELECT segment_path INTO v_path FROM ancestry ORDER BY lvl DESC LIMIT 1;
+  RETURN v_path;
 END;
