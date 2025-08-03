@@ -25,10 +25,6 @@
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="fn/fn_resolve_namespace_path.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
 
         <!-- SP: WORKERS -->
         <sqlFile path="sp/sp_workers__delete.sql"

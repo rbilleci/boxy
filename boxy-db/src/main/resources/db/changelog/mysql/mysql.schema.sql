@@ -174,3 +174,20 @@ CREATE OR REPLACE ALGORITHM = MERGE VIEW leased_cursors_view AS
      WHERE w.heartbeat_detected_at < w.heartbeat_deadline
        AND l.state = 'ACTIVE'
   ORDER BY worker_id, c.id;
+
+
+-- ========================================================
+-- VIEW: namespaces, with the 'path'
+CREATE OR REPLACE ALGORITHM=MERGE VIEW namespaces_with_path_view AS
+    WITH RECURSIVE tree AS (
+        -- 1) anchor: every root node
+        SELECT id, parent_id, name, name AS path
+          FROM namespaces
+         WHERE parent_id IS NULL
+        UNION ALL
+        -- 2) recurse: append each child’s name to its parent’s path
+        SELECT n.id, n.parent_id, n.name, CONCAT(tree.path, '/', n.name) AS path
+          FROM namespaces n
+          JOIN tree ON n.parent_id = tree.id
+    )
+    SELECT * FROM tree;

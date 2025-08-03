@@ -23,9 +23,10 @@ public final class SubscriptionTopicRepository extends BaseRepository {
                         SELECT st.* FROM subscription_topics st
                             JOIN subscriptions s ON st.subscription_id = s.id
                             JOIN topics t ON st.topic_id = t.id
-                            WHERE s.name = ? AND
-                                  t.namespace_id = fn_resolve_namespace_id(?, '/') AND
-                                  t.name = ?
+                            JOIN namespaces_with_path_view n ON n.id = t.namespace_id
+                            WHERE s.name = ?
+                              AND n.path = ?
+                              AND t.name = ?
                         """, SUBSCRIPTION_TOPIC_MAPPER,
                 subscription, path, topic);
     }

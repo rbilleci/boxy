@@ -26,7 +26,8 @@ public final class TopicRepository extends BaseRepository {
         return queryOne("""
                         SELECT t.*
                           FROM topics t
-                         WHERE t.namespace_id = fn_resolve_namespace_id(?, '/')
+                          JOIN namespaces_with_path_view n ON n.id = t.namespace_id
+                         WHERE n.path = ?
                            AND t.name = ?
                         """,
                 TOPIC_MAPPER, path, name);
