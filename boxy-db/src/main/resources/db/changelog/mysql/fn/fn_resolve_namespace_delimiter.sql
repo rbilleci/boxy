@@ -1,0 +1,6 @@
+CREATE FUNCTION fn_resolve_namespace_delimiter()
+    RETURNS VARCHAR(10)
+    DETERMINISTIC
+    NO SQL
+    SQL SECURITY INVOKER
+    RETURN '/';

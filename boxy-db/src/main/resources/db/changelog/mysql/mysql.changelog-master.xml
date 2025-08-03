@@ -9,6 +9,10 @@
         <sqlFile path="mysql.schema.sql" relativeToChangelogFile="true"/>
 
         <!-- FUNCTIONS -->
+        <sqlFile path="fn/fn_resolve_namespace_delimiter.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
         <sqlFile path="fn/fn_resolve_namespace_id.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
