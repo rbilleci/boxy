@@ -26,7 +26,7 @@ public final class NamespaceRepository extends BaseRepository {
     }
 
     public Optional<Namespace> find(String path) {
-        return queryOne("SELECT * FROM namespaces WHERE path = ?", NAMESPACE_MAPPER, path);
+        return queryOne("SELECT * FROM namespaces WHERE path_hash = UNHEX(MD5(?)) AND path = ?", NAMESPACE_MAPPER, path, path);
     }
 }
 

@@ -9,7 +9,7 @@ BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
 
     -- RESOLVE THE NAMESPACE ID
-    SELECT id INTO v_namespace_id FROM namespaces WHERE path = p_path;
+    SELECT id INTO v_namespace_id FROM namespaces WHERE path_hash = UNHEX(MD5(p_path)) AND path = p_path;
 
     -- RESOLVE THE TOPIC ID
     SELECT id INTO v_topic_id FROM topics WHERE namespace_id = v_namespace_id AND name = p_topic;

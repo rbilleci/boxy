@@ -36,7 +36,7 @@ BEGIN
         IF TRIM(v_parent_path) = '' THEN
             SET v_parent_id = NULL;
         ELSE
-            SELECT id INTO v_parent_id FROM namespaces WHERE path = v_parent_path;
+            SELECT id INTO v_parent_id FROM namespaces WHERE path_hash = UNHEX(MD5(v_parent_path)) AND path = v_parent_path;
             IF v_parent_id IS NULL THEN
                 SET v_error = CONCAT('Parent path not found: ', v_parent_path);
                 SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = v_error;

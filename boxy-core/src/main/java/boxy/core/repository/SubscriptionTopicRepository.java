@@ -25,10 +25,11 @@ public final class SubscriptionTopicRepository extends BaseRepository {
                             JOIN topics t ON st.topic_id = t.id
                             JOIN namespaces n ON n.id = t.namespace_id
                             WHERE s.name = ?
-                              AND n.path = ?
-                              AND t.name = ?
+                              AND n.path_hash = UNHEX(MD5(?))
+                              AND n.path      = ?
+                              AND t.name      = ?
                         """, SUBSCRIPTION_TOPIC_MAPPER,
-                subscription, path, topic);
+                subscription, path, path, topic);
     }
 
     public long subscribe(String subscription, String path, String topic) {

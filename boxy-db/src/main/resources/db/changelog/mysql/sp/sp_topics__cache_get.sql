@@ -27,7 +27,7 @@ BEGIN
 
   IF p_topic_id IS NULL THEN
     -- cache miss: fetch the "real" value
-    SELECT id INTO v_namespace_id FROM namespaces WHERE path = p_path;
+    SELECT id INTO v_namespace_id FROM namespaces WHERE path_hash = v_path_hash AND path = p_path;
 
     SELECT id, partitions
       INTO p_topic_id, p_partitions
