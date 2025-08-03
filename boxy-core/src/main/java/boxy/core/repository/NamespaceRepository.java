@@ -34,7 +34,7 @@ public final class NamespaceRepository extends BaseRepository {
 
     public Optional<Namespace> find(String path) {
         return queryOne("""
-                SELECT n.*, fn_resolve_namespace_path(n.id) AS path
+                SELECT n.*, fn_resolve_namespace_path(n.id, '/') AS path
                   FROM namespaces n
                  WHERE n.id = fn_resolve_namespace_id(?, '/')
                 """, NAMESPACE_MAPPER, path);
