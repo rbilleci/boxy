@@ -18,19 +18,19 @@ public final class SubscriptionRepository extends BaseRepository {
         super(ds);
     }
 
-    public long create(String tenant, String name) {
-        return queryOne("{CALL sp_subscriptions__create(?, ?)}", ID_MAPPER, tenant, name)
+    public long create(String name) {
+        return queryOne("{CALL sp_subscriptions__create(?)}", ID_MAPPER, name)
                 .orElseThrow();
     }
 
-    public void delete(String tenant, String name) {
-        update("{CALL sp_subscriptions__delete(?, ?)}", tenant, name);
+    public void delete(String name) {
+        update("{CALL sp_subscriptions__delete(?)}", name);
     }
 
-    public Optional<Subscription> find(String tenant, String name) {
-        return queryOne("SELECT * FROM subscriptions WHERE tenant = ? AND name = ?",
+    public Optional<Subscription> find(String name) {
+        return queryOne("SELECT * FROM subscriptions WHERE name = ?",
                 SUBSCRIPTION_MAPPER,
-                tenant, name);
+                name);
     }
 
     public List<Subscription> findAll(int limit, int offset) {

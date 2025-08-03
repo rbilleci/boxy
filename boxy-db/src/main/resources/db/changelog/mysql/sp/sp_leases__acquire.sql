@@ -1,5 +1,5 @@
 CREATE PROCEDURE sp_leases__acquire(
-    IN p_worker_id VARCHAR(255),
+    IN p_worker_id VARCHAR(36),
     IN p_subscription_id BIGINT,
     IN p_leases_to_acquire INT
 )

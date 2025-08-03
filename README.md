@@ -2,7 +2,7 @@
 # Boxy
 <img src="docs/images/boxy-logo.png" alt="Boxy Logo" style="width:50%" align="right"/>
 
-Boxy is a multi-tenant event streaming library modeled after Apache Pulsar that exposes Pulsar-like semantics directly over a database’s transactional outbox. It targets monolithic applications that need event streaming without taking on the operational cost of running a full Pulsar deployment. Boxy turns your transactional outbox into an event stream and allows you to build asynchronous workers in your favorite language to consume events. Boxy is **not** intended as a central event streaming platform.
+Boxy is a multi-tenant event streaming library modeled after Apache Pulsar that exposes Pulsar-like semantics directly over a database’s transactional outbox. It targets monolithic applications that need event streaming without taking on the operational cost of running a full Pulsar deployment. Boxy turns your transactional outbox into an event stream and allows you to build asynchronous workers in your favorite language to consume events. Tenant isolation is provided through hierarchical namespaces. Boxy is **not** intended as a central event streaming platform.
 
 Boxy is released under the **Apache License 2.0** and remains a work in progress.
 
@@ -36,15 +36,18 @@ Boxy is released under the **Apache License 2.0** and remains a work in progress
 
 ## Architecture Decisions
 - APIs for consumers and producers are kept simple, easy to integrate, and easy to use.
-- Publishing an event should be possible when only knowing the tenant name and topic name.
+- Publishing an event should be possible when only knowing the path and topic name.
 - Third-party libraries are minimized to those that are necessary.
 - For safety: boxy never deletes events. Event deletion is left to be orchestrated by you.
 - For easy portability across programming languages and runtimes, all mutations are strictly performed by stored procedures.
-- Tenant and Topic Names are case-sensitive.
+- Namespace and Topic Names are case-sensitive.
 
 ## Limits
 - Each topic has a practical limit of 1024 partitions, and a technical limit of 65536 partitions
 - Each subscription has a practical limit of 1024 workers.
+- The fully qualified namespace path and topic name has a limit of 4000 characters
+- Each namespace name a limit of 500 characters.
+- Each topic name has a limit of 500 characters.
 
 ## Roadmap
 
@@ -78,7 +81,7 @@ erDiagram
 
 ### Key Tables and Views
 
-- **namespaces**: tenant-scoped containers for topics.
+- **namespaces**: hierarchical containers for topics.
 - **topics**: belong to namespaces and declare a partition count.
 - **partitions**: per-topic shards that track a `high_watermark`.
 - **events**: append-only records stored per partition.
@@ -338,7 +341,6 @@ You can configure various aspects of Boxy:
 ```java
 BoxySubscription subscription = BoxySubscription.builder()
     .dataSource(dataSource)
-    .tenant("mycompany")
     .name("order-processor")
     .heartbeatIntervalBaseline(3.0) // Default heartbeat interval in seconds
     .heartbeatTargetQPS(10.0)      // Target heartbeats per second for the cluster

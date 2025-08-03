@@ -1,20 +1,21 @@
 CREATE TABLE namespaces (
-    id      BIGINT AUTO_INCREMENT PRIMARY KEY,
-    tenant  VARCHAR(255) NOT NULL,
-    name    VARCHAR(255) NOT NULL,
-    created_at          DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    last_modified_at    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    CONSTRAINT u_namespaces UNIQUE (tenant, name)
+    id               BIGINT AUTO_INCREMENT PRIMARY KEY,
+    parent_id        BIGINT NULL,
+    name             VARCHAR(500)    NOT NULL,
+    created_at       DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    last_modified_at DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    CONSTRAINT u_namespaces__parent UNIQUE (parent_id, name),
+    FOREIGN KEY (parent_id) REFERENCES namespaces(id) ON DELETE CASCADE
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
-    COMMENT='Stores namespaces per tenant';
+    COMMENT='Stores namespaces hierarchically';
 
 CREATE TABLE topics (
     id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
     namespace_id        BIGINT NOT NULL,
-    name                VARCHAR(255) NOT NULL,
-    partitions          INT NOT NULL DEFAULT 16,
+    name                VARCHAR(500) NOT NULL,
+    partitions          INT NOT NULL DEFAULT 1,
     created_at          DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     last_modified_at    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     INDEX idx_topics__cover (namespace_id, name, id, partitions),
@@ -40,8 +41,7 @@ CREATE TABLE partitions (
 
 CREATE TABLE subscriptions (
     id                              BIGINT AUTO_INCREMENT PRIMARY KEY,
-    tenant                          VARCHAR(255) NOT NULL,
-    name                            VARCHAR(255) NOT NULL,
+    name                            VARCHAR(500) NOT NULL,
     heartbeat_deadline_multiplier   DOUBLE NOT NULL DEFAULT 5.0,
     heartbeat_interval_baseline     DOUBLE NOT NULL DEFAULT 3.0,
     heartbeat_interval              DOUBLE NOT NULL DEFAULT 15.0,
@@ -54,11 +54,11 @@ CREATE TABLE subscriptions (
     active_workers_limit            INT NOT NULL DEFAULT 16,
     active_workers_weight           DOUBLE NOT NULL DEFAULT 0,
     last_modified_at                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    CONSTRAINT u_subscriptions UNIQUE (tenant, name)
+    CONSTRAINT u_subscriptions UNIQUE (name)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
-    COMMENT='Defines subscriptions per tenant which store consumption state';
+    COMMENT='Defines subscriptions which store consumption state';
 
 CREATE TABLE subscription_topics (
     id               BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -79,7 +79,7 @@ CREATE TABLE cursors (
     subscription_id  BIGINT NOT NULL,
     partition_id     BIGINT NOT NULL,
     random_key       INT    NOT NULL,
-    position BIGINT NOT NULL DEFAULT 0,
+    position         BIGINT NOT NULL DEFAULT 0,
     FOREIGN KEY (subscription_id)   REFERENCES subscription_topics (id) ON DELETE CASCADE,
     FOREIGN KEY (partition_id)      REFERENCES partitions (id) ON DELETE CASCADE,
     CONSTRAINT u_cursors UNIQUE (subscription_id, partition_id),
@@ -93,7 +93,7 @@ CREATE TABLE cursors (
 CREATE INDEX idx_cursors__random_key ON cursors(random_key);
 
 CREATE TABLE workers (
-    id                   VARCHAR(255) PRIMARY KEY,
+    id                   VARCHAR(36)  PRIMARY KEY,
     subscription_id      BIGINT       NOT NULL,
     weight               DOUBLE       NOT NULL DEFAULT 1,
     heartbeat_detected_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -108,13 +108,13 @@ CREATE TABLE workers (
     COMMENT='Registered workers per subscription, with capacity weight and heartbeat timestamp';
 
 CREATE TABLE leases (
-    cursor_id              BIGINT PRIMARY KEY,
-    worker_id               VARCHAR(255) NOT NULL,
-    version                 BIGINT NOT NULL DEFAULT 1,
-    acquired_at             DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    released_at             DATETIME(3) NULL,
-    release_deadline        DATETIME(3) NULL,
-    state                   ENUM('ACTIVE', 'RELEASING') NOT NULL DEFAULT 'ACTIVE',
+    cursor_id           BIGINT PRIMARY KEY,
+    worker_id           VARCHAR(36) NOT NULL,
+    version             BIGINT NOT NULL DEFAULT 1,
+    acquired_at         DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    released_at         DATETIME(3) NULL,
+    release_deadline    DATETIME(3) NULL,
+    state               ENUM('ACTIVE', 'RELEASING') NOT NULL DEFAULT 'ACTIVE',
     INDEX idx_leases__state (cursor_id, state),
     INDEX idx_leases__worker (worker_id),
     FOREIGN KEY (cursor_id) REFERENCES cursors(id),
@@ -137,12 +137,12 @@ CREATE TABLE events (
     COMMENT='Append-only event store per partition; JSON payloads in sequence order';
 
 CREATE TABLE topics_cache (
-  tenant       VARCHAR(255)  NOT NULL,
-  namespace    VARCHAR(255)  NOT NULL,
-  topic        VARCHAR(255)  NOT NULL,
+  path_hash    BINARY(16)    NOT NULL,
+  path         VARCHAR(4000) NOT NULL,
+  topic        VARCHAR(500)  NOT NULL,
   topic_id     BIGINT        NOT NULL,
   partitions   INT NOT NULL,
-  PRIMARY KEY (tenant, namespace, topic)
+  PRIMARY KEY (path_hash, topic)
 ) ENGINE=MEMORY;
 
 -- ========================================================
@@ -174,3 +174,20 @@ CREATE OR REPLACE ALGORITHM = MERGE VIEW leased_cursors_view AS
      WHERE w.heartbeat_detected_at < w.heartbeat_deadline
        AND l.state = 'ACTIVE'
   ORDER BY worker_id, c.id;
+
+
+-- ========================================================
+-- VIEW: namespaces, with the 'path'
+CREATE OR REPLACE ALGORITHM=MERGE VIEW namespaces_with_path_view AS
+    WITH RECURSIVE tree AS (
+        -- 1) anchor: every root node
+        SELECT id, parent_id, name, name AS path
+          FROM namespaces
+         WHERE parent_id IS NULL
+        UNION ALL
+        -- 2) recurse: append each child’s name to its parent’s path
+        SELECT n.id, n.parent_id, n.name, CONCAT(tree.path, '/', n.name) AS path
+          FROM namespaces n
+          JOIN tree ON n.parent_id = tree.id
+    )
+    SELECT * FROM tree;

@@ -1,7 +1,6 @@
 CREATE PROCEDURE sp_topics__create(
-    IN p_tenant VARCHAR(255),
-    IN p_namespace VARCHAR(255),
-    IN p_name VARCHAR(255),
+    IN p_path VARCHAR(4000),
+    IN p_name VARCHAR(500),
     IN p_partitions INT)
 BEGIN
     DECLARE v_namespace_id BIGINT;
@@ -10,7 +9,7 @@ BEGIN
 
     START TRANSACTION;
         -- RESOLVE THE NAMESPACE ID
-        SELECT id INTO v_namespace_id FROM namespaces WHERE name = p_namespace AND tenant = p_tenant;
+        SET v_namespace_id = fn_resolve_namespace_id(p_path, '/');
 
         -- CREATE THE TOPIC
         INSERT INTO topics (namespace_id, name, partitions) VALUES (v_namespace_id, p_name, p_partitions);

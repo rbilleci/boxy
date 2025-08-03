@@ -17,25 +17,24 @@ public final class TopicRepository extends BaseRepository {
         super(ds);
     }
 
-    public long create(String tenant, String namespace, String name, int partitions) {
-        return queryOne("{CALL sp_topics__create(?,?,?,?)}",
-                ID_MAPPER, tenant, namespace, name, partitions).orElseThrow();
+    public long create(String path, String name, int partitions) {
+        return queryOne("{CALL sp_topics__create(?,?,?)}",
+                ID_MAPPER, path, name, partitions).orElseThrow();
     }
 
-    public Optional<Topic> find(String tenant, String namespace, String name) {
+    public Optional<Topic> find(String path, String name) {
         return queryOne("""
                         SELECT t.*
                           FROM topics t
-                          JOIN namespaces n ON t.namespace_id = n.id
-                         WHERE n.tenant = ?
-                           AND n.name = ?
+                          JOIN namespaces_with_path_view n ON n.id = t.namespace_id
+                         WHERE n.path = ?
                            AND t.name = ?
                         """,
-                TOPIC_MAPPER, tenant, namespace, name);
+                TOPIC_MAPPER, path, name);
     }
 
-    public void delete(String tenant, String namespace, String name) {
-        update("{CALL sp_topics__delete(?,?,?)}", tenant, namespace, name);
+    public void delete(String path, String name) {
+        update("{CALL sp_topics__delete(?,?)}", path, name);
     }
 
 }

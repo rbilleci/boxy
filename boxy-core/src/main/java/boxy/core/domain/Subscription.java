@@ -4,7 +4,6 @@ import java.time.Instant;
 
 public record Subscription(
         long id,
-        String tenant,
         String name,
         double heartbeatDeadlineMultiplier,
         double heartbeatIntervalBaseline,

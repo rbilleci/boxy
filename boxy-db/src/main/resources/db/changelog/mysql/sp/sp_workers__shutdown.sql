@@ -1,4 +1,4 @@
-CREATE PROCEDURE sp_workers__shutdown(IN p_worker_id VARCHAR(255))
+CREATE PROCEDURE sp_workers__shutdown(IN p_worker_id VARCHAR(36))
 BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
 
