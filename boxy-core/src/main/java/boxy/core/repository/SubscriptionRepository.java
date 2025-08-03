@@ -27,6 +27,15 @@ public final class SubscriptionRepository extends BaseRepository {
         update("{CALL sp_subscriptions__delete(?)}", name);
     }
 
+    public long subscribe(String subscription, String path, String topic) {
+        return queryOne("{CALL sp_subscriptions__subscribe(?,?,?)}", ID_MAPPER, subscription, path, topic)
+                .orElseThrow();
+    }
+
+    public void unsubscribe(String subscription, String path, String topic) {
+        update("{CALL sp_subscriptions__unsubscribe(?,?,?)}", subscription, path, topic);
+    }
+
     public Optional<Subscription> find(String name) {
         return queryOne("SELECT * FROM subscriptions WHERE name = ?",
                 SUBSCRIPTION_MAPPER,

@@ -83,6 +83,14 @@
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
+        <sqlFile path="sp/sp_subscriptions__subscribe.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_subscriptions__unsubscribe.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
 
         <!-- SP: TOPICS -->
         <sqlFile path="sp/sp_topics__create.sql"
@@ -90,14 +98,6 @@
                  splitStatements="false"
                  stripComments="false"/>
         <sqlFile path="sp/sp_topics__delete.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-        <sqlFile path="sp/sp_topics__subscribe.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-        <sqlFile path="sp/sp_topics__unsubscribe.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>

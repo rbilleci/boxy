@@ -1,9 +1,8 @@
 package boxy.core.it;
 
+import boxy.core.domain.Subscription;
 import boxy.core.repository.EventRepository;
-import boxy.core.repository.SubscriptionTopicRepository;
 import boxy.core.repository.CursorRepository;
-import boxy.core.domain.SubscriptionTopic;
 import boxy.core.domain.Cursor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,14 +16,12 @@ public class ProcessorIT extends BaseIT {
 
     private static final String DATA = "{\"key\": \"value\"}\n";
 
-    private SubscriptionTopicRepository subscriptionTopicRepository;
     private CursorRepository cursorRepository;
     private EventRepository eventRepository;
     private TestData data;
 
     @BeforeEach
     void setup() {
-        subscriptionTopicRepository = new SubscriptionTopicRepository(dataSource);
         cursorRepository = new CursorRepository(dataSource);
         eventRepository = new EventRepository(dataSource);
         data = TestData.seed(dataSource);
@@ -32,7 +29,7 @@ public class ProcessorIT extends BaseIT {
 
     @Test
     void leasesAvailable_whenViewHasOneItem_returnsListWithOneItem() {
-        final var subscriptionId = subscriptionTopicRepository.find(SUBSCRIPTION_A, PATH_A, TOPIC_A).orElseThrow().id();
+        final var subscriptionId = data.subscriptions().getFirst().id();
         // PUBLISH
         eventRepository.publish(PATH_A, TOPIC_A, "partitionKey", DATA);
         // VALIDATE
@@ -59,6 +56,6 @@ public class ProcessorIT extends BaseIT {
         assertThat(leasable)
                 .hasSize(16)
                 .extracting(Cursor::subscriptionId)
-                .containsAll(data.subscriptionTopics().stream().map(SubscriptionTopic::subscriptionId).toList());
+                .containsAll(data.subscriptions().stream().map(Subscription::id).toList());
     }
 }

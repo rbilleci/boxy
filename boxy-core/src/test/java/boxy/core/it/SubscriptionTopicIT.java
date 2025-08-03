@@ -1,5 +1,6 @@
 package boxy.core.it;
 
+import boxy.core.domain.Subscription;
 import boxy.core.repository.SubscriptionRepository;
 import boxy.core.repository.SubscriptionTopicRepository;
 import boxy.core.repository.TopicRepository;
@@ -22,8 +23,8 @@ public class SubscriptionTopicIT extends BaseIT {
     @BeforeEach
     void setup() {
         subscriptionRepository = new SubscriptionRepository(dataSource);
-        subscriptionTopicRepository = new SubscriptionTopicRepository(dataSource);
         topicRepository = new TopicRepository(dataSource);
+        subscriptionTopicRepository = new SubscriptionTopicRepository(dataSource);
         data = TestData.seed(dataSource);
     }
 
@@ -44,13 +45,13 @@ public class SubscriptionTopicIT extends BaseIT {
     @Test
     void delete_whenDeleted_isNotPresent() {
         System.out.println(subscriptionTopicRepository.findAll(100, 0).size());
-        subscriptionTopicRepository.unsubscribe(SUBSCRIPTION_A, PATH_A, TOPIC_A);
+        subscriptionRepository.unsubscribe(SUBSCRIPTION_A, PATH_A, TOPIC_A);
         System.out.println(subscriptionTopicRepository.findAll(100, 0).size());
-        subscriptionTopicRepository.unsubscribe(SUBSCRIPTION_A, PATH_A, TOPIC_B);
+        subscriptionRepository.unsubscribe(SUBSCRIPTION_A, PATH_A, TOPIC_B);
         System.out.println(subscriptionTopicRepository.findAll(100, 0).size());
-        subscriptionTopicRepository.unsubscribe(SUBSCRIPTION_C, PATH_B, TOPIC_C);
+        subscriptionRepository.unsubscribe(SUBSCRIPTION_C, PATH_B, TOPIC_C);
         System.out.println(subscriptionTopicRepository.findAll(100, 0).size());
-        subscriptionTopicRepository.unsubscribe(SUBSCRIPTION_C, PATH_B, TOPIC_D);
+        subscriptionRepository.unsubscribe(SUBSCRIPTION_C, PATH_B, TOPIC_D);
         System.out.println(subscriptionTopicRepository.findAll(100, 0).size());
         assertThat(subscriptionTopicRepository.findAll(100, 0)).hasSize(4);
     }
@@ -60,12 +61,12 @@ public class SubscriptionTopicIT extends BaseIT {
         assertThat(new SubscriptionTopicRepository(dataSource).findAll(100, 0))
                 .hasSize(8)
                 .extracting(SubscriptionTopic::subscriptionId)
-                .containsAll(data.subscriptionTopics().stream().map(SubscriptionTopic::subscriptionId).toList());
+                .containsAll(data.subscriptions().stream().map(Subscription::id).toList());
         // UNSUBSCRIBE S1
-        subscriptionTopicRepository.unsubscribe(SUBSCRIPTION_A, PATH_A, TOPIC_A);
-        subscriptionTopicRepository.unsubscribe(SUBSCRIPTION_A, PATH_A, TOPIC_B);
-        subscriptionTopicRepository.unsubscribe(SUBSCRIPTION_C, PATH_B, TOPIC_C);
-        subscriptionTopicRepository.unsubscribe(SUBSCRIPTION_C, PATH_B, TOPIC_D);
+        subscriptionRepository.unsubscribe(SUBSCRIPTION_A, PATH_A, TOPIC_A);
+        subscriptionRepository.unsubscribe(SUBSCRIPTION_A, PATH_A, TOPIC_B);
+        subscriptionRepository.unsubscribe(SUBSCRIPTION_C, PATH_B, TOPIC_C);
+        subscriptionRepository.unsubscribe(SUBSCRIPTION_C, PATH_B, TOPIC_D);
         assertThat(subscriptionTopicRepository.findAll(100, 0)).hasSize(4);
     }
 

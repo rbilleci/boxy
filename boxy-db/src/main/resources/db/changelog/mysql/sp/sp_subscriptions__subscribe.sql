@@ -1,4 +1,4 @@
-CREATE PROCEDURE sp_topics__subscribe(
+CREATE PROCEDURE sp_subscriptions__subscribe(
     IN p_subscription VARCHAR(500),
     IN p_path  VARCHAR(4000),
     IN p_topic VARCHAR(500))

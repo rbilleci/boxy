@@ -13,7 +13,6 @@ public record TestData(Topic topic,
                        long namespaceAId,
                        long namespaceBId,
                        List<Subscription> subscriptions,
-                       List<SubscriptionTopic> subscriptionTopics,
                        Cursor cursor,
                        Worker worker1,
                        Worker worker2) {
@@ -36,7 +35,6 @@ public record TestData(Topic topic,
         final var namespaceRepository = new NamespaceRepository(ds);
         final var topicRepository = new TopicRepository(ds);
         final var subscriptionRepository = new SubscriptionRepository(ds);
-        final var subscriptionTopicRepository = new SubscriptionTopicRepository(ds);
         final var cursorRepository = new CursorRepository(ds);
         final var workerRepository = new WorkerRepository(ds);
 
@@ -59,19 +57,17 @@ public record TestData(Topic topic,
         final var subscriptions = new ArrayList<>(subscriptionRepository.findAll(100, 0));
 
         // Subscribe topics
-        subscriptionTopicRepository.subscribe(SUBSCRIPTION_A, PATH_A, TOPIC_A);
-        subscriptionTopicRepository.subscribe(SUBSCRIPTION_A, PATH_A, TOPIC_B);
-        subscriptionTopicRepository.subscribe(SUBSCRIPTION_B, PATH_A, TOPIC_A);
-        subscriptionTopicRepository.subscribe(SUBSCRIPTION_B, PATH_A, TOPIC_B);
+        subscriptionRepository.subscribe(SUBSCRIPTION_A, PATH_A, TOPIC_A);
+        subscriptionRepository.subscribe(SUBSCRIPTION_A, PATH_A, TOPIC_B);
+        subscriptionRepository.subscribe(SUBSCRIPTION_B, PATH_A, TOPIC_A);
+        subscriptionRepository.subscribe(SUBSCRIPTION_B, PATH_A, TOPIC_B);
 
-        subscriptionTopicRepository.subscribe(SUBSCRIPTION_C, PATH_B, TOPIC_C);
-        subscriptionTopicRepository.subscribe(SUBSCRIPTION_C, PATH_B, TOPIC_D);
-        subscriptionTopicRepository.subscribe(SUBSCRIPTION_D, PATH_B, TOPIC_C);
-        subscriptionTopicRepository.subscribe(SUBSCRIPTION_D, PATH_B, TOPIC_D);
+        subscriptionRepository.subscribe(SUBSCRIPTION_C, PATH_B, TOPIC_C);
+        subscriptionRepository.subscribe(SUBSCRIPTION_C, PATH_B, TOPIC_D);
+        subscriptionRepository.subscribe(SUBSCRIPTION_D, PATH_B, TOPIC_C);
+        subscriptionRepository.subscribe(SUBSCRIPTION_D, PATH_B, TOPIC_D);
 
-        final var subscriptionTopics = new SubscriptionTopicRepository(ds).findAll(100, 0);
-        final var firstSubscriptionTopic = subscriptionTopics.getFirst();
-        final var cursor = cursorRepository.findAll(firstSubscriptionTopic.id()).getFirst();
+        final var cursor = cursorRepository.findAll(subscriptions.getFirst().id()).getFirst();
 
         workerRepository.checkIn(PARTY_1, subscriptions.get(0).id(), 1);
         workerRepository.checkIn(PARTY_2, subscriptions.get(1).id(), 1);
@@ -83,7 +79,6 @@ public record TestData(Topic topic,
                 namespaceAId,
                 namespaceBId,
                 subscriptions,
-                subscriptionTopics,
                 cursor,
                 worker1,
                 worker2);
