@@ -1,8 +1,8 @@
 -- Publishes an event
 -- Expected to be called from within a transaction.
 CREATE PROCEDURE sp_events__publish(
-    IN p_path VARCHAR(1024),
-    IN p_topic VARCHAR(255),
+    IN p_path VARCHAR(4000),
+    IN p_topic VARCHAR(500),
     IN p_key VARCHAR(255),
     IN p_data JSON)
 BEGIN

@@ -130,7 +130,7 @@ SQL code are **consistent**, **performant**, and **maintainable**.
 ```sql
 -- Heartbeat upsert with LAST_INSERT_ID
 CREATE PROCEDURE sp_workers__heartbeat(
-  IN p_worker_id VARCHAR(255),
+  IN p_worker_id VARCHAR(36),
   IN p_interval DOUBLE,
   OUT p_id BIGINT
 )

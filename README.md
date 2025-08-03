@@ -45,6 +45,9 @@ Boxy is released under the **Apache License 2.0** and remains a work in progress
 ## Limits
 - Each topic has a practical limit of 1024 partitions, and a technical limit of 65536 partitions
 - Each subscription has a practical limit of 1024 workers.
+- The fully qualified namespace path and topic name has a limit of 4000 characters
+- Each namespace name a limit of 500 characters.
+- Each topic name has a limit of 500 characters.
 
 ## Roadmap
 

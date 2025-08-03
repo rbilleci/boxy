@@ -1,5 +1,4 @@
-CREATE PROCEDURE sp_subscriptions__create(
-    IN p_name VARCHAR(255))
+CREATE PROCEDURE sp_subscriptions__create(IN p_name VARCHAR(500))
 BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
 

@@ -1,7 +1,7 @@
 CREATE PROCEDURE sp_topics__subscribe(
-    IN p_subscription VARCHAR(255),
-    IN p_path  VARCHAR(1024),
-    IN p_topic VARCHAR(255))
+    IN p_subscription VARCHAR(500),
+    IN p_path  VARCHAR(4000),
+    IN p_topic VARCHAR(500))
 BEGIN
     DECLARE v_subscription_id BIGINT;
     DECLARE v_topic_id BIGINT;

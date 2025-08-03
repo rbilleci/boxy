@@ -1,6 +1,6 @@
 CREATE PROCEDURE sp_namespaces__create(
-    IN p_parent_path VARCHAR(1024),
-    IN p_name        VARCHAR(255))
+    IN p_parent_path VARCHAR(4000),
+    IN p_name        VARCHAR(500))
 BEGIN
     DECLARE v_parent_id BIGINT;
     DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;

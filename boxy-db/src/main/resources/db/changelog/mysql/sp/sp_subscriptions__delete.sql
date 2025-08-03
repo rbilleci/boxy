@@ -1,5 +1,5 @@
 CREATE PROCEDURE sp_subscriptions__delete(
-    IN p_name VARCHAR(255))
+    IN p_name VARCHAR(500))
 BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
     DELETE FROM subscriptions WHERE name = p_name;

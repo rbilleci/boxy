@@ -1,7 +1,7 @@
 CREATE TABLE namespaces (
     id               BIGINT AUTO_INCREMENT PRIMARY KEY,
     parent_id        BIGINT NULL,
-    name             VARCHAR(255)    NOT NULL,
+    name             VARCHAR(500)    NOT NULL,
     created_at       DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     last_modified_at DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     CONSTRAINT u_namespaces__parent UNIQUE (parent_id, name),
@@ -14,7 +14,7 @@ CREATE TABLE namespaces (
 CREATE TABLE topics (
     id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
     namespace_id        BIGINT NOT NULL,
-    name                VARCHAR(255) NOT NULL,
+    name                VARCHAR(500) NOT NULL,
     partitions          INT NOT NULL DEFAULT 16,
     created_at          DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     last_modified_at    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -41,7 +41,7 @@ CREATE TABLE partitions (
 
 CREATE TABLE subscriptions (
     id                              BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name                            VARCHAR(255) NOT NULL,
+    name                            VARCHAR(500) NOT NULL,
     heartbeat_deadline_multiplier   DOUBLE NOT NULL DEFAULT 5.0,
     heartbeat_interval_baseline     DOUBLE NOT NULL DEFAULT 3.0,
     heartbeat_interval              DOUBLE NOT NULL DEFAULT 15.0,
@@ -93,7 +93,7 @@ CREATE TABLE cursors (
 CREATE INDEX idx_cursors__random_key ON cursors(random_key);
 
 CREATE TABLE workers (
-    id                   VARCHAR(255) PRIMARY KEY,
+    id                   VARCHAR(36)  PRIMARY KEY,
     subscription_id      BIGINT       NOT NULL,
     weight               DOUBLE       NOT NULL DEFAULT 1,
     heartbeat_detected_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -109,7 +109,7 @@ CREATE TABLE workers (
 
 CREATE TABLE leases (
     cursor_id           BIGINT PRIMARY KEY,
-    worker_id           VARCHAR(255) NOT NULL,
+    worker_id           VARCHAR(36) NOT NULL,
     version             BIGINT NOT NULL DEFAULT 1,
     acquired_at         DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     released_at         DATETIME(3) NULL,
@@ -138,8 +138,8 @@ CREATE TABLE events (
 
 CREATE TABLE topics_cache (
   path_hash    BINARY(16)    NOT NULL,
-  path         VARCHAR(1024) NOT NULL,
-  topic        VARCHAR(255)  NOT NULL,
+  path         VARCHAR(4000) NOT NULL,
+  topic        VARCHAR(500)  NOT NULL,
   topic_id     BIGINT        NOT NULL,
   partitions   INT NOT NULL,
   PRIMARY KEY (path_hash, topic)

@@ -1,6 +1,6 @@
 CREATE PROCEDURE sp_leases__release(
     IN p_cursor_id BIGINT,
-    IN p_worker_id VARCHAR(255))
+    IN p_worker_id VARCHAR(36))
 BEGIN
     DECLARE v_timestamp TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3);
     DECLARE v_release_period INT;

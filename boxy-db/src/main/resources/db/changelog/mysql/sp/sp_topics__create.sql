@@ -1,6 +1,6 @@
 CREATE PROCEDURE sp_topics__create(
-    IN p_path VARCHAR(1024),
-    IN p_name VARCHAR(255),
+    IN p_path VARCHAR(4000),
+    IN p_name VARCHAR(500),
     IN p_partitions INT)
 BEGIN
     DECLARE v_namespace_id BIGINT;

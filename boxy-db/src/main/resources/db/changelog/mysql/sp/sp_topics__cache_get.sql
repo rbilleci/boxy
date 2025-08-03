@@ -1,6 +1,6 @@
 CREATE PROCEDURE sp_topics__cache_get(
-  IN  p_path         VARCHAR(1024),
-  IN  p_topic        VARCHAR(255),
+  IN  p_path         VARCHAR(4000),
+  IN  p_topic        VARCHAR(500),
   OUT p_topic_id     BIGINT,
   OUT p_partitions   INT
 )
