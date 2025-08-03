@@ -4,7 +4,6 @@ CREATE PROCEDURE sp_leases__release(
 BEGIN
     DECLARE v_timestamp TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3);
     DECLARE v_release_period INT;
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
 
     -- GET THE RELEASE PERIOD
     SELECT subscriptions.lease_release_period

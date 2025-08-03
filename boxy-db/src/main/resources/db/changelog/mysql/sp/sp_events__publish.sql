@@ -1,5 +1,3 @@
--- Publishes an event
--- Expected to be called from within a transaction.
 CREATE PROCEDURE sp_events__publish(
     IN p_path VARCHAR(4000),
     IN p_topic VARCHAR(500),

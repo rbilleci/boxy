@@ -1,7 +1,5 @@
 CREATE PROCEDURE sp_workers__shutdown(IN p_worker_id VARCHAR(36))
 BEGIN
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
-
     DELETE FROM workers WHERE id = p_id;
 END;
 

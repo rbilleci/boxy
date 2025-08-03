@@ -6,7 +6,7 @@ CREATE FUNCTION fn_resolve_partition_id(topic_id BIGINT, partition_number INT)
     SQL SECURITY INVOKER
 BEGIN
     IF partition_number < 0 OR partition_number >= 65536 THEN
-    SIGNAL SQLSTATE '45000'
+        SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'The partition number must be from [0, 65536)';
     END IF;
     -- MULTIPLY BY 65536, then add the partition number

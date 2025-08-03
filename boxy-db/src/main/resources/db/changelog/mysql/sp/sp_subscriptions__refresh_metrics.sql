@@ -10,8 +10,6 @@ BEGIN
     DECLARE v_heartbeat_interval_limit DOUBLE;
     DECLARE v_heartbeat_target_qps DOUBLE;
 
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN RESIGNAL; END;
-
     -- ACTIVE WORKERS + TOTAL WEIGHT
     SELECT
         COUNT(w.id),
