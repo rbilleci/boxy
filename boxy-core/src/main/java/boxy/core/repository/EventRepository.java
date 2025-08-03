@@ -12,7 +12,7 @@ public final class EventRepository extends BaseRepository {
         update("{CALL sp_events__publish(?,?,?,?)}", path, topic, key, data);
     }
 
-    public void publishAdvanced(long partitionId, String data) {
+    public void publish(long partitionId, String data) {
         update("{CALL sp_events__publish_advanced(?,?)}", partitionId, data);
     }
 }

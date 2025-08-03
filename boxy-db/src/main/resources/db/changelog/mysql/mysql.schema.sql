@@ -1,9 +1,9 @@
 CREATE TABLE namespaces (
     id               BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name             VARCHAR(255)   NOT NULL,
-    parent_id        BIGINT         NULL,
-    created_at       DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    last_modified_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    parent_id        BIGINT NULL,
+    name             VARCHAR(255)    NOT NULL,
+    created_at       DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    last_modified_at DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     CONSTRAINT u_namespaces__parent UNIQUE (parent_id, name),
     FOREIGN KEY (parent_id) REFERENCES namespaces(id) ON DELETE CASCADE
 ) ENGINE=InnoDB
@@ -79,7 +79,7 @@ CREATE TABLE cursors (
     subscription_id  BIGINT NOT NULL,
     partition_id     BIGINT NOT NULL,
     random_key       INT    NOT NULL,
-    position BIGINT NOT NULL DEFAULT 0,
+    position         BIGINT NOT NULL DEFAULT 0,
     FOREIGN KEY (subscription_id)   REFERENCES subscription_topics (id) ON DELETE CASCADE,
     FOREIGN KEY (partition_id)      REFERENCES partitions (id) ON DELETE CASCADE,
     CONSTRAINT u_cursors UNIQUE (subscription_id, partition_id),
@@ -108,13 +108,13 @@ CREATE TABLE workers (
     COMMENT='Registered workers per subscription, with capacity weight and heartbeat timestamp';
 
 CREATE TABLE leases (
-    cursor_id              BIGINT PRIMARY KEY,
-    worker_id               VARCHAR(255) NOT NULL,
-    version                 BIGINT NOT NULL DEFAULT 1,
-    acquired_at             DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-    released_at             DATETIME(3) NULL,
-    release_deadline        DATETIME(3) NULL,
-    state                   ENUM('ACTIVE', 'RELEASING') NOT NULL DEFAULT 'ACTIVE',
+    cursor_id           BIGINT PRIMARY KEY,
+    worker_id           VARCHAR(255) NOT NULL,
+    version             BIGINT NOT NULL DEFAULT 1,
+    acquired_at         DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    released_at         DATETIME(3) NULL,
+    release_deadline    DATETIME(3) NULL,
+    state               ENUM('ACTIVE', 'RELEASING') NOT NULL DEFAULT 'ACTIVE',
     INDEX idx_leases__state (cursor_id, state),
     INDEX idx_leases__worker (worker_id),
     FOREIGN KEY (cursor_id) REFERENCES cursors(id),

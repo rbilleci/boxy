@@ -1,5 +1,4 @@
-CREATE PROCEDURE sp_events__publish_multi(
-    IN p_events JSON)
+CREATE PROCEDURE sp_events__publish_multi(IN p_events JSON)
 BEGIN
     DECLARE v_idx INT DEFAULT 0;
     DECLARE v_len INT;

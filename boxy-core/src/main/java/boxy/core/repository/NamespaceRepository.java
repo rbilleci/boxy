@@ -17,10 +17,10 @@ public final class NamespaceRepository extends BaseRepository {
         super(ds);
     }
 
-    public long create(String path) {
-        String parent = null;
-        String name = path;
-        int idx = path.lastIndexOf('/');
+    public long create(final String path) {
+        var parent = (String) null;
+        var name = path;
+        final var idx = path.lastIndexOf('/');
         if (idx >= 0) {
             parent = path.substring(0, idx);
             name = path.substring(idx + 1);
@@ -34,10 +34,10 @@ public final class NamespaceRepository extends BaseRepository {
 
     public Optional<Namespace> find(String path) {
         return queryOne("""
-                        SELECT n.*, fn_namespace_path(n.id) AS path
-                          FROM namespaces n
-                         WHERE n.id = fn_resolve_namespace_id(?)
-                        """, NAMESPACE_MAPPER, path);
+                SELECT n.*, fn_namespace_path(n.id) AS path
+                  FROM namespaces n
+                 WHERE n.id = fn_resolve_namespace_id(?)
+                """, NAMESPACE_MAPPER, path);
     }
 }
 

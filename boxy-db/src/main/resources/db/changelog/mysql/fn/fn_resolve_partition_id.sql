@@ -1,5 +1,7 @@
 -- FUNCTION TO DERIVE A PARTITION ID FROM A TOPIC ID AND P NUMBER
-CREATE FUNCTION fn_resolve_partition_id(topic_id BIGINT, partition_number INT)
+CREATE FUNCTION fn_resolve_partition_id(
+    topic_id BIGINT,
+    partition_number INT)
 RETURNS BIGINT
 DETERMINISTIC
 BEGIN
