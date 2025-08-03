@@ -1,4 +1,7 @@
-CREATE PROCEDURE sp_namespaces__rename(IN p_path VARCHAR(4000), IN p_new_name VARCHAR(500))
+CREATE PROCEDURE sp_namespaces__rename(
+    IN p_path VARCHAR(4000),
+    IN p_new_name VARCHAR(500),
+    IN p_delimiter VARCHAR(10))
 BEGIN
     DECLARE v_id BIGINT;
     DECLARE v_parent_id BIGINT;
@@ -32,10 +35,10 @@ BEGIN
         IF v_parent_path IS NULL THEN
             SET v_new_path = p_new_name;
         ELSE
-            SET v_new_path = CONCAT(v_parent_path, '/', p_new_name);
+            SET v_new_path = CONCAT(v_parent_path, p_delimiter, p_new_name);
         END IF;
 
-        -- Optional: check for name/path collision with siblings
+        -- Optional: check for name-path collision with siblings
         IF EXISTS (
             SELECT 1 FROM namespaces
              WHERE parent_id <=> v_parent_id AND name = p_new_name AND id <> v_id

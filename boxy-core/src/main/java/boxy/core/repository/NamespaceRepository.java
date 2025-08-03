@@ -12,13 +12,14 @@ public final class NamespaceRepository extends BaseRepository {
 
     private static final NamespaceMapper NAMESPACE_MAPPER = new NamespaceMapper();
     private static final RowMapper<Long> ID_MAPPER = new IdMapper();
+    private static final String DELIMITER = "/";
 
     public NamespaceRepository(DataSource ds) {
         super(ds);
     }
 
     public long create(final String path) {
-        return queryOne("{CALL sp_namespaces__create(?, '/')}", ID_MAPPER, path).orElseThrow();
+        return queryOne("{CALL sp_namespaces__create(?, ?)}", ID_MAPPER, path, DELIMITER).orElseThrow();
     }
 
     public void delete(String path) {
@@ -26,11 +27,12 @@ public final class NamespaceRepository extends BaseRepository {
     }
 
     public void rename(String path, String newName) {
-        update("{CALL sp_namespaces__rename(?, ?)}", path, newName);
+        update("{CALL sp_namespaces__rename(?, ?, ?)}",
+                path, newName, DELIMITER);
     }
 
     public void move(String path, String newParentPath) {
-        update("{CALL sp_namespaces__move(?, ?)}", path, newParentPath);
+        update("{CALL sp_namespaces__move(?, ?, ?)}", path, newParentPath, DELIMITER);
     }
 
     public Optional<Namespace> find(String path) {

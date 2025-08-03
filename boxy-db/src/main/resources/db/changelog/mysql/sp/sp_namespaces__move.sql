@@ -1,4 +1,7 @@
-CREATE PROCEDURE sp_namespaces__move(IN p_path VARCHAR(4000), IN p_new_parent_path VARCHAR(4000))
+CREATE PROCEDURE sp_namespaces__move(
+    IN p_path VARCHAR(4000),
+    IN p_new_parent_path VARCHAR(4000),
+    IN p_delimiter VARCHAR(10))
 BEGIN
     DECLARE v_id BIGINT;
     DECLARE v_name VARCHAR(500);
@@ -32,7 +35,7 @@ BEGIN
                 SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cannot move a node under itself.';
             END IF;
             SELECT path INTO v_new_parent_path FROM namespaces WHERE id = v_new_parent_id FOR UPDATE;
-            SET v_new_path = CONCAT(v_new_parent_path, '/', v_name);
+            SET v_new_path = CONCAT(v_new_parent_path, p_delimiter, v_name);
         END IF;
 
         -- Prevent moving under a descendant (cycle)

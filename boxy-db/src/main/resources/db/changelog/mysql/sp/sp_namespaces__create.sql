@@ -1,4 +1,4 @@
-CREATE PROCEDURE sp_namespaces__create(IN p_path VARCHAR(4000), IN p_separator VARCHAR(10))
+CREATE PROCEDURE sp_namespaces__create(IN p_path VARCHAR(4000), IN p_delimiter VARCHAR(10))
 BEGIN
     DECLARE v_name        VARCHAR(500);
     DECLARE v_parent_path VARCHAR(4000);
@@ -20,14 +20,14 @@ BEGIN
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Path cannot be null or empty';
         END IF;
 
-        IF p_separator IS NULL OR p_separator = '' THEN
-            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Separator cannot be null or empty';
+        IF p_delimiter IS NULL OR p_delimiter = '' THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Delimiter cannot be null or empty';
         END IF;
 
-        SET v_sep_len = CHAR_LENGTH(p_separator);
+        SET v_sep_len = CHAR_LENGTH(p_delimiter);
 
         -- GET THE LAST PATH ELEMENT (THE NEW NAMESPACE)
-        SET v_name = SUBSTRING_INDEX(p_path, p_separator, -1);
+        SET v_name = SUBSTRING_INDEX(p_path, p_delimiter, -1);
         IF TRIM(v_name) = '' THEN
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Invalid path: trailing or empty segment';
         END IF;
