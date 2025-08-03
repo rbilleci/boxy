@@ -3,6 +3,7 @@ CREATE TABLE namespaces (
     parent_id        BIGINT NULL,
     name             VARCHAR(500)    NOT NULL,
     path             VARCHAR(4000)   NOT NULL,
+    path_hash        BINARY(16)      GENERATED ALWAYS AS (UNHEX(MD5(path))) STORED,
     created_at       DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     last_modified_at DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     CONSTRAINT u_namespaces__parent UNIQUE (parent_id, name),
