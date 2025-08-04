@@ -24,11 +24,13 @@ BEGIN
         SELECT p_consumer_id,
                p_consumer_group_id,
                p_weight,
-               heartbeat_interval_baseline,
+               hp.heartbeat_interval_baseline,
                v_timestamp + INTERVAL 1 SECOND
-          FROM consumer_groups
-         WHERE active_consumers < active_consumers_limit
-           AND id = p_consumer_group_id;
+          FROM consumer_groups cg
+          CROSS JOIN heartbeat_policies hp
+          CROSS JOIN lease_policies lp
+         WHERE cg.active_consumers < lp.active_consumers_limit
+           AND cg.id = p_consumer_group_id;
         SET p_status = IF(ROW_COUNT() > 0, 'ACCEPTED', 'REJECTED');
     END IF;
 

@@ -35,8 +35,7 @@ BEGIN
       INTO v_heartbeat_target_qps,
            v_heartbeat_interval_baseline,
            v_heartbeat_interval_limit
-      FROM consumer_groups
-     WHERE id = p_consumer_group_id;
+      FROM heartbeat_policies;
 
 
     -- CALCULATE HEARTBEAT FROM TARGET QPS
