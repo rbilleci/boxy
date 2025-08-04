@@ -2,9 +2,9 @@ package boxy.core.domain;
 
 import java.time.Instant;
 
-public record Worker(
+public record Consumer(
         String id,
-        long subscriptionId,
+        long consumerGroupId,
         double weight,
         Instant heartbeatDetectedAt,
         double heartbeatInterval,

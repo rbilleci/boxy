@@ -2,8 +2,8 @@ package boxy.core.repository;
 
 import boxy.core.mapper.CursorMapper;
 import boxy.core.mapper.CheckInResultMapper;
-import boxy.core.mapper.WorkerMapper;
-import boxy.core.domain.Worker;
+import boxy.core.mapper.ConsumerMapper;
+import boxy.core.domain.Consumer;
 import boxy.core.domain.CheckInResult;
 
 import javax.sql.DataSource;
@@ -11,29 +11,29 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
-public final class WorkerRepository extends BaseRepository {
+public final class ConsumerRepository extends BaseRepository {
 
-    private static final WorkerMapper WORKER_MAPPER = new WorkerMapper();
+    private static final ConsumerMapper CONSUMER_MAPPER = new ConsumerMapper();
     private static final CheckInResultMapper CHECK_IN_RESULT_MAPPER = new CheckInResultMapper();
     private static final CursorMapper CURSOR_MAPPER = new CursorMapper();
 
-    public WorkerRepository(DataSource ds) {
+    public ConsumerRepository(DataSource ds) {
         super(ds);
     }
 
-    public Optional<Worker> find(String id) {
-        return queryOne("SELECT * FROM workers WHERE id = ?", WORKER_MAPPER, id);
+    public Optional<Consumer> find(String id) {
+        return queryOne("SELECT * FROM consumers WHERE id = ?", CONSUMER_MAPPER, id);
     }
 
-    public List<Worker> findAll(int limit, int offset) {
-        return query("SELECT * FROM workers ORDER BY id LIMIT ? OFFSET ?", WORKER_MAPPER, limit, offset);
+    public List<Consumer> findAll(int limit, int offset) {
+        return query("SELECT * FROM consumers ORDER BY id LIMIT ? OFFSET ?", CONSUMER_MAPPER, limit, offset);
     }
 
-    public CheckInResult checkIn(String workerId, long subscriptionId, double weight) {
+    public CheckInResult checkIn(String consumerId, long consumerGroupId, double weight) {
         try (final var connection = ds.getConnection();
-             final var statement = connection.prepareCall("{CALL sp_workers__check_in(?, ?, ?)}")) {
-            statement.setString(1, workerId);
-            statement.setLong(2, subscriptionId);
+             final var statement = connection.prepareCall("{CALL sp_consumers__check_in(?, ?, ?)}")) {
+            statement.setString(1, consumerId);
+            statement.setLong(2, consumerGroupId);
             statement.setDouble(3, weight);
 
             // Execute, then process the results
@@ -47,30 +47,30 @@ public final class WorkerRepository extends BaseRepository {
                     throw new SQLException("No statistics found");
                 }
                 // Map the statistics
-                final var workerCheckInResult = CHECK_IN_RESULT_MAPPER.map(rs);
+                final var consumerCheckInResult = CHECK_IN_RESULT_MAPPER.map(rs);
                 // Record active leases
                 if (statement.getMoreResults()) {
                     try (final var leasedCursorsRS = statement.getResultSet()) {
                         while (leasedCursorsRS.next()) {
-                            workerCheckInResult.leasedCursors().add(CURSOR_MAPPER.map(leasedCursorsRS));
+                            consumerCheckInResult.leasedCursors().add(CURSOR_MAPPER.map(leasedCursorsRS));
                         }
                     }
                 }
-                return workerCheckInResult;
+                return consumerCheckInResult;
             }
 
 
         } catch (SQLException e) {
-            throw new RuntimeException("Error during worker check-in", e);
+            throw new RuntimeException("Error during consumer check-in", e);
         }
     }
 
     public void delete(String id) {
-        update("{CALL sp_workers__delete(?)}", id);
+        update("{CALL sp_consumers__delete(?)}", id);
     }
 
     public void shutdown(String id) {
-        update("{CALL sp_workers__shutdown(?)}", id);
+        update("{CALL sp_consumers__shutdown(?)}", id);
     }
 
 }

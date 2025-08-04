@@ -1,6 +1,6 @@
 CREATE PROCEDURE sp_leases__release_excess(
-    IN p_worker_id VARCHAR(36),
-    IN p_subscription_id BIGINT,
+    IN p_consumer_id VARCHAR(36),
+    IN p_consumer_group_id BIGINT,
     IN p_leases_to_release INT)
 BEGIN
     DECLARE v_release_period INT;
@@ -8,8 +8,8 @@ BEGIN
     -- GET THE RELEASE PERIOD
     SELECT lease_release_period
       INTO v_release_period
-      FROM subscriptions
-     WHERE id = p_subscription_id;
+      FROM consumer_groups
+     WHERE id = p_consumer_group_id;
 
     -- Release leases when we have too many
     -- Among the leases held, identify:
@@ -27,7 +27,7 @@ BEGIN
           COUNT(1) OVER () AS total_leases
         FROM leased_cursors_view lsov
         JOIN partitions p ON lsov.partition_id = p.id
-        WHERE lsov.worker_id = p_worker_id
+        WHERE lsov.consumer_id = p_consumer_id
       ) t
       WHERE t.rn <= CEIL(t.total_leases * 0.5)
       ORDER BY t.acquired_at DESC

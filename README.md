@@ -2,7 +2,7 @@
 # Boxy
 <img src="docs/images/boxy-logo.png" alt="Boxy Logo" style="width:50%" align="right"/>
 
-Boxy is a multi-tenant event streaming library modeled after Apache Pulsar that exposes Pulsar-like semantics directly over a database’s transactional outbox. It targets monolithic applications that need event streaming without taking on the operational cost of running a full Pulsar deployment. Boxy turns your transactional outbox into an event stream and allows you to build asynchronous workers in your favorite language to consume events. Tenant isolation is provided through hierarchical namespaces. Boxy is **not** intended as a central event streaming platform.
+Boxy is a multi-tenant event streaming library modeled after Apache Pulsar that exposes Pulsar-like semantics directly over a database’s transactional outbox. It targets monolithic applications that need event streaming without taking on the operational cost of running a full Pulsar deployment. Boxy turns your transactional outbox into an event stream and allows you to build asynchronous consumers in your favorite language to consume events. Tenant isolation is provided through hierarchical namespaces. Boxy is **not** intended as a central event streaming platform.
 
 Boxy is released under the **Apache License 2.0** and remains a work in progress.
 
@@ -14,9 +14,9 @@ Boxy is released under the **Apache License 2.0** and remains a work in progress
 - [Roadmap](#roadmap)
 - [Boxy Core and Boxy DB Overview](#boxy-core-and-boxy-db-overview)
   - [Key Tables and Views](#key-tables-and-views)
-  - [Subscription Statistics](#subscription-statistics)
+  - [Consumer Group Statistics](#consumer-group-statistics)
 - [Domain Classes](#domain-classes)
-- [Worker State](#worker-state)
+- [Consumer State](#consumer-state)
 - [Lease State](#lease-state)
 - [State Change Example](#state-change-example)
 - [Heartbeats](#heartbeats)
@@ -30,9 +30,9 @@ Boxy is released under the **Apache License 2.0** and remains a work in progress
 ## Design Highlights
 
 - **Decentralized, Randomized Work-Stealing** for lease distribution
-- **Fair-share Load Balancing** across workers, proportional to capacity weights
+- **Fair-share Load Balancing** across consumers, proportional to capacity weights
 - **Low Consumer Lag**: p99 ~5ms for active partitions, and ~100ms for cold partitions
-- **Scalable Polling**: workers stagger lease grabs to minimize database queries (e.g. ≈10 checks/s instead of hundreds)
+- **Scalable Polling**: consumers stagger lease grabs to minimize database queries (e.g. ≈10 checks/s instead of hundreds)
 
 ## Architecture Decisions
 - APIs for consumers and producers are kept simple, easy to integrate, and easy to use.
@@ -44,7 +44,7 @@ Boxy is released under the **Apache License 2.0** and remains a work in progress
 
 ## Limits
 - Each topic has a practical limit of 1024 partitions, and a technical limit of 65536 partitions
-- Each subscription has a practical limit of 1024 workers.
+- Each consumer group has a practical limit of 1024 consumers.
 - The fully qualified namespace path and topic name has a limit of 4000 characters
 - Each namespace name a limit of 500 characters.
 - Each topic name has a limit of 500 characters.
@@ -53,12 +53,12 @@ Boxy is released under the **Apache License 2.0** and remains a work in progress
 
 ### V1 (August 2025)
 
-1. Simple Worker API for Java
+1. Simple Consumer API for Java
 2. Simple Producer API for Java
 
 ### V2 (September 2025)
 
-1. Multi-language Worker APIs (Java, Go, Rust, Python, CLI) 
+1. Multi-language Consumer APIs (Java, Go, Rust, Python, CLI) 
 2. Multi-language Producer APIs
 3. Postgres support
 
@@ -73,10 +73,10 @@ erDiagram
     namespaces ||--o{ topics : owns
     topics ||--o{ partitions : has
     partitions ||--o{ events : stores
-    subscriptions ||--o{ subscription_topics : links
-    subscription_topics ||--o{ cursors : positions
+    consumer_groups ||--o{ subscriptions : links
+    subscriptions ||--o{ cursors : positions
     cursors ||--o{ leases : locks
-    workers ||--o{ leases : holds
+    consumers ||--o{ leases : holds
 ```
 
 ### Key Tables and Views
@@ -85,32 +85,32 @@ erDiagram
 - **topics**: belong to namespaces and declare a partition count.
 - **partitions**: per-topic shards that track a `high_watermark`.
 - **events**: append-only records stored per partition.
-- **subscription_topics**: links subscriptions to the topics they consume.
-- **cursors**: tracks the position per (subscription, partition).
+- **subscriptions**: links consumer groups to the topics they consume.
+- **cursors**: tracks the position per subscription and partition.
   Each row is assigned a persistent `random_key` used for evenly
   distributing the start position when acquiring leases.
-- **workers**: registers each worker’s `subscription_id`, `weight`, and `heartbeat_detected_at`.
-- **leases**: one row per `cursor` when a worker holds a lease, with `state` indicating whether it's 'ACTIVE' or 'RELEASING'.
-- **subscriptions**: stores configuration and precomputed statistics for each subscription.
+- **consumers**: registers each consumer’s `consumer_group_id`, `weight`, and `heartbeat_detected_at`.
+- **leases**: one row per `cursor` when a consumer holds a lease, with `state` indicating whether it's 'ACTIVE' or 'RELEASING'.
+- **consumer_groups**: stores configuration and precomputed statistics for each consumer group.
 - **topics_cache**: in-memory table for quick topic lookups.
 
-### Subscription Statistics
+### Consumer Group Statistics
 
-The `subscriptions` table stores precomputed statistics that are updated with each worker check-in:
+The `consumer_groups` table stores precomputed statistics that are updated with each consumer check-in:
 
 - **active_partitions**: Count of partitions with new events (high_watermark > position).
-- **active_workers**: Count of workers with valid heartbeats. 
-- **active_workers_weight**: Sum of weights of all active workers in the subscription.
+- **active_consumers**: Count of consumers with valid heartbeats. 
+- **active_consumers_weight**: Sum of weights of all active consumers in the consumer group.
 - **last_modified_at**: Timestamp of the last statistics update.
 - **lease_release_period**: Configurable period (in seconds) for how long a lease remains in the 'RELEASING' state before being deleted.
 
 These statistics are used for:
 
-1. **Fair Share Calculation**: The ideal share of leases for each worker is calculated as `(worker_weight / active_workers_weight) * active_partitions`.
-2. **Adaptive Heartbeat Intervals**: The heartbeat interval is adjusted based on the number of active workers to maintain a target QPS (queries per second) for the cluster.
+1. **Fair Share Calculation**: The ideal share of leases for each consumer is calculated as `(consumer_weight / active_consumers_weight) * active_partitions`.
+2. **Adaptive Heartbeat Intervals**: The heartbeat interval is adjusted based on the number of active consumers to maintain a target QPS (queries per second) for the cluster.
 3. **Garbage Collection**: The lease_release_period determines how long a lease remains in the 'RELEASING' state before being deleted.
 
-Precomputing these statistics reduces the need for expensive queries during worker check-ins and ensures consistent fair share calculations across all workers.
+Precomputing these statistics reduces the need for expensive queries during consumer check-ins and ensures consistent fair share calculations across all consumers.
 
 ## Domain Classes
 
@@ -118,9 +118,9 @@ The Boxy Core module uses Java records to model the schema. Relevant classes:
 
 ```mermaid
 classDiagram
-    class Worker {
+    class Consumer {
         +String id
-        +long subscriptionId
+        +long consumerGroupId
         +double weight
         +Instant heartbeatDetectedAt
         +double heartbeatInterval
@@ -135,7 +135,7 @@ classDiagram
     }
     class Lease {
         +long cursorId
-        +String workerId
+        +String consumerId
         +long version
         +Instant acquiredAt
         +Instant releasedAt
@@ -147,16 +147,16 @@ classDiagram
         ACTIVE
         RELEASING
     }
-    Worker --> "*" Lease
+    Consumer --> "*" Lease
     Cursor --> "0..1" Lease
     Lease --> "1" LeaseState
 ```
 
 
 
-## Worker State
+## Consumer State
 
-Each worker runs in one of three high-level states with respect to a given partition:
+Each consumer runs in one of three high-level states with respect to a given partition:
  
       [Idle] ──(grab lease)──> [Processing] ──(drain completed)──> [Releasing] ──(confirm release)──> [Idle]
 
@@ -166,17 +166,17 @@ Each worker runs in one of three high-level states with respect to a given parti
 
 **Processing**
 - Lease acquired with state='ACTIVE' and an event batch is in-flight.
-- Worker reads events, calls handlers, and updates the position as it goes.
+- Consumer reads events, calls handlers, and updates the position as it goes.
 
 **Releasing**
-- Release can occur in two scenarios: 1) all in-flight work is done and the cursor position is update, 2) the worker is determined to have an unfair share of leases.
+- Release can occur in two scenarios: 1) all in-flight work is done and the cursor position is update, 2) the consumer is determined to have an unfair share of leases.
 - The lease is marked as state='RELEASING' with a timestamp in released_at.
-- The worker must finish its current batch and commit positions before the lease is fully released.
+- The consumer must finish its current batch and commit positions before the lease is fully released.
 - After a configurable deadline (default 10 seconds), the lease is deleted by the garbage collection process.
 - This controlled release is intended to reduce the occurrence of duplicate message processing.
-- Once the lease is deleted, the worker transitions back to Idle.
+- Once the lease is deleted, the consumer transitions back to Idle.
 
-This design minimizes leases on cold partitions, to reduce the total number of queries to the database, and ensures that workers can finish processing in-flight events before leases are reassigned.
+This design minimizes leases on cold partitions, to reduce the total number of queries to the database, and ensures that consumers can finish processing in-flight events before leases are reassigned.
 
 ## Lease State
 
@@ -187,17 +187,17 @@ Each lease row goes through the following states:
 **Available (unleased_cursors_view)**
 
 - Partition is active (high_watermark > position) but unleased.
-- Any under-loaded worker can pick it up via a randomized grab.
+- Any under-loaded consumer can pick it up via a randomized grab.
 
 **ACTIVE (leases row exists with state='ACTIVE')**
-- The worker is actively processing events from this partition.
-- The lease can be marked for release if the worker has more leases than its fair share.
+- The consumer is actively processing events from this partition.
+- The lease can be marked for release if the consumer has more leases than its fair share.
 
 **RELEASING (leases row exists with state='RELEASING')**
-- The worker is finishing processing any in-flight events before the lease is fully released.
+- The consumer is finishing processing any in-flight events before the lease is fully released.
 - The `released_at` timestamp tracks when the release process started.
 - After a configurable deadline (default 10 seconds), the lease is deleted by the garbage collection process.
-- Leases in the RELEASING state are not available for acquisition by other workers.
+- Leases in the RELEASING state are not available for acquisition by other consumers.
 
 ```mermaid
 stateDiagram-v2
@@ -216,48 +216,48 @@ Releasing --> Idle       : delete lease
 
 ## State Change Example
 
-      t=0s    Worker A grabs lease on P42 → state Idle→Processing, lease created
+      t=0s    Consumer A grabs lease on P42 → state Idle→Processing, lease created
       t=0–2s  A processes events 101–105 → in-flight
       t=3s    A commits position=105, no more in-flight → transition to Releasing
       t=3s    A issues DELETE FROM leases WHERE X → lease row gone
       t=4s    New event arrives in P42 → shows up in unleased_cursors_view
-      t=5s    Worker B grabs lease on P42 → begins Processing
+      t=5s    Consumer B grabs lease on P42 → begins Processing
 
 
 ## Heartbeats
 
-Worker-level heartbeat (in the workers table) remains independent of per-partition state.
+Consumer-level heartbeat (in the consumers table) remains independent of per-partition state.
 
-Rather than each worker writing every X seconds, we define:
+Rather than each consumer writing every X seconds, we define:
 
 - T<sub>cycle</sub>: a fixed “heartbeat cycle” (e.g. 1 s)
 
 - QPS<sub>target</sub>: the desired total heartbeats/sec for the whole cluster (e.g. 10 qps)
 
-On each cycle, each worker flips a weighted coin with probability `p = min(1, target_QPS / N_active)`, 
+On each cycle, each consumer flips a weighted coin with probability `p = min(1, target_QPS / N_active)`, 
 and only writes a heartbeat if it “wins” that flip.
 
 Properties
 - When N_active ≤ Q_target, then p = 1 → everyone writes → we get N_active QPS (fine for small clusters).
 - When N_active > Q_target, then p = Q_target / N_active → expected cluster rate ≈ Q_target, irrespective of N.
-- We detect failures in a bounded time: expected per-worker heartbeat interval = 1 s / p = N_active / Q_target seconds; 
+- We detect failures in a bounded time: expected per-consumer heartbeat interval = 1 s / p = N_active / Q_target seconds; 
   we pick the dead‐timeout to be a small multiple of that (e.g. 3×).
 
 
   
 ## Work-Stealing Lease Protocol
 
-The work-stealing algorithm is implemented in the `sp_workers__check_in` stored procedure and its sub-procedures. The algorithm works as follows:
+The work-stealing algorithm is implemented in the `sp_consumers__check_in` stored procedure and its sub-procedures. The algorithm works as follows:
 
-1. **Subscription Statistics Update**:
-   - The procedure updates precomputed statistics in the `subscriptions` table:
+1. **Consumer Group Statistics Update**:
+   - The procedure updates precomputed statistics in the `consumer_groups` table:
      - `active_partitions`: Count of partitions with new events (high_watermark > position)
-     - `active_workers`: Count of workers with valid heartbeats    
-     - `active_workers_weight`: Sum of weights of all active workers
+     - `active_consumers`: Count of consumers with valid heartbeats    
+     - `active_consumers_weight`: Sum of weights of all active consumers
    - These statistics are used for fair share calculation and adaptive heartbeat intervals.
 
 2. **Fair-Share Calculation**:
-    - Let `Wᵢ` = worker weight, `T` = total active weight, `P` = active partitions.
+    - Let `Wᵢ` = consumer weight, `T` = total active weight, `P` = active partitions.
     - Ideal share `Sᵢ = (Wᵢ / T) * P` with slack Δ (default 10%) to prevent oscillation.
     - Min leases = ⌊Sᵢ * (1 - Δ)⌋, Max leases = ⌈Sᵢ * (1 + Δ)⌉
 
@@ -278,7 +278,7 @@ The work-stealing algorithm is implemented in the `sp_workers__check_in` stored 
 
 6. **Garbage Collection**:
    - Leases in the 'RELEASING' state are deleted after a configurable deadline (default 10 seconds).
-   - Expired workers and their leases are deleted if they miss their heartbeat deadline.
+   - Expired consumers and their leases are deleted if they miss their heartbeat deadline.
 
 This algorithm ensures:
 
@@ -339,7 +339,7 @@ mvn liquibase:update -Dliquibase.url=jdbc:mysql://localhost:3306/events_db -Dliq
 You can configure various aspects of Boxy:
 
 ```java
-BoxySubscription subscription = BoxySubscription.builder()
+BoxyConsumerGroup consumerGroup = BoxyConsumerGroup.builder()
     .dataSource(dataSource)
     .name("order-processor")
     .heartbeatIntervalBaseline(3.0) // Default heartbeat interval in seconds
@@ -347,8 +347,8 @@ BoxySubscription subscription = BoxySubscription.builder()
     .leaseReleasePeriod(10)           // Seconds to wait before cleaning up releasing leases
     .build();
 
-BoxyWorker worker = subscription.createWorker(BoxyWorker.builder()
-    .id("worker-1")
+BoxyConsumer consumer = consumerGroup.createConsumer(BoxyConsumer.builder()
+    .id("consumer-1")
     .weight(2)                     // Higher weight gets proportionally more partitions
     .build());
 ```

@@ -4,7 +4,7 @@ import java.time.Instant;
 
 public record Lease(
         long cursorId,
-        String workerId,
+        String consumerId,
         long version,
         Instant acquiredAt,
         Instant releasedAt,
