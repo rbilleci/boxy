@@ -7,7 +7,7 @@ import java.sql.SQLException;
 
 public class ConsumerMapper implements RowMapper<Consumer> {
     @Override
-    public Consumer map(ResultSet rs) throws SQLException {
+    public Consumer map(final ResultSet rs) throws SQLException {
         return new Consumer(
                 rs.getString("id"),
                 rs.getLong("consumer_group_id"),

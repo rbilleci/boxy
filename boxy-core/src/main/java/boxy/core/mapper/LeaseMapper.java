@@ -7,7 +7,7 @@ import java.sql.SQLException;
 
 public class LeaseMapper implements RowMapper<Lease> {
     @Override
-    public Lease map(ResultSet rs) throws SQLException {
+    public Lease map(final ResultSet rs) throws SQLException {
         return new Lease(
                 rs.getLong("cursor_id"),
                 rs.getString("consumer_id"),

@@ -96,7 +96,8 @@ erDiagram
   distributing the start position when acquiring leases.
 - **consumers**: registers each consumer’s `consumer_group_id`, `weight`, and `heartbeat_detected_at`.
 - **leases**: one row per `cursor` when a consumer holds a lease, with `state` indicating whether it's 'ACTIVE' or 'RELEASING'.
-- **consumer_groups**: stores configuration and precomputed statistics for each consumer group.
+- **consumer_groups**: stores precomputed statistics for each consumer group.
+- **heartbeat_policies**, **lease_policies**, **metrics_policies**: singleton tables providing cluster-wide configuration.
 - **topics_cache**: in-memory table for quick topic lookups.
 
 ### Consumer Group Statistics
@@ -107,15 +108,24 @@ The `consumer_groups` table stores precomputed statistics that are updated with 
 - **active_consumers**: Count of consumers with valid heartbeats. 
 - **active_consumers_weight**: Sum of weights of all active consumers in the consumer group.
 - **last_modified_at**: Timestamp of the last statistics update.
-- **lease_release_period**: Configurable period (in seconds) for how long a lease remains in the 'RELEASING' state before being deleted.
 
 These statistics are used for:
 
 1. **Fair Share Calculation**: The ideal share of leases for each consumer is calculated as `(consumer_weight / active_consumers_weight) * active_partitions`.
 2. **Adaptive Heartbeat Intervals**: The heartbeat interval is adjusted based on the number of active consumers to maintain a target QPS (queries per second) for the cluster.
-3. **Garbage Collection**: The lease_release_period determines how long a lease remains in the 'RELEASING' state before being deleted.
+3. **Garbage Collection**: The cluster's lease policy (`lease_release_period`) determines how long a lease remains in the 'RELEASING' state before being deleted.
 
 Precomputing these statistics reduces the need for expensive queries during consumer check-ins and ensures consistent fair share calculations across all consumers.
+
+### Cluster Policies
+
+The following tables define cluster-wide defaults and each contains exactly one row:
+
+- `heartbeat_policies`: `heartbeat_deadline_multiplier`, `heartbeat_interval_baseline`, `heartbeat_interval_limit`, `heartbeat_target_qps`
+- `lease_policies`: `active_consumers_limit`, `lease_release_period`
+- `metrics_policies`: `metrics_refresh_interval`
+
+Operators can adjust these records to tune cluster behavior.
 
 ## Domain Classes
 
@@ -347,9 +357,6 @@ You can configure various aspects of Boxy:
 BoxyConsumerGroup consumerGroup = BoxyConsumerGroup.builder()
     .dataSource(dataSource)
     .name("order-processor")
-    .heartbeatIntervalBaseline(3.0) // Default heartbeat interval in seconds
-    .heartbeatTargetQPS(10.0)      // Target heartbeats per second for the cluster
-    .leaseReleasePeriod(10)           // Seconds to wait before cleaning up releasing leases
     .build();
 
 BoxyConsumer consumer = consumerGroup.createConsumer(BoxyConsumer.builder()
@@ -357,6 +364,8 @@ BoxyConsumer consumer = consumerGroup.createConsumer(BoxyConsumer.builder()
     .weight(2)                     // Higher weight gets proportionally more partitions
     .build());
 ```
+
+Cluster-wide heartbeat, lease, and metrics settings can be adjusted by updating the `heartbeat_policies`, `lease_policies`, and `metrics_policies` tables.
 
 ## FAQ
 

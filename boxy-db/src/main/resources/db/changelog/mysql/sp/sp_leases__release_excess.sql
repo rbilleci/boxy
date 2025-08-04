@@ -8,8 +8,7 @@ BEGIN
     -- GET THE RELEASE PERIOD
     SELECT lease_release_period
       INTO v_release_period
-      FROM consumer_groups
-     WHERE id = p_consumer_group_id;
+      FROM lease_policies;
 
     -- Release leases when we have too many
     -- Among the leases held, identify:

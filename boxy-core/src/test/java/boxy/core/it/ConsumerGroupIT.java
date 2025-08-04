@@ -32,12 +32,8 @@ public class ConsumerGroupIT extends BaseIT {
         System.out.println("[DEBUG_LOG] Consumer Group fields:");
         System.out.println("[DEBUG_LOG]   ID: " + consumerGroup.id());
         System.out.println("[DEBUG_LOG]   Name: " + consumerGroup.name());
-        System.out.println("[DEBUG_LOG]   Heartbeat Interval Default: " + consumerGroup.heartbeatIntervalBaseline());
-        System.out.println("[DEBUG_LOG]   Heartbeat Deadline Multiplier: " + consumerGroup.heartbeatDeadlineMultiplier());
-        System.out.println("[DEBUG_LOG]   Lease Release Period: " + consumerGroup.leaseReleasePeriod());
-        System.out.println("[DEBUG_LOG]   Heartbeat QPS Target: " + consumerGroup.heartbeatTargetQPS());
-        System.out.println("[DEBUG_LOG]   Heartbeat Interval Limit: " + consumerGroup.heartbeatIntervalLimit());
         System.out.println("[DEBUG_LOG]   Active Consumers Count: " + consumerGroup.activeConsumers());
+        System.out.println("[DEBUG_LOG]   Heartbeat Interval: " + consumerGroup.heartbeatInterval());
         System.out.println("[DEBUG_LOG]   Total Weight: " + consumerGroup.activeConsumersWeight());
         System.out.println("[DEBUG_LOG]   Active Partitions Count: " + consumerGroup.activePartitions());
         System.out.println("[DEBUG_LOG]   Last Modified At: " + consumerGroup.lastModifiedAt());

@@ -7,7 +7,7 @@ import java.sql.SQLException;
 
 public class NamespaceMapper implements RowMapper<Namespace> {
     @Override
-    public Namespace map(ResultSet rs) throws SQLException {
+    public Namespace map(final ResultSet rs) throws SQLException {
         return new Namespace(
                 rs.getLong("id"),
                 rs.getObject("parent_id", Long.class),

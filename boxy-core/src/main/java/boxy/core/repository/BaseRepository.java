@@ -18,25 +18,19 @@ public abstract class BaseRepository {
 
     protected final DataSource ds;
 
-    protected BaseRepository(DataSource ds) {
+    protected BaseRepository(final DataSource ds) {
         this.ds = ds;
     }
 
-    protected <T> Optional<T> queryOne(final String sql,
-                                       final RowMapper<T> mapper,
-                                       final Object... parameters) {
+    protected <T> Optional<T> queryOne(final String sql, final RowMapper<T> mapper, final Object... parameters) {
         return execute(sql, ps -> {
             try (final var rs = ps.executeQuery()) {
-                return rs.next() ?
-                        Optional.of(mapper.map(rs)) :
-                        Optional.empty();
+                return rs.next() ? Optional.of(mapper.map(rs)) : Optional.empty();
             }
         }, parameters);
     }
 
-    protected <T> List<T> query(final String sql,
-                                final RowMapper<T> mapper,
-                                final Object... parameters) {
+    protected <T> List<T> query(final String sql, final RowMapper<T> mapper, final Object... parameters) {
         return execute(sql, ps -> {
             try (final var rs = ps.executeQuery()) {
                 final var results = new ArrayList<T>();
@@ -48,20 +42,17 @@ public abstract class BaseRepository {
         }, parameters);
     }
 
-    protected int update(final String sql,
-                         final Object... parameters) {
+    protected int update(final String sql, final Object... parameters) {
         return execute(sql, PreparedStatement::executeUpdate, parameters);
     }
 
-    private <T> T execute(final String sql,
-                          final SQLFunction<PreparedStatement, T> function,
-                          final Object... parameters) {
+    private <T> T execute(final String sql, final SQLFunction<PreparedStatement, T> fn, final Object... parameters) {
         try (final var connection = ds.getConnection();
              final var statement = connection.prepareStatement(sql)) {
             for (var i = 0; i < parameters.length; i++) {
                 statement.setObject(i + 1, parameters[i]);
             }
-            return function.apply(statement);
+            return fn.apply(statement);
         } catch (SQLException e) {
             throw new DataAccessException(e);
         }

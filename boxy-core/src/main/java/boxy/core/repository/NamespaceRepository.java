@@ -13,7 +13,7 @@ public final class NamespaceRepository extends BaseRepository {
     private static final NamespaceMapper NAMESPACE_MAPPER = new NamespaceMapper();
     private static final RowMapper<Long> ID_MAPPER = new IdMapper();
 
-    public NamespaceRepository(DataSource ds) {
+    public NamespaceRepository(final DataSource ds) {
         super(ds);
     }
 
@@ -21,19 +21,19 @@ public final class NamespaceRepository extends BaseRepository {
         return queryOne("{CALL sp_namespaces__create(?)}", ID_MAPPER, path).orElseThrow();
     }
 
-    public void delete(String path) {
+    public void delete(final String path) {
         update("{CALL sp_namespaces__delete(?)}", path);
     }
 
-    public void rename(String path, String newName) {
+    public void rename(final String path, final String newName) {
         update("{CALL sp_namespaces__rename(?, ?)}", path, newName);
     }
 
-    public void move(String path, String newParentPath) {
+    public void move(final String path, final String newParentPath) {
         update("{CALL sp_namespaces__move(?, ?)}", path, newParentPath);
     }
 
-    public Optional<Namespace> find(String path) {
+    public Optional<Namespace> find(final String path) {
         return queryOne("SELECT * FROM namespaces WHERE path_hash = UNHEX(MD5(?)) AND path = ?", NAMESPACE_MAPPER, path, path);
     }
 }

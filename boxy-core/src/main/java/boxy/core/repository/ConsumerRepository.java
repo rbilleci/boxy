@@ -17,19 +17,19 @@ public final class ConsumerRepository extends BaseRepository {
     private static final CheckInResultMapper CHECK_IN_RESULT_MAPPER = new CheckInResultMapper();
     private static final CursorMapper CURSOR_MAPPER = new CursorMapper();
 
-    public ConsumerRepository(DataSource ds) {
+    public ConsumerRepository(final DataSource ds) {
         super(ds);
     }
 
-    public Optional<Consumer> find(String id) {
+    public Optional<Consumer> find(final String id) {
         return queryOne("SELECT * FROM consumers WHERE id = ?", CONSUMER_MAPPER, id);
     }
 
-    public List<Consumer> findAll(int limit, int offset) {
+    public List<Consumer> findAll(final int limit, final int offset) {
         return query("SELECT * FROM consumers ORDER BY id LIMIT ? OFFSET ?", CONSUMER_MAPPER, limit, offset);
     }
 
-    public CheckInResult checkIn(String consumerId, long consumerGroupId, double weight) {
+    public CheckInResult checkIn(final String consumerId, final long consumerGroupId, final double weight) {
         try (final var connection = ds.getConnection();
              final var statement = connection.prepareCall("{CALL sp_consumers__check_in(?, ?, ?)}")) {
             statement.setString(1, consumerId);
@@ -64,11 +64,11 @@ public final class ConsumerRepository extends BaseRepository {
         }
     }
 
-    public void delete(String id) {
+    public void delete(final String id) {
         update("{CALL sp_consumers__delete(?)}", id);
     }
 
-    public void shutdown(String id) {
+    public void shutdown(final String id) {
         update("{CALL sp_consumers__shutdown(?)}", id);
     }
 

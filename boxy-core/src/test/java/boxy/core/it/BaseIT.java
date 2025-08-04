@@ -14,10 +14,14 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.utility.DockerImageName;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.Set;
 import javax.sql.DataSource;
 
 public abstract class BaseIT {
+
+    private static final Set<String> PROTECTED_TABLES = Set.of("heartbeat_policies", "metrics_policies", "lease_policies");
 
     @Container
     private static final MySQLContainer<?> MYSQL =
@@ -42,7 +46,6 @@ public abstract class BaseIT {
 
     @BeforeAll
     static void setupDB() throws SQLException, LiquibaseException {
-        // Configure JDBC connections settings
         System.setProperty("DB_HOST", MYSQL.getHost());
         System.setProperty("DB_PORT", MYSQL.getMappedPort(MySQLContainer.MYSQL_PORT).toString());
         System.setProperty("DB_NAME", MYSQL.getDatabaseName());
@@ -77,12 +80,28 @@ public abstract class BaseIT {
         }
         DataSourceProvider.close();
     }
+
     void teardownPGSQL(final java.sql.Connection conn) throws SQLException {
-        try (var stmt = conn.createStatement()) {
-            final var rs = stmt.executeQuery("SELECT string_agg(quote_ident(tablename), ', ') FROM pg_tables WHERE schemaname = 'public'");
-            rs.next();
-            final var tables = rs.getString(1);
-            stmt.execute("TRUNCATE TABLE " + tables + " RESTART IDENTITY CASCADE;");
+        try (final var stmt = conn.createStatement();
+             final var rs = stmt.executeQuery("SELECT quote_ident(tablename) FROM pg_tables WHERE schemaname = 'public'")) {
+
+            final var tables = new ArrayList<String>();
+            while (rs.next()) {
+                final var table = rs.getString(1);
+                if (!PROTECTED_TABLES.contains(table.toLowerCase())) {
+                    tables.add(rs.getString(1));
+                }
+            }
+            for (final var table : tables) {
+                stmt.addBatch("ALTER TABLE %s DISABLE TRIGGER ALL;".formatted(table));
+            }
+            for (final var table : tables) {
+                stmt.addBatch("TRUNCATE TABLE %s RESTART IDENTITY;".formatted(table));
+            }
+            for (final var table : tables) {
+                stmt.addBatch("ALTER TABLE %s ENABLE TRIGGER ALL;".formatted(table));
+            }
+            stmt.executeBatch();
         }
     }
 
@@ -91,7 +110,10 @@ public abstract class BaseIT {
             stmt.execute("SET FOREIGN_KEY_CHECKS = 0;");
             try (var rs = stmt.executeQuery("SELECT table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema = DATABASE()")) {
                 while (rs.next()) {
-                    stmt.addBatch("TRUNCATE TABLE `" + rs.getString(1) + "`");
+                    final var table = rs.getString(1);
+                    if (!PROTECTED_TABLES.contains(table.toLowerCase())) {
+                        stmt.addBatch("TRUNCATE TABLE `%s`".formatted(table));
+                    }
                 }
                 stmt.executeBatch();
             }

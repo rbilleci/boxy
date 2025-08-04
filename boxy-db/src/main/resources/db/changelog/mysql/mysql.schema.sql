@@ -56,19 +56,46 @@ CREATE TABLE partitions (
     COLLATE=utf8mb4_bin
     COMMENT='Tracks partitions for each topic';
 
+CREATE TABLE heartbeat_policies (
+    id                           TINYINT NOT NULL PRIMARY KEY CHECK (id = 1),
+    heartbeat_deadline_multiplier DOUBLE NOT NULL DEFAULT 5.0,
+    heartbeat_interval_baseline   DOUBLE NOT NULL DEFAULT 3.0,
+    heartbeat_interval_limit      DOUBLE NOT NULL DEFAULT 60.0,
+    heartbeat_target_qps          DOUBLE NOT NULL DEFAULT 10.0
+) ENGINE=InnoDB
+    DEFAULT CHARSET=utf8mb4
+    COLLATE=utf8mb4_bin
+    COMMENT='Stores cluster-wide heartbeat configuration';
+
+INSERT INTO heartbeat_policies (id) VALUES (1);
+
+CREATE TABLE lease_policies (
+    id                      TINYINT NOT NULL PRIMARY KEY CHECK (id = 1),
+    active_consumers_limit  INT     NOT NULL DEFAULT 16,
+    lease_release_period    INT     NOT NULL DEFAULT 10
+) ENGINE=InnoDB
+    DEFAULT CHARSET=utf8mb4
+    COLLATE=utf8mb4_bin
+    COMMENT='Stores cluster-wide lease configuration';
+
+INSERT INTO lease_policies (id) VALUES (1);
+
+CREATE TABLE metrics_policies (
+    id                      TINYINT NOT NULL PRIMARY KEY CHECK (id = 1),
+    metrics_refresh_interval INT    NOT NULL DEFAULT 3
+) ENGINE=InnoDB
+    DEFAULT CHARSET=utf8mb4
+    COLLATE=utf8mb4_bin
+    COMMENT='Stores cluster-wide metrics configuration';
+
+INSERT INTO metrics_policies (id) VALUES (1);
+
 CREATE TABLE consumer_groups (
     id                              BIGINT AUTO_INCREMENT PRIMARY KEY,
     name                            VARCHAR(500) NOT NULL,
-    heartbeat_deadline_multiplier   DOUBLE NOT NULL DEFAULT 5.0,
-    heartbeat_interval_baseline     DOUBLE NOT NULL DEFAULT 3.0,
     heartbeat_interval              DOUBLE NOT NULL DEFAULT 15.0,
-    heartbeat_interval_limit        DOUBLE NOT NULL DEFAULT 60.00,
-    heartbeat_target_qps            DOUBLE NOT NULL DEFAULT 10.0,
-    metrics_refresh_interval        INT NOT NULL DEFAULT 3,
-    lease_release_period            INT NOT NULL DEFAULT 10,
     active_partitions               INT NOT NULL DEFAULT 0,
     active_consumers                INT NOT NULL DEFAULT 0,
-    active_consumers_limit          INT NOT NULL DEFAULT 16,
     active_consumers_weight         DOUBLE NOT NULL DEFAULT 0,
     last_modified_at                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     CONSTRAINT u_consumer_groups UNIQUE (name)

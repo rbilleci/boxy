@@ -11,15 +11,15 @@ public final class LeaseRepository extends BaseRepository {
 
     private static final LeaseMapper LEASE_MAPPER = new LeaseMapper();
 
-    public LeaseRepository(DataSource ds) {
+    public LeaseRepository(final DataSource ds) {
         super(ds);
     }
 
-    public Optional<Lease> find(long cursorId) {
+    public Optional<Lease> find(final long cursorId) {
         return queryOne("SELECT * FROM leases WHERE cursor_id = ?", LEASE_MAPPER, cursorId);
     }
 
-    public void release(long cursorId, String consumerId) {
+    public void release(final long cursorId, final String consumerId) {
         update("{CALL sp_leases__release(?,?)}", cursorId, consumerId);
     }
 
