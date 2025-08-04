@@ -7,7 +7,7 @@ import java.sql.SQLException;
 
 public class PartitionMapper implements RowMapper<Partition> {
     @Override
-    public Partition map(ResultSet rs) throws SQLException {
+    public Partition map(final ResultSet rs) throws SQLException {
         return new Partition(
                 rs.getLong("id"),
                 rs.getLong("topic_id"),

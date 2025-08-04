@@ -11,19 +11,19 @@ public final class CursorRepository extends BaseRepository {
 
     private static final CursorMapper CURSOR_MAPPER = new CursorMapper();
 
-    public CursorRepository(DataSource ds) {
+    public CursorRepository(final DataSource ds) {
         super(ds);
     }
 
-    public void commit(long id, long position) {
+    public void commit(final long id, final long position) {
         update("{CALL sp_cursors__commit(?,?)}", id, position);
     }
 
-    public Optional<Cursor> find(long id) {
+    public Optional<Cursor> find(final long id) {
         return queryOne("SELECT * FROM cursors WHERE id = ?", CURSOR_MAPPER, id);
     }
 
-    public Optional<Cursor> find(long consumerGroupId, long partitionId) {
+    public Optional<Cursor> find(final long consumerGroupId, final long partitionId) {
         return queryOne("""
                 SELECT c.* FROM cursors c
                 JOIN subscriptions st ON c.subscription_id = st.id
@@ -31,7 +31,7 @@ public final class CursorRepository extends BaseRepository {
                 """, CURSOR_MAPPER, consumerGroupId, partitionId);
     }
 
-    public List<Cursor> findAll(long consumerGroupId) {
+    public List<Cursor> findAll(final long consumerGroupId) {
         return query("""
                 SELECT c.* FROM cursors c
                 JOIN subscriptions st ON c.subscription_id = st.id
@@ -40,12 +40,12 @@ public final class CursorRepository extends BaseRepository {
     }
 
 
-    public List<Cursor> findLeasable(int limit, int offset) {
+    public List<Cursor> findLeasable(final int limit, final int offset) {
         return query("SELECT * FROM unleased_cursors_view ORDER BY id LIMIT ? OFFSET ?",
                 CURSOR_MAPPER, limit, offset);
     }
 
-    public List<Cursor> findLeasable(long consumerGroupId, int limit, int offset) {
+    public List<Cursor> findLeasable(final long consumerGroupId, final int limit, final int offset) {
         return query("SELECT * FROM unleased_cursors_view WHERE consumer_group_id = ? ORDER BY id LIMIT ? OFFSET ?",
                 CURSOR_MAPPER, consumerGroupId, limit, offset);
     }

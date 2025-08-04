@@ -7,9 +7,7 @@ import java.sql.SQLException;
 
 public class MetricsPolicyMapper implements RowMapper<MetricsPolicy> {
     @Override
-    public MetricsPolicy map(ResultSet rs) throws SQLException {
-        return new MetricsPolicy(
-                rs.getInt("id"),
-                rs.getInt("metrics_refresh_interval"));
+    public MetricsPolicy map(final ResultSet rs) throws SQLException {
+        return new MetricsPolicy(rs.getInt("metrics_refresh_interval"));
     }
 }

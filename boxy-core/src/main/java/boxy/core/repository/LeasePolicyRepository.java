@@ -9,7 +9,7 @@ public final class LeasePolicyRepository extends BaseRepository {
 
     private static final LeasePolicyMapper MAPPER = new LeasePolicyMapper();
 
-    public LeasePolicyRepository(DataSource ds) {
+    public LeasePolicyRepository(final DataSource ds) {
         super(ds);
     }
 
@@ -17,7 +17,7 @@ public final class LeasePolicyRepository extends BaseRepository {
         return queryOne("SELECT * FROM lease_policies WHERE id = 1", MAPPER).orElseThrow();
     }
 
-    public void update(LeasePolicy policy) {
+    public void update(final LeasePolicy policy) {
         update("{CALL sp_lease_policies__update(?,?)}",
                 policy.activeConsumersLimit(),
                 policy.leaseReleasePeriod());

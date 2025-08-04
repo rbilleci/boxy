@@ -9,15 +9,15 @@ public final class HeartbeatPolicyRepository extends BaseRepository {
 
     private static final HeartbeatPolicyMapper MAPPER = new HeartbeatPolicyMapper();
 
-    public HeartbeatPolicyRepository(DataSource ds) {
+    public HeartbeatPolicyRepository(final DataSource ds) {
         super(ds);
     }
 
     public HeartbeatPolicy get() {
-        return queryOne("SELECT * FROM heartbeat_policies WHERE id = 1", MAPPER).orElseThrow();
+        return queryOne("SELECT * FROM heartbeat_policies LIMIT 1", MAPPER).orElseThrow();
     }
 
-    public void update(HeartbeatPolicy policy) {
+    public void update(final HeartbeatPolicy policy) {
         update("{CALL sp_heartbeat_policies__update(?,?,?,?)}",
                 policy.heartbeatDeadlineMultiplier(),
                 policy.heartbeatIntervalBaseline(),

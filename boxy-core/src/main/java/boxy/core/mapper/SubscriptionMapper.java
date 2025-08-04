@@ -7,7 +7,7 @@ import java.sql.SQLException;
 
 public class SubscriptionMapper implements RowMapper<Subscription> {
     @Override
-    public Subscription map(ResultSet rs) throws SQLException {
+    public Subscription map(final ResultSet rs) throws SQLException {
         return new Subscription(
                 rs.getLong("id"),
                 rs.getLong("consumer_group_id"),

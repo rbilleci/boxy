@@ -5,7 +5,7 @@ import java.sql.SQLException;
 
 public class IdMapper implements RowMapper<Long> {
     @Override
-    public Long map(ResultSet rs) throws SQLException {
+    public Long map(final ResultSet rs) throws SQLException {
         return rs.getLong(1);
     }
 }

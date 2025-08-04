@@ -7,9 +7,8 @@ import java.sql.SQLException;
 
 public class HeartbeatPolicyMapper implements RowMapper<HeartbeatPolicy> {
     @Override
-    public HeartbeatPolicy map(ResultSet rs) throws SQLException {
+    public HeartbeatPolicy map(final ResultSet rs) throws SQLException {
         return new HeartbeatPolicy(
-                rs.getInt("id"),
                 rs.getDouble("heartbeat_deadline_multiplier"),
                 rs.getDouble("heartbeat_interval_baseline"),
                 rs.getDouble("heartbeat_interval_limit"),

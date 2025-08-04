@@ -28,7 +28,7 @@ BEGIN
      WHERE c.position < p.high_watermark
        AND st.consumer_group_id = p_consumer_group_id;
 
-    -- METRICS
+    -- POLICY
     SELECT heartbeat_target_qps,
            heartbeat_interval_baseline,
            heartbeat_interval_limit
@@ -36,6 +36,11 @@ BEGIN
            v_heartbeat_interval_baseline,
            v_heartbeat_interval_limit
       FROM heartbeat_policies;
+
+    -- VERIFY POLICY IS FOUND
+    IF v_heartbeat_target_qps IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No heartbeat policy found.';
+    END IF;
 
 
     -- CALCULATE HEARTBEAT FROM TARGET QPS

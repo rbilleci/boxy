@@ -29,7 +29,7 @@ public class PolicyRepositoryIT extends BaseIT {
     @Test
     void heartbeatPolicy_updateAndGet() {
         HeartbeatPolicy current = heartbeatPolicyRepository.get();
-        HeartbeatPolicy updated = new HeartbeatPolicy(current.id(), 2.0, 4.0, 5.0, 8.0);
+        HeartbeatPolicy updated = new HeartbeatPolicy(2.0, 4.0, 5.0, 8.0);
         heartbeatPolicyRepository.update(updated);
         assertThat(heartbeatPolicyRepository.get()).isEqualTo(updated);
     }
@@ -37,7 +37,7 @@ public class PolicyRepositoryIT extends BaseIT {
     @Test
     void leasePolicy_updateAndGet() {
         LeasePolicy current = leasePolicyRepository.get();
-        LeasePolicy updated = new LeasePolicy(current.id(), current.activeConsumersLimit() + 1, current.leaseReleasePeriod() + 1);
+        LeasePolicy updated = new LeasePolicy(current.activeConsumersLimit() + 1, current.leaseReleasePeriod() + 1);
         leasePolicyRepository.update(updated);
         assertThat(leasePolicyRepository.get()).isEqualTo(updated);
     }
@@ -45,7 +45,7 @@ public class PolicyRepositoryIT extends BaseIT {
     @Test
     void metricsPolicy_updateAndGet() {
         MetricsPolicy current = metricsPolicyRepository.get();
-        MetricsPolicy updated = new MetricsPolicy(current.id(), current.metricsRefreshInterval() + 1);
+        MetricsPolicy updated = new MetricsPolicy(current.metricsRefreshInterval() + 1);
         metricsPolicyRepository.update(updated);
         assertThat(metricsPolicyRepository.get()).isEqualTo(updated);
     }

@@ -69,6 +69,7 @@ public record TestData(Topic topic,
 
         final var cursor = cursorRepository.findAll(consumerGroups.getFirst().id()).getFirst();
 
+        System.out.println(new HeartbeatPolicyRepository(ds).get());
         consumerRepository.checkIn(PARTY_1, consumerGroups.get(0).id(), 1);
         consumerRepository.checkIn(PARTY_2, consumerGroups.get(1).id(), 1);
         final var consumer1 = consumerRepository.find(PARTY_1).orElseThrow();

@@ -9,7 +9,7 @@ public final class MetricsPolicyRepository extends BaseRepository {
 
     private static final MetricsPolicyMapper MAPPER = new MetricsPolicyMapper();
 
-    public MetricsPolicyRepository(DataSource ds) {
+    public MetricsPolicyRepository(final DataSource ds) {
         super(ds);
     }
 
@@ -17,8 +17,7 @@ public final class MetricsPolicyRepository extends BaseRepository {
         return queryOne("SELECT * FROM metrics_policies WHERE id = 1", MAPPER).orElseThrow();
     }
 
-    public void update(MetricsPolicy policy) {
-        update("{CALL sp_metrics_policies__update(?)}",
-                policy.metricsRefreshInterval());
+    public void update(final MetricsPolicy policy) {
+        update("{CALL sp_metrics_policies__update(?)}", policy.metricsRefreshInterval());
     }
 }

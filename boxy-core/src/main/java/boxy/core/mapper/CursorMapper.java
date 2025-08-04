@@ -7,7 +7,7 @@ import java.sql.SQLException;
 
 public class CursorMapper implements RowMapper<Cursor> {
     @Override
-    public Cursor map(ResultSet rs) throws SQLException {
+    public Cursor map(final ResultSet rs) throws SQLException {
         return new Cursor(
                 rs.getLong("id"),
                 rs.getLong("subscription_id"),

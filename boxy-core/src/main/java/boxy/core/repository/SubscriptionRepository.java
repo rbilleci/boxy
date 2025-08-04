@@ -15,7 +15,7 @@ public final class SubscriptionRepository extends BaseRepository {
         super(ds);
     }
 
-    public Optional<Subscription> find(String consumerGroup, String path, String topic) {
+    public Optional<Subscription> find(final String consumerGroup, final String path, final String topic) {
         return queryOne("""
                 SELECT st.* FROM subscriptions st
                     JOIN consumer_groups s ON st.consumer_group_id = s.id
@@ -29,9 +29,8 @@ public final class SubscriptionRepository extends BaseRepository {
     }
 
 
-    public List<Subscription> findAll(int limit, int offset) {
-        return query("SELECT * FROM subscriptions ORDER BY id LIMIT ? OFFSET ?",
-                SUBSCRIPTION_MAPPER, limit, offset);
+    public List<Subscription> findAll(final int limit, final int offset) {
+        return query("SELECT * FROM subscriptions ORDER BY id LIMIT ? OFFSET ?", SUBSCRIPTION_MAPPER, limit, offset);
     }
 
 }

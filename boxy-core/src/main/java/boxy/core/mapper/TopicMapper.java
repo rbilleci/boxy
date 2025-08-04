@@ -7,7 +7,7 @@ import java.sql.SQLException;
 
 public class TopicMapper implements RowMapper<Topic> {
     @Override
-    public Topic map(ResultSet rs) throws SQLException {
+    public Topic map(final ResultSet rs) throws SQLException {
         return new Topic(
                 rs.getLong("id"),
                 rs.getLong("namespace_id"),
