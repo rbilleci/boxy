@@ -5,7 +5,7 @@ BEGIN
     DECLARE v_heartbeat_interval DOUBLE;
 
     -- GET METRICS
-    SELECT hp.heartbeat_deadline_multiplier,
+    SELECT MAX(hp.heartbeat_deadline_multiplier),
            MAX(st.heartbeat_interval)
       INTO v_heartbeat_deadline_multiplier,
            v_heartbeat_interval
