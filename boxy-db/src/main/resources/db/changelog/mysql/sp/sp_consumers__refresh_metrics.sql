@@ -6,12 +6,12 @@ BEGIN
 
     -- GET METRICS
     SELECT hp.heartbeat_deadline_multiplier,
-           cg.heartbeat_interval
+           MAX(st.heartbeat_interval)
       INTO v_heartbeat_deadline_multiplier,
            v_heartbeat_interval
-      FROM consumer_groups cg
+      FROM subscriptions st
       CROSS JOIN heartbeat_policies hp
-     WHERE cg.id = p_consumer_group_id;
+     WHERE st.consumer_group_id = p_consumer_group_id;
 
     -- CONSUMER UPDATE
     SET v_heartbeat_timeout_period = GREATEST(1, CEILING(v_heartbeat_interval * v_heartbeat_deadline_multiplier));

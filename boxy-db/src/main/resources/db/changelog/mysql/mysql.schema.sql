@@ -93,10 +93,6 @@ INSERT INTO metrics_policies (id) VALUES (1);
 CREATE TABLE consumer_groups (
     id                              BIGINT AUTO_INCREMENT PRIMARY KEY,
     name                            VARCHAR(500) NOT NULL,
-    heartbeat_interval              DOUBLE NOT NULL DEFAULT 15.0,
-    active_partitions               INT NOT NULL DEFAULT 0,
-    active_consumers                INT NOT NULL DEFAULT 0,
-    active_consumers_weight         DOUBLE NOT NULL DEFAULT 0,
     last_modified_at                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     CONSTRAINT u_consumer_groups UNIQUE (name)
 ) ENGINE=InnoDB
@@ -108,7 +104,12 @@ CREATE TABLE subscriptions (
     id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
     consumer_group_id   BIGINT NOT NULL,
     topic_id            BIGINT NOT NULL,
+    heartbeat_interval          DOUBLE NOT NULL DEFAULT 15.0,
+    active_partitions           INT NOT NULL DEFAULT 0,
+    active_consumers            INT NOT NULL DEFAULT 0,
+    active_consumers_weight     DOUBLE NOT NULL DEFAULT 0,
     created_at          DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    last_modified_at    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     FOREIGN KEY (consumer_group_id) REFERENCES consumer_groups (id) ON DELETE CASCADE,
     FOREIGN KEY (topic_id) REFERENCES topics (id) ON DELETE CASCADE,
     CONSTRAINT u_subscriptions UNIQUE (consumer_group_id, topic_id),

@@ -12,6 +12,11 @@ public class SubscriptionMapper implements RowMapper<Subscription> {
                 rs.getLong("id"),
                 rs.getLong("consumer_group_id"),
                 rs.getLong("topic_id"),
-                rs.getTimestamp("created_at").toInstant());
+                rs.getDouble("heartbeat_interval"),
+                rs.getInt("active_partitions"),
+                rs.getInt("active_consumers"),
+                rs.getDouble("active_consumers_weight"),
+                rs.getTimestamp("created_at").toInstant(),
+                rs.getTimestamp("last_modified_at").toInstant());
     }
 }

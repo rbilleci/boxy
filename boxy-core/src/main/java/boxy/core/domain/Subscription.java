@@ -6,5 +6,10 @@ public record Subscription(
         long id,
         long consumerGroupId,
         long topicId,
-        Instant createdAt) {
+        double heartbeatInterval,
+        int activePartitions,
+        int activeConsumers,
+        double activeConsumersWeight,
+        Instant createdAt,
+        Instant lastModifiedAt) {
 }
