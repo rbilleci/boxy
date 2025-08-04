@@ -85,7 +85,7 @@
                  stripComments="false"/>
 
         <!-- SP: CONSUMER GROUPS -->
-        <sqlFile path="sp/sp_consumer_groups__refresh_metrics.sql"
+        <sqlFile path="sp/sp_subscriptions__refresh_metrics.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>

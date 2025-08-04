@@ -90,22 +90,23 @@ erDiagram
 - **topics**: belong to namespaces and declare a partition count.
 - **partitions**: per-topic shards that track a `high_watermark`.
 - **events**: append-only records stored per partition.
-- **subscriptions**: links consumer groups to the topics they consume.
+- **subscriptions**: links consumer groups to the topics they consume and stores precomputed statistics.
 - **cursors**: tracks the position per subscription and partition.
   Each row is assigned a persistent `random_key` used for evenly
   distributing the start position when acquiring leases.
 - **consumers**: registers each consumer’s `consumer_group_id`, `weight`, and `heartbeat_detected_at`.
 - **leases**: one row per `cursor` when a consumer holds a lease, with `state` indicating whether it's 'ACTIVE' or 'RELEASING'.
-- **consumer_groups**: stores precomputed statistics for each consumer group.
+- **consumer_groups**: defines logical groups of consumers.
 - **heartbeat_policies**, **lease_policies**, **metrics_policies**: singleton tables providing cluster-wide configuration.
 - **topics_cache**: in-memory table for quick topic lookups.
 
-### Consumer Group Statistics
+### Subscription Statistics
 
-The `consumer_groups` table stores precomputed statistics that are updated with each consumer check-in:
+The `subscriptions` table stores precomputed statistics that are updated with each consumer check-in:
 
+- **heartbeat_interval**: Adaptive interval used for consumer heartbeats.
 - **active_partitions**: Count of partitions with new events (high_watermark > position).
-- **active_consumers**: Count of consumers with valid heartbeats. 
+- **active_consumers**: Count of consumers with valid heartbeats.
 - **active_consumers_weight**: Sum of weights of all active consumers in the consumer group.
 - **last_modified_at**: Timestamp of the last statistics update.
 
@@ -264,10 +265,11 @@ Properties
 
 The work-stealing algorithm is implemented in the `sp_consumers__check_in` stored procedure and its sub-procedures. The algorithm works as follows:
 
-1. **Consumer Group Statistics Update**:
-   - The procedure updates precomputed statistics in the `consumer_groups` table:
+1. **Subscription Statistics Update**:
+   - The procedure updates precomputed statistics in the `subscriptions` table:
+     - `heartbeat_interval`: Adaptive interval for consumer heartbeats
      - `active_partitions`: Count of partitions with new events (high_watermark > position)
-     - `active_consumers`: Count of consumers with valid heartbeats    
+     - `active_consumers`: Count of consumers with valid heartbeats
      - `active_consumers_weight`: Sum of weights of all active consumers
    - These statistics are used for fair share calculation and adaptive heartbeat intervals.
 

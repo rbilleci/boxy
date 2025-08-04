@@ -15,7 +15,7 @@ BEGIN
     -- HEARTBEAT
     CALL sp_consumers__heartbeat(p_consumer_id, p_consumer_group_id, p_weight, v_status);
     CALL sp_consumers__gc(p_consumer_group_id);
-    CALL sp_consumer_groups__refresh_metrics(p_consumer_group_id);
+    CALL sp_subscriptions__refresh_metrics(p_consumer_group_id);
 
     -- HANDLE CONSUMER ACCEPTANCE
     IF v_status = 'ACCEPTED' THEN
@@ -30,19 +30,13 @@ BEGIN
          WHERE consumer_id = p_consumer_id
            AND state = 'ACTIVE';
 
-       -- IDEAL W/SLACK OF 10%
-        SELECT COUNT(1)
-          INTO v_leases_active
-          FROM consumer_groups
-         WHERE id = p_consumer_group_id;
-
         -- CALCULATE TARGET FOR LEASES
-        SELECT (p_weight / active_consumers_weight * active_partitions),
-               active_partitions
+        SELECT (p_weight / MAX(active_consumers_weight) * SUM(active_partitions)),
+               SUM(active_partitions)
           INTO v_leases_target,
                v_active_partitions
-          FROM consumer_groups
-         WHERE id = p_consumer_group_id;
+          FROM subscriptions
+         WHERE consumer_group_id = p_consumer_group_id;
 
         SET v_leases_min = GREATEST(FLOOR(v_leases_target * 0.9), 0);
         SET v_leases_max = LEAST(CEILING(v_leases_target * 1.1), v_active_partitions);
@@ -50,7 +44,7 @@ BEGIN
         -- RELEASE / ACQUIRE
         IF (v_leases_active > v_leases_max) THEN
             CALL sp_leases__release_excess(p_consumer_id, p_consumer_group_id, v_leases_active - v_leases_max);
-        ELSEIF (v_leases < v_leases_target) THEN
+        ELSEIF (v_leases_active < v_leases_target) THEN
             CALL sp_leases__acquire(p_consumer_id, p_consumer_group_id, v_leases_target - v_leases_active);
         END IF;
     END IF;

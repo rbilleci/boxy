@@ -26,17 +26,7 @@ public class ConsumerGroupIT extends BaseIT {
 
     @Test
     void create_whenCreated_isPresent() {
-        System.out.println("[DEBUG_LOG] Running create_whenCreated_isPresent test");
         final var consumerGroup = consumerGroupRepository.find(CONSUMER_GROUP_A).orElseThrow();
-        System.out.println("[DEBUG_LOG] Found consumer group: " + consumerGroup);
-        System.out.println("[DEBUG_LOG] Consumer Group fields:");
-        System.out.println("[DEBUG_LOG]   ID: " + consumerGroup.id());
-        System.out.println("[DEBUG_LOG]   Name: " + consumerGroup.name());
-        System.out.println("[DEBUG_LOG]   Active Consumers Count: " + consumerGroup.activeConsumers());
-        System.out.println("[DEBUG_LOG]   Heartbeat Interval: " + consumerGroup.heartbeatInterval());
-        System.out.println("[DEBUG_LOG]   Total Weight: " + consumerGroup.activeConsumersWeight());
-        System.out.println("[DEBUG_LOG]   Active Partitions Count: " + consumerGroup.activePartitions());
-        System.out.println("[DEBUG_LOG]   Last Modified At: " + consumerGroup.lastModifiedAt());
         assertThat(consumerGroup).extracting(ConsumerGroup::name).isEqualTo(CONSUMER_GROUP_A);
     }
 
