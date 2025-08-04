@@ -1,32 +1,32 @@
-CREATE PROCEDURE sp_subscriptions__refresh_metrics(IN p_subscription_id BIGINT)
+CREATE PROCEDURE sp_consumer_groups__refresh_metrics(IN p_consumer_group_id BIGINT)
 BEGIN
     -- Variables for the aggregates
     DECLARE v_timestamp TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3);
-    DECLARE v_active_workers INT DEFAULT 0;
-    DECLARE v_active_workers_weight DOUBLE DEFAULT 0;
+    DECLARE v_active_consumers INT DEFAULT 0;
+    DECLARE v_active_consumers_weight DOUBLE DEFAULT 0;
     DECLARE v_active_partitions INT DEFAULT 0;
     DECLARE v_heartbeat_interval DOUBLE;
     DECLARE v_heartbeat_interval_baseline DOUBLE;
     DECLARE v_heartbeat_interval_limit DOUBLE;
     DECLARE v_heartbeat_target_qps DOUBLE;
 
-    -- ACTIVE WORKERS + TOTAL WEIGHT
+    -- ACTIVE CONSUMERS + TOTAL WEIGHT
     SELECT
         COUNT(w.id),
         COALESCE(SUM(w.weight), 0)
-      INTO v_active_workers, v_active_workers_weight
-      FROM workers w
-     WHERE w.subscription_id = p_subscription_id
+      INTO v_active_consumers, v_active_consumers_weight
+      FROM consumers w
+     WHERE w.consumer_group_id = p_consumer_group_id
        AND v_timestamp < w.heartbeat_deadline;
 
     -- ACTIVE PARTITIONS
     SELECT COUNT(1)
       INTO v_active_partitions
-      FROM subscription_topics st
+      FROM subscriptions st
       JOIN cursors c ON st.id = c.subscription_id
       JOIN partitions p ON c.partition_id = p.id
      WHERE c.position < p.high_watermark
-       AND st.subscription_id = p_subscription_id;
+       AND st.consumer_group_id = p_consumer_group_id;
 
     -- METRICS
     SELECT heartbeat_target_qps,
@@ -35,21 +35,21 @@ BEGIN
       INTO v_heartbeat_target_qps,
            v_heartbeat_interval_baseline,
            v_heartbeat_interval_limit
-      FROM subscriptions
-     WHERE id = p_subscription_id;
+      FROM consumer_groups
+     WHERE id = p_consumer_group_id;
 
 
     -- CALCULATE HEARTBEAT FROM TARGET QPS
     SET v_heartbeat_interval = v_heartbeat_interval_baseline;
-    SET v_heartbeat_interval = GREATEST(v_heartbeat_interval, v_active_workers /  NULLIF(v_heartbeat_target_qps, 0));
+    SET v_heartbeat_interval = GREATEST(v_heartbeat_interval, v_active_consumers /  NULLIF(v_heartbeat_target_qps, 0));
     SET v_heartbeat_interval = LEAST(v_heartbeat_interval, v_heartbeat_interval_limit);
 
     -- UPDATE
-    UPDATE subscriptions
-       SET active_workers = v_active_workers,
-           active_workers_weight = v_active_workers_weight,
+    UPDATE consumer_groups
+       SET active_consumers = v_active_consumers,
+           active_consumers_weight = v_active_consumers_weight,
            active_partitions = v_active_partitions,
            heartbeat_interval = v_heartbeat_interval
-     WHERE id = p_subscription_id;
+     WHERE id = p_consumer_group_id;
 
 END;

@@ -19,8 +19,8 @@ public final class LeaseRepository extends BaseRepository {
         return queryOne("SELECT * FROM leases WHERE cursor_id = ?", LEASE_MAPPER, cursorId);
     }
 
-    public void release(long cursorId, String workerId) {
-        update("{CALL sp_leases__release(?,?)}", cursorId, workerId);
+    public void release(long cursorId, String consumerId) {
+        update("{CALL sp_leases__release(?,?)}", cursorId, consumerId);
     }
 
 }

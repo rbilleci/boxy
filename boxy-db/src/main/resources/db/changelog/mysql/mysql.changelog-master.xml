@@ -26,28 +26,28 @@
                  splitStatements="false"
                  stripComments="false"/>
 
-        <!-- SP: WORKERS -->
-        <sqlFile path="sp/sp_workers__delete.sql"
+        <!-- SP: CONSUMERS -->
+        <sqlFile path="sp/sp_consumers__delete.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_workers__gc.sql"
+        <sqlFile path="sp/sp_consumers__gc.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_workers__heartbeat.sql"
+        <sqlFile path="sp/sp_consumers__heartbeat.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_workers__refresh_metrics.sql"
+        <sqlFile path="sp/sp_consumers__refresh_metrics.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_workers__shutdown.sql"
+        <sqlFile path="sp/sp_consumers__shutdown.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_workers__check_in.sql"
+        <sqlFile path="sp/sp_consumers__check_in.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
@@ -70,24 +70,24 @@
                  splitStatements="false"
                  stripComments="false"/>
 
-        <!-- SP: SUBSCRIPTIONS -->
-        <sqlFile path="sp/sp_subscriptions__refresh_metrics.sql"
+        <!-- SP: CONSUMER GROUPS -->
+        <sqlFile path="sp/sp_consumer_groups__refresh_metrics.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_subscriptions__create.sql"
+        <sqlFile path="sp/sp_consumer_groups__create.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_subscriptions__delete.sql"
+        <sqlFile path="sp/sp_consumer_groups__delete.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_subscriptions__subscribe.sql"
+        <sqlFile path="sp/sp_consumer_groups__subscribe.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_subscriptions__unsubscribe.sql"
+        <sqlFile path="sp/sp_consumer_groups__unsubscribe.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>

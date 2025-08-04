@@ -1,16 +1,16 @@
 package boxy.core.mapper;
 
-import boxy.core.domain.Worker;
+import boxy.core.domain.Consumer;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class WorkerMapper implements RowMapper<Worker> {
+public class ConsumerMapper implements RowMapper<Consumer> {
     @Override
-    public Worker map(ResultSet rs) throws SQLException {
-        return new Worker(
+    public Consumer map(ResultSet rs) throws SQLException {
+        return new Consumer(
                 rs.getString("id"),
-                rs.getLong("subscription_id"),
+                rs.getLong("consumer_group_id"),
                 rs.getDouble("weight"),
                 rs.getTimestamp("heartbeat_detected_at").toInstant(),
                 rs.getDouble("heartbeat_interval"),

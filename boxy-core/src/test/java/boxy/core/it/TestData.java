@@ -12,16 +12,16 @@ import java.util.UUID;
 public record TestData(Topic topic,
                        long namespaceAId,
                        long namespaceBId,
-                       List<Subscription> subscriptions,
+                       List<ConsumerGroup> consumerGroups,
                        Cursor cursor,
-                       Worker worker1,
-                       Worker worker2) {
+                       Consumer consumer1,
+                       Consumer consumer2) {
 
     public static final int DEFAULT_PARTITIONS = 16;
-    public static final String SUBSCRIPTION_A = "sub-a";
-    public static final String SUBSCRIPTION_B = "sub-b";
-    public static final String SUBSCRIPTION_C = "sub-c";
-    public static final String SUBSCRIPTION_D = "sub-d";
+    public static final String CONSUMER_GROUP_A = "sub-a";
+    public static final String CONSUMER_GROUP_B = "sub-b";
+    public static final String CONSUMER_GROUP_C = "sub-c";
+    public static final String CONSUMER_GROUP_D = "sub-d";
     public static final String PATH_A = "ns-a";
     public static final String PATH_B = "ns-a/ns-b";
     public static final String TOPIC_A = "topic-a";
@@ -34,9 +34,9 @@ public record TestData(Topic topic,
     public static TestData seed(final DataSource ds) {
         final var namespaceRepository = new NamespaceRepository(ds);
         final var topicRepository = new TopicRepository(ds);
-        final var subscriptionRepository = new SubscriptionRepository(ds);
+        final var consumerGroupRepository = new ConsumerGroupRepository(ds);
         final var cursorRepository = new CursorRepository(ds);
-        final var workerRepository = new WorkerRepository(ds);
+        final var consumerRepository = new ConsumerRepository(ds);
 
         // Create the namespaces
         final var namespaceAId = namespaceRepository.create(PATH_A);
@@ -49,38 +49,38 @@ public record TestData(Topic topic,
         topicRepository.create(PATH_B, TOPIC_D, DEFAULT_PARTITIONS);
         final var topicA = topicRepository.find(PATH_A, TOPIC_A).orElseThrow();
 
-        // Create the subscriptions
-        subscriptionRepository.create(SUBSCRIPTION_A);
-        subscriptionRepository.create(SUBSCRIPTION_B);
-        subscriptionRepository.create(SUBSCRIPTION_C);
-        subscriptionRepository.create(SUBSCRIPTION_D);
-        final var subscriptions = new ArrayList<>(subscriptionRepository.findAll(100, 0));
+        // Create the consumer groups
+        consumerGroupRepository.create(CONSUMER_GROUP_A);
+        consumerGroupRepository.create(CONSUMER_GROUP_B);
+        consumerGroupRepository.create(CONSUMER_GROUP_C);
+        consumerGroupRepository.create(CONSUMER_GROUP_D);
+        final var consumerGroups = new ArrayList<>(consumerGroupRepository.findAll(100, 0));
 
         // Subscribe topics
-        subscriptionRepository.subscribe(SUBSCRIPTION_A, PATH_A, TOPIC_A);
-        subscriptionRepository.subscribe(SUBSCRIPTION_A, PATH_A, TOPIC_B);
-        subscriptionRepository.subscribe(SUBSCRIPTION_B, PATH_A, TOPIC_A);
-        subscriptionRepository.subscribe(SUBSCRIPTION_B, PATH_A, TOPIC_B);
+        consumerGroupRepository.subscribe(CONSUMER_GROUP_A, PATH_A, TOPIC_A);
+        consumerGroupRepository.subscribe(CONSUMER_GROUP_A, PATH_A, TOPIC_B);
+        consumerGroupRepository.subscribe(CONSUMER_GROUP_B, PATH_A, TOPIC_A);
+        consumerGroupRepository.subscribe(CONSUMER_GROUP_B, PATH_A, TOPIC_B);
 
-        subscriptionRepository.subscribe(SUBSCRIPTION_C, PATH_B, TOPIC_C);
-        subscriptionRepository.subscribe(SUBSCRIPTION_C, PATH_B, TOPIC_D);
-        subscriptionRepository.subscribe(SUBSCRIPTION_D, PATH_B, TOPIC_C);
-        subscriptionRepository.subscribe(SUBSCRIPTION_D, PATH_B, TOPIC_D);
+        consumerGroupRepository.subscribe(CONSUMER_GROUP_C, PATH_B, TOPIC_C);
+        consumerGroupRepository.subscribe(CONSUMER_GROUP_C, PATH_B, TOPIC_D);
+        consumerGroupRepository.subscribe(CONSUMER_GROUP_D, PATH_B, TOPIC_C);
+        consumerGroupRepository.subscribe(CONSUMER_GROUP_D, PATH_B, TOPIC_D);
 
-        final var cursor = cursorRepository.findAll(subscriptions.getFirst().id()).getFirst();
+        final var cursor = cursorRepository.findAll(consumerGroups.getFirst().id()).getFirst();
 
-        workerRepository.checkIn(PARTY_1, subscriptions.get(0).id(), 1);
-        workerRepository.checkIn(PARTY_2, subscriptions.get(1).id(), 1);
-        final var worker1 = workerRepository.find(PARTY_1).orElseThrow();
-        final var worker2 = workerRepository.find(PARTY_2).orElseThrow();
+        consumerRepository.checkIn(PARTY_1, consumerGroups.get(0).id(), 1);
+        consumerRepository.checkIn(PARTY_2, consumerGroups.get(1).id(), 1);
+        final var consumer1 = consumerRepository.find(PARTY_1).orElseThrow();
+        final var consumer2 = consumerRepository.find(PARTY_2).orElseThrow();
 
         return new TestData(
                 topicA,
                 namespaceAId,
                 namespaceBId,
-                subscriptions,
+                consumerGroups,
                 cursor,
-                worker1,
-                worker2);
+                consumer1,
+                consumer2);
     }
 }
