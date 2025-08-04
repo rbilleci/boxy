@@ -17,21 +17,21 @@ public final class SubscriptionRepository extends BaseRepository {
 
     public Optional<Subscription> find(String consumerGroup, String path, String topic) {
         return queryOne("""
-                        SELECT st.* FROM subscriptions st
-                            JOIN consumer_groups s ON st.consumer_group_id = s.id
-                            JOIN topics t ON st.topic_id = t.id
-                            JOIN namespaces n ON n.id = t.namespace_id
-                            WHERE s.name = ?
-                              AND n.path_hash = UNHEX(MD5(?))
-                              AND n.path      = ?
-                              AND t.name      = ?
-                        """, SUBSCRIPTION_MAPPER,
-                consumerGroup, path, path, topic);
+                SELECT st.* FROM subscriptions st
+                    JOIN consumer_groups s ON st.consumer_group_id = s.id
+                    JOIN topics t ON st.topic_id = t.id
+                    JOIN namespaces n ON n.id = t.namespace_id
+                    WHERE s.name = ?
+                      AND n.path_hash = UNHEX(MD5(?))
+                      AND n.path      = ?
+                      AND t.name      = ?
+                """, SUBSCRIPTION_MAPPER, consumerGroup, path, path, topic);
     }
 
 
     public List<Subscription> findAll(int limit, int offset) {
-        return query("SELECT * FROM subscriptions ORDER BY id LIMIT ? OFFSET ?", SUBSCRIPTION_MAPPER, limit, offset);
+        return query("SELECT * FROM subscriptions ORDER BY id LIMIT ? OFFSET ?",
+                SUBSCRIPTION_MAPPER, limit, offset);
     }
 
 }

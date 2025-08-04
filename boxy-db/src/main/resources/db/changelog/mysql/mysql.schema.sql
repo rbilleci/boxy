@@ -67,9 +67,9 @@ CREATE TABLE consumer_groups (
     metrics_refresh_interval        INT NOT NULL DEFAULT 3,
     lease_release_period            INT NOT NULL DEFAULT 10,
     active_partitions               INT NOT NULL DEFAULT 0,
-    active_consumers                  INT NOT NULL DEFAULT 0,
-    active_consumers_limit            INT NOT NULL DEFAULT 16,
-    active_consumers_weight           DOUBLE NOT NULL DEFAULT 0,
+    active_consumers                INT NOT NULL DEFAULT 0,
+    active_consumers_limit          INT NOT NULL DEFAULT 16,
+    active_consumers_weight         DOUBLE NOT NULL DEFAULT 0,
     last_modified_at                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     CONSTRAINT u_consumer_groups UNIQUE (name)
 ) ENGINE=InnoDB
@@ -78,10 +78,10 @@ CREATE TABLE consumer_groups (
     COMMENT='Defines consumer groups which store consumption state';
 
 CREATE TABLE subscriptions (
-    id               BIGINT AUTO_INCREMENT PRIMARY KEY,
-    consumer_group_id  BIGINT NOT NULL,
-    topic_id         BIGINT NOT NULL,
-    created_at       DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
+    consumer_group_id   BIGINT NOT NULL,
+    topic_id            BIGINT NOT NULL,
+    created_at          DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     FOREIGN KEY (consumer_group_id) REFERENCES consumer_groups (id) ON DELETE CASCADE,
     FOREIGN KEY (topic_id) REFERENCES topics (id) ON DELETE CASCADE,
     CONSTRAINT u_subscriptions UNIQUE (consumer_group_id, topic_id),
@@ -111,7 +111,7 @@ CREATE INDEX idx_cursors__random_key ON cursors(random_key);
 
 CREATE TABLE consumers (
     id                   VARCHAR(36)  PRIMARY KEY,
-    consumer_group_id      BIGINT       NOT NULL,
+    consumer_group_id    BIGINT       NOT NULL,
     weight               DOUBLE       NOT NULL DEFAULT 1,
     heartbeat_detected_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     heartbeat_interval   DOUBLE       NOT NULL,
@@ -126,7 +126,7 @@ CREATE TABLE consumers (
 
 CREATE TABLE leases (
     cursor_id           BIGINT PRIMARY KEY,
-    consumer_id           VARCHAR(36) NOT NULL,
+    consumer_id         VARCHAR(36) NOT NULL,
     version             BIGINT NOT NULL DEFAULT 1,
     acquired_at         DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     released_at         DATETIME(3) NULL,
@@ -171,7 +171,7 @@ CREATE OR REPLACE ALGORITHM = MERGE VIEW unleased_cursors_view AS
       JOIN subscriptions st ON c.subscription_id = st.id
       JOIN partitions p     ON c.partition_id = p.id
  LEFT JOIN leases l         ON c.id = l.cursor_id
- LEFT JOIN consumers w        ON l.consumer_id = w.id
+ LEFT JOIN consumers w      ON l.consumer_id = w.id
     -- A lease is available if:
     -- 1. No lease exists for this cursor (l.cursor_id IS NULL)
     -- 2. Or a lease exists but the consumer has expired

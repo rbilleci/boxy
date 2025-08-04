@@ -2,9 +2,14 @@
 # Boxy
 <img src="docs/images/boxy-logo.png" alt="Boxy Logo" style="width:50%" align="right"/>
 
-Boxy is a multi-tenant event streaming library modeled after Apache Pulsar that exposes Pulsar-like semantics directly over a database’s transactional outbox. It targets monolithic applications that need event streaming without taking on the operational cost of running a full Pulsar deployment. Boxy turns your transactional outbox into an event stream and allows you to build asynchronous consumers in your favorite language to consume events. Tenant isolation is provided through hierarchical namespaces. Boxy is **not** intended as a central event streaming platform.
+Boxy is a multi-tenant event streaming library modeled that exposes Apache Pulsar-like semantics 
+directly over a database’s transactional outbox. It targets monolithic applications that need event streaming without 
+taking on the operational cost of running a Pulsar/Kafka deployment. 
+Boxy turns your transactional outbox into an event stream and allows you to build asynchronous consumers in your 
+favorite programming language. 
+Tenant isolation is provided through a hierarchical namespace system.
 
-Boxy is released under the **Apache License 2.0** and remains a work in progress.
+Boxy is released under the **Apache License 2.0** and is under active development.
 
 ## Table of Contents
 

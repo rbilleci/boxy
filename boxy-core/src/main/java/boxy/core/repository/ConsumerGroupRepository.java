@@ -19,8 +19,7 @@ public final class ConsumerGroupRepository extends BaseRepository {
     }
 
     public long create(String name) {
-        return queryOne("{CALL sp_consumer_groups__create(?)}", ID_MAPPER, name)
-                .orElseThrow();
+        return queryOne("{CALL sp_consumer_groups__create(?)}", ID_MAPPER, name).orElseThrow();
     }
 
     public void delete(String name) {
@@ -28,8 +27,7 @@ public final class ConsumerGroupRepository extends BaseRepository {
     }
 
     public long subscribe(String consumerGroup, String path, String topic) {
-        return queryOne("{CALL sp_consumer_groups__subscribe(?,?,?)}", ID_MAPPER, consumerGroup, path, topic)
-                .orElseThrow();
+        return queryOne("{CALL sp_consumer_groups__subscribe(?,?,?)}", ID_MAPPER, consumerGroup, path, topic).orElseThrow();
     }
 
     public void unsubscribe(String consumerGroup, String path, String topic) {
@@ -37,14 +35,10 @@ public final class ConsumerGroupRepository extends BaseRepository {
     }
 
     public Optional<ConsumerGroup> find(String name) {
-        return queryOne("SELECT * FROM consumer_groups WHERE name = ?",
-                CONSUMER_GROUP_MAPPER,
-                name);
+        return queryOne("SELECT * FROM consumer_groups WHERE name = ?", CONSUMER_GROUP_MAPPER, name);
     }
 
     public List<ConsumerGroup> findAll(int limit, int offset) {
-        return query("SELECT * FROM consumer_groups ORDER BY id LIMIT ? OFFSET ?",
-                CONSUMER_GROUP_MAPPER,
-                limit, offset);
+        return query("SELECT * FROM consumer_groups ORDER BY id LIMIT ? OFFSET ?", CONSUMER_GROUP_MAPPER, limit, offset);
     }
 }

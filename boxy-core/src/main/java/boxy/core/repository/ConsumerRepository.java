@@ -48,7 +48,7 @@ public final class ConsumerRepository extends BaseRepository {
                 }
                 // Map the statistics
                 final var consumerCheckInResult = CHECK_IN_RESULT_MAPPER.map(rs);
-                // Record active leases
+                // Map leased cursors
                 if (statement.getMoreResults()) {
                     try (final var leasedCursorsRS = statement.getResultSet()) {
                         while (leasedCursorsRS.next()) {
@@ -58,7 +58,6 @@ public final class ConsumerRepository extends BaseRepository {
                 }
                 return consumerCheckInResult;
             }
-
 
         } catch (SQLException e) {
             throw new RuntimeException("Error during consumer check-in", e);

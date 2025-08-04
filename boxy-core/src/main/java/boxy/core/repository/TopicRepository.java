@@ -18,20 +18,18 @@ public final class TopicRepository extends BaseRepository {
     }
 
     public long create(String path, String name, int partitions) {
-        return queryOne("{CALL sp_topics__create(?,?,?)}",
-                ID_MAPPER, path, name, partitions).orElseThrow();
+        return queryOne("{CALL sp_topics__create(?,?,?)}", ID_MAPPER, path, name, partitions).orElseThrow();
     }
 
     public Optional<Topic> find(String path, String name) {
         return queryOne("""
-                        SELECT t.*
-                          FROM topics t
-                          JOIN namespaces n ON n.id = t.namespace_id
-                         WHERE n.path_hash = UNHEX(MD5(?))
-                           AND n.path      = ?
-                           AND t.name      = ?
-                        """,
-                TOPIC_MAPPER, path, path, name);
+                SELECT t.*
+                  FROM topics t
+                  JOIN namespaces n ON n.id = t.namespace_id
+                 WHERE n.path_hash = UNHEX(MD5(?))
+                   AND n.path      = ?
+                   AND t.name      = ?
+                """, TOPIC_MAPPER, path, path, name);
     }
 
     public void delete(String path, String name) {
