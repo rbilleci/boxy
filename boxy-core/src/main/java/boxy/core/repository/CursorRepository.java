@@ -24,17 +24,13 @@ public final class CursorRepository extends BaseRepository {
     }
 
     public Optional<Cursor> find(final long subscriptionId, final long partitionId) {
-        return queryOne("""
-                SELECT * FROM cursors
-                WHERE subscription_id = ? AND partition_id = ?
-                """, CURSOR_MAPPER, subscriptionId, partitionId);
+        return queryOne("SELECT * FROM cursors WHERE subscription_id = ? AND partition_id = ?",
+                CURSOR_MAPPER, subscriptionId, partitionId);
     }
 
     public List<Cursor> findAll(final long subscriptionId) {
-        return query("""
-                SELECT * FROM cursors
-                WHERE subscription_id = ? ORDER BY id
-                """, CURSOR_MAPPER, subscriptionId);
+        return query("SELECT * FROM cursors WHERE subscription_id = ? ORDER BY id",
+                CURSOR_MAPPER, subscriptionId);
     }
 
 

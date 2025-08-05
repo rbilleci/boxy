@@ -121,13 +121,13 @@ CREATE TABLE subscription_topics (
 
 CREATE TABLE cursors (
     id               BIGINT AUTO_INCREMENT PRIMARY KEY,
-    subscription_topic_id BIGINT NOT NULL,
     subscription_id       BIGINT NOT NULL,
+    subscription_topic_id BIGINT NOT NULL,
     partition_id          BIGINT NOT NULL,
     random_key            INT    NOT NULL,
     position              BIGINT NOT NULL DEFAULT 0,
-    FOREIGN KEY (subscription_topic_id) REFERENCES subscription_topics (id) ON DELETE CASCADE,
     FOREIGN KEY (subscription_id)       REFERENCES subscriptions (id) ON DELETE CASCADE,
+    FOREIGN KEY (subscription_topic_id) REFERENCES subscription_topics (id) ON DELETE CASCADE,
     FOREIGN KEY (partition_id)          REFERENCES partitions (id) ON DELETE CASCADE,
     CONSTRAINT u_cursors UNIQUE (subscription_topic_id, partition_id),
     INDEX idx_cursors__random_1 (random_key, id),

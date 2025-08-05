@@ -23,13 +23,11 @@ public final class TopicRepository extends BaseRepository {
 
     public Optional<Topic> find(final String path, final String name) {
         return queryOne("""
-                SELECT t.*
-                  FROM topics t
-                  JOIN namespaces n ON n.id = t.namespace_id
-                 WHERE n.path_hash = UNHEX(MD5(?))
-                   AND n.path      = ?
-                   AND t.name      = ?
-                """, TOPIC_MAPPER, path, path, name);
+                SELECT *
+                  FROM topics
+                 WHERE namespace_id = fn_resolve_namespace_id(?)
+                   AND name = ?
+                """, TOPIC_MAPPER, path, name);
     }
 
     public void delete(final String path, final String name) {
