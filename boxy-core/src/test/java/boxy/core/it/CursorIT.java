@@ -24,12 +24,12 @@ public class CursorIT extends BaseIT {
     @Test
     void commit_whenPositionDoesNotExist_insertsNewRow() {
         final var cursor = data.cursor();
-        final var consumerGroupId = data.consumerGroups().getFirst().id();
+        final var subscriptionId = data.subscriptions().getFirst().id();
         final var partitionId = cursor.partitionId();
 
         // COMMIT HWM
         cursorRepository.commit(cursor.id(), 100L);
-        assertThat(cursorRepository.find(consumerGroupId, partitionId))
+        assertThat(cursorRepository.find(subscriptionId, partitionId))
                 .isPresent()
                 .get()
                 .extracting(Cursor::position)
@@ -39,14 +39,14 @@ public class CursorIT extends BaseIT {
     @Test
     void commit_whenPositionIsGreater_updatesExistingRow() {
         final var cursor = data.cursor();
-        final var consumerGroupId = data.consumerGroups().getFirst().id();
+        final var subscriptionId = data.subscriptions().getFirst().id();
         final var partitionId = cursor.partitionId();
 
         // COMMIT HWM
         cursorRepository.commit(cursor.id(), 100L);
         cursorRepository.commit(cursor.id(), 101L);
         cursorRepository.commit(cursor.id(), 102L);
-        assertThat(cursorRepository.find(consumerGroupId, partitionId))
+        assertThat(cursorRepository.find(subscriptionId, partitionId))
                 .isPresent()
                 .get()
                 .extracting(Cursor::position)
@@ -56,13 +56,13 @@ public class CursorIT extends BaseIT {
     @Test
     void commit_whenPositionIsLower_doesNotUpdateExistingRow() {
         final var cursor = data.cursor();
-        final var consumerGroupId = data.consumerGroups().getFirst().id();
+        final var subscriptionId = data.subscriptions().getFirst().id();
         final var partitionId = cursor.partitionId();
 
         // COMMIT HWM
         cursorRepository.commit(cursor.id(), 100L);
         cursorRepository.commit(cursor.id(), 10L);
-        assertThat(cursorRepository.find(consumerGroupId, partitionId))
+        assertThat(cursorRepository.find(subscriptionId, partitionId))
                 .isPresent()
                 .get()
                 .extracting(Cursor::position)
@@ -72,13 +72,13 @@ public class CursorIT extends BaseIT {
     @Test
     void commit_whenPositionIsEqual_doesNotUpdateExistingRow() {
         final var cursor = data.cursor();
-        final var consumerGroupId = data.consumerGroups().getFirst().id();
+        final var subscriptionId = data.subscriptions().getFirst().id();
         final var partitionId = cursor.partitionId();
 
         // COMMIT HWM
         cursorRepository.commit(cursor.id(), 100L);
         cursorRepository.commit(cursor.id(), 100L);
-        assertThat(cursorRepository.find(consumerGroupId, partitionId))
+        assertThat(cursorRepository.find(subscriptionId, partitionId))
                 .isPresent()
                 .get()
                 .extracting(Cursor::position)

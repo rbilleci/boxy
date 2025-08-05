@@ -4,6 +4,9 @@ import java.time.Instant;
 
 public record Lease(
         long cursorId,
+        long subscriptionId,
+        long topicId,
+        long partitionId,
         String consumerId,
         long version,
         Instant acquiredAt,

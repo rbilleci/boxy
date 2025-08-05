@@ -1,6 +1,6 @@
 CREATE PROCEDURE sp_leases__release_excess(
     IN p_consumer_id VARCHAR(36),
-    IN p_consumer_group_id BIGINT,
+    IN p_subscription_id BIGINT,
     IN p_leases_to_release INT)
 BEGIN
     DECLARE v_release_period INT;
@@ -16,22 +16,25 @@ BEGIN
     --  2) Among those, pick the one most recently acquired (minimizes disruption to established processing).
     UPDATE leases l
     JOIN (
-      SELECT t.id
+      SELECT t.cursor_id
       FROM (
         SELECT
-          lsov.id,
-          lsov.acquired_at,
-          (p.high_watermark - lsov.position) AS lag_metric,
-          ROW_NUMBER() OVER (ORDER BY (p.high_watermark - lsov.position) ASC) AS rn,
+          l.cursor_id,
+          l.acquired_at,
+          (p.high_watermark - c.position) AS lag_metric,
+          ROW_NUMBER() OVER (ORDER BY (p.high_watermark - c.position) ASC) AS rn,
           COUNT(1) OVER () AS total_leases
-        FROM leased_cursors_view lsov
-        JOIN partitions p ON lsov.partition_id = p.id
-        WHERE lsov.consumer_id = p_consumer_id
+        FROM leases l
+        JOIN cursors c ON l.cursor_id = c.id
+        JOIN partitions p ON l.partition_id = p.id
+        WHERE l.consumer_id = p_consumer_id
+          AND l.subscription_id = p_subscription_id
+          AND l.state = 'ACTIVE'
       ) t
       WHERE t.rn <= CEIL(t.total_leases * 0.5)
       ORDER BY t.acquired_at DESC
       LIMIT p_leases_to_release
-    ) th ON l.cursor_id = th.id
+    ) th ON l.cursor_id = th.cursor_id
     SET l.state = 'RELEASING',
         l.released_at = CURRENT_TIMESTAMP(3),
         l.release_deadline = CURRENT_TIMESTAMP(3) + INTERVAL v_release_period SECOND;

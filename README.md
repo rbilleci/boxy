@@ -19,7 +19,7 @@ Boxy is released under the **Apache License 2.0** and is under active developmen
 - [Roadmap](#roadmap)
 - [Boxy Core and Boxy DB Overview](#boxy-core-and-boxy-db-overview)
   - [Key Tables and Views](#key-tables-and-views)
-  - [Consumer Group Statistics](#consumer-group-statistics)
+  - [Subscription Statistics](#subscription-statistics)
 - [Domain Classes](#domain-classes)
 - [Consumer State](#consumer-state)
 - [Lease State](#lease-state)
@@ -49,7 +49,7 @@ Boxy is released under the **Apache License 2.0** and is under active developmen
 
 ## Limits
 - Each topic has a practical limit of 1024 partitions, and a technical limit of 65536 partitions
-- Each consumer group has a practical limit of 1024 consumers.
+- Each subscription has a practical limit of 1024 consumers.
 - The fully qualified namespace path and topic name has a limit of 4000 characters
 - Each namespace name a limit of 500 characters.
 - Each topic name has a limit of 500 characters.
@@ -78,8 +78,9 @@ erDiagram
     namespaces ||--o{ topics : owns
     topics ||--o{ partitions : has
     partitions ||--o{ events : stores
-    consumer_groups ||--o{ subscriptions : links
+    subscriptions ||--o{ subscription_topics : links
     subscriptions ||--o{ cursors : positions
+    subscription_topics ||--o{ cursors : positions
     cursors ||--o{ leases : locks
     consumers ||--o{ leases : holds
 ```
@@ -90,24 +91,24 @@ erDiagram
 - **topics**: belong to namespaces and declare a partition count.
 - **partitions**: per-topic shards that track a `high_watermark`.
 - **events**: append-only records stored per partition.
-- **subscriptions**: links consumer groups to the topics they consume and stores precomputed statistics.
-- **cursors**: tracks the position per subscription and partition.
-  Each row is assigned a persistent `random_key` used for evenly
-  distributing the start position when acquiring leases.
-- **consumers**: registers each consumer’s `consumer_group_id`, `weight`, and `heartbeat_detected_at`.
-- **leases**: one row per `cursor` when a consumer holds a lease, with `state` indicating whether it's 'ACTIVE' or 'RELEASING'.
-- **consumer_groups**: defines logical groups of consumers.
+- **subscription_topics**: links subscriptions to the topics they consume and stores precomputed statistics.
+- **cursors**: tracks the position per subscription and partition and stores the `subscription_id`
+  alongside the `subscription_topic_id` for join-free lookups. Each row is assigned a persistent
+  `random_key` used for evenly distributing the start position when acquiring leases.
+- **consumers**: registers each consumer’s `subscription_id`, `weight`, and `heartbeat_detected_at`.
+- **leases**: one row per `cursor` when a consumer holds a lease, tracking `subscription_id`, `topic_id`, and `partition_id` alongside `state` to support join-free lookups.
+- **subscriptions**: defines logical groups of consumers.
 - **heartbeat_policies**, **lease_policies**, **metrics_policies**: singleton tables providing cluster-wide configuration.
 - **topics_cache**: in-memory table for quick topic lookups.
 
 ### Subscription Statistics
 
-The `subscriptions` table stores precomputed statistics that are updated with each consumer check-in:
+The `subscription_topics` table stores precomputed statistics that are updated with each consumer check-in:
 
 - **heartbeat_interval**: Adaptive interval used for consumer heartbeats.
 - **active_partitions**: Count of partitions with new events (high_watermark > position).
 - **active_consumers**: Count of consumers with valid heartbeats.
-- **active_consumers_weight**: Sum of weights of all active consumers in the consumer group.
+- **active_consumers_weight**: Sum of weights of all active consumers in the subscription.
 - **last_modified_at**: Timestamp of the last statistics update.
 
 These statistics are used for:
@@ -136,7 +137,7 @@ The Boxy Core module uses Java records to model the schema. Relevant classes:
 classDiagram
     class Consumer {
         +String id
-        +long consumerGroupId
+        +long subscriptionId
         +double weight
         +Instant heartbeatDetectedAt
         +double heartbeatInterval
@@ -266,7 +267,7 @@ Properties
 The work-stealing algorithm is implemented in the `sp_consumers__check_in` stored procedure and its sub-procedures. The algorithm works as follows:
 
 1. **Subscription Statistics Update**:
-   - The procedure updates precomputed statistics in the `subscriptions` table:
+   - The procedure updates precomputed statistics in the `subscription_topics` table:
      - `heartbeat_interval`: Adaptive interval for consumer heartbeats
      - `active_partitions`: Count of partitions with new events (high_watermark > position)
      - `active_consumers`: Count of consumers with valid heartbeats
@@ -356,12 +357,12 @@ mvn liquibase:update -Dliquibase.url=jdbc:mysql://localhost:3306/events_db -Dliq
 You can configure various aspects of Boxy:
 
 ```java
-BoxyConsumerGroup consumerGroup = BoxyConsumerGroup.builder()
+BoxySubscription subscription = BoxySubscription.builder()
     .dataSource(dataSource)
     .name("order-processor")
     .build();
 
-BoxyConsumer consumer = consumerGroup.createConsumer(BoxyConsumer.builder()
+BoxyConsumer consumer = subscription.createConsumer(BoxyConsumer.builder()
     .id("consumer-1")
     .weight(2)                     // Higher weight gets proportionally more partitions
     .build());

@@ -6,12 +6,9 @@ BEGIN
     DECLARE v_release_period INT;
 
     -- GET THE RELEASE PERIOD
-    SELECT lp.lease_release_period
+    SELECT lease_release_period
       INTO v_release_period
-      FROM consumers c
-      JOIN consumer_groups cg ON cg.id = c.consumer_group_id
-      CROSS JOIN lease_policies lp
-     WHERE c.id = p_consumer_id;
+      FROM lease_policies;
 
     -- RELEASE THE LEASE
     UPDATE leases 

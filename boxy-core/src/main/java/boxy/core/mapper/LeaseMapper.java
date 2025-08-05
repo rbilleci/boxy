@@ -10,6 +10,9 @@ public class LeaseMapper implements RowMapper<Lease> {
     public Lease map(final ResultSet rs) throws SQLException {
         return new Lease(
                 rs.getLong("cursor_id"),
+                rs.getLong("subscription_id"),
+                rs.getLong("topic_id"),
+                rs.getLong("partition_id"),
                 rs.getString("consumer_id"),
                 rs.getLong("version"),
                 rs.getTimestamp("acquired_at").toInstant(),

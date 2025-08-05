@@ -1,4 +1,4 @@
-CREATE PROCEDURE sp_consumers__refresh_metrics(IN p_consumer_id VARCHAR(36), IN p_consumer_group_id BIGINT)
+CREATE PROCEDURE sp_consumers__refresh_metrics(IN p_consumer_id VARCHAR(36), IN p_subscription_id BIGINT)
 BEGIN
     DECLARE v_heartbeat_deadline_multiplier DOUBLE;
     DECLARE v_heartbeat_timeout_period DOUBLE;
@@ -6,12 +6,12 @@ BEGIN
 
     -- GET METRICS
     SELECT MAX(hp.heartbeat_deadline_multiplier),
-           MAX(st.heartbeat_interval)
+           COALESCE(MAX(st.heartbeat_interval), MAX(hp.heartbeat_interval_baseline))
       INTO v_heartbeat_deadline_multiplier,
            v_heartbeat_interval
-      FROM subscriptions st
-      CROSS JOIN heartbeat_policies hp
-     WHERE st.consumer_group_id = p_consumer_group_id;
+      FROM heartbeat_policies hp
+ LEFT JOIN consumer_subscriptions cs ON cs.consumer_id = p_consumer_id
+ LEFT JOIN subscription_topics st ON cs.topic_id = st.topic_id AND st.subscription_id = p_subscription_id;
 
     -- CONSUMER UPDATE
     SET v_heartbeat_timeout_period = GREATEST(1, CEILING(v_heartbeat_interval * v_heartbeat_deadline_multiplier));
