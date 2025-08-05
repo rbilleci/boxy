@@ -123,11 +123,13 @@ CREATE TABLE cursors (
     id               BIGINT AUTO_INCREMENT PRIMARY KEY,
     subscription_id       BIGINT NOT NULL,
     subscription_topic_id BIGINT NOT NULL,
+    topic_id              BIGINT NOT NULL,
     partition_id          BIGINT NOT NULL,
     random_key            INT    NOT NULL,
     position              BIGINT NOT NULL DEFAULT 0,
     FOREIGN KEY (subscription_id)       REFERENCES subscriptions (id) ON DELETE CASCADE,
     FOREIGN KEY (subscription_topic_id) REFERENCES subscription_topics (id) ON DELETE CASCADE,
+    FOREIGN KEY (topic_id)             REFERENCES topics (id) ON DELETE CASCADE,
     FOREIGN KEY (partition_id)          REFERENCES partitions (id) ON DELETE CASCADE,
     CONSTRAINT u_cursors UNIQUE (subscription_topic_id, partition_id),
     INDEX idx_cursors__random_1 (random_key, id),
@@ -220,7 +222,7 @@ CREATE TABLE topics_cache (
 -- VIEW: unleased_cursors_view
 -- List cursors leases that are not leased and have active work to perform
 CREATE OR REPLACE ALGORITHM = MERGE VIEW unleased_cursors_view AS
-    SELECT c.*, p.topic_id
+    SELECT c.*
       FROM cursors c
       JOIN partitions p     ON c.partition_id = p.id
  LEFT JOIN leases l         ON c.id = l.cursor_id
@@ -237,7 +239,6 @@ CREATE OR REPLACE ALGORITHM = MERGE VIEW unleased_cursors_view AS
 CREATE OR REPLACE ALGORITHM = MERGE VIEW leased_cursors_view AS
     SELECT c.*, w.id AS consumer_id,
            l.cursor_id AS lease_id,
-           l.topic_id,
            l.acquired_at
      FROM consumers w
       JOIN leases l ON w.id = l.consumer_id

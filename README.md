@@ -92,8 +92,8 @@ erDiagram
 - **partitions**: per-topic shards that track a `high_watermark`.
 - **events**: append-only records stored per partition.
 - **subscription_topics**: links subscriptions to the topics they consume and stores precomputed statistics.
-- **cursors**: tracks the position per subscription and partition and stores the `subscription_id`
-  alongside the `subscription_topic_id` for join-free lookups. Each row is assigned a persistent
+- **cursors**: tracks the position per subscription and partition and stores the `subscription_id`,
+  `subscription_topic_id`, and `topic_id` for join-free lookups. Each row is assigned a persistent
   `random_key` used for evenly distributing the start position when acquiring leases.
 - **consumers**: registers each consumer’s `subscription_id`, `weight`, and `heartbeat_detected_at`.
 - **leases**: one row per `cursor` when a consumer holds a lease, tracking `subscription_id`, `topic_id`, and `partition_id` alongside `state` to support join-free lookups.
