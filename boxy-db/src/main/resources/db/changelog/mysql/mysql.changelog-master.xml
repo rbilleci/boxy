@@ -65,6 +65,14 @@
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
+        <sqlFile path="sp/sp_consumers__subscribe.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_consumers__unsubscribe.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
 
         <!-- SP: NAMESPACES -->
         <sqlFile path="sp/sp_namespaces__create.sql"
@@ -84,24 +92,24 @@
                  splitStatements="false"
                  stripComments="false"/>
 
-        <!-- SP: CONSUMER GROUPS -->
-        <sqlFile path="sp/sp_subscriptions__refresh_metrics.sql"
+        <!-- SP: SUBSCRIPTIONS -->
+        <sqlFile path="sp/sp_subscription_topics__refresh_metrics.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_consumer_groups__create.sql"
+        <sqlFile path="sp/sp_subscriptions__create.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_consumer_groups__delete.sql"
+        <sqlFile path="sp/sp_subscriptions__delete.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_consumer_groups__subscribe.sql"
+        <sqlFile path="sp/sp_subscriptions__subscribe.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_consumer_groups__unsubscribe.sql"
+        <sqlFile path="sp/sp_subscriptions__unsubscribe.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>

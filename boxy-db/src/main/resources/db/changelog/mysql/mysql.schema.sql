@@ -90,19 +90,19 @@ CREATE TABLE metrics_policies (
 
 INSERT INTO metrics_policies (id) VALUES (1);
 
-CREATE TABLE consumer_groups (
+CREATE TABLE subscriptions (
     id                              BIGINT AUTO_INCREMENT PRIMARY KEY,
     name                            VARCHAR(500) NOT NULL,
     last_modified_at                DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
-    CONSTRAINT u_consumer_groups UNIQUE (name)
+    CONSTRAINT u_subscriptions UNIQUE (name)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
-    COMMENT='Defines consumer groups which store consumption state';
+    COMMENT='Defines subscriptions which store consumption state';
 
-CREATE TABLE subscriptions (
+CREATE TABLE subscription_topics (
     id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
-    consumer_group_id   BIGINT NOT NULL,
+    subscription_id     BIGINT NOT NULL,
     topic_id            BIGINT NOT NULL,
     heartbeat_interval          DOUBLE NOT NULL DEFAULT 15.0,
     active_partitions           INT NOT NULL DEFAULT 0,
@@ -110,24 +110,26 @@ CREATE TABLE subscriptions (
     active_consumers_weight     DOUBLE NOT NULL DEFAULT 0,
     created_at          DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     last_modified_at    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
-    FOREIGN KEY (consumer_group_id) REFERENCES consumer_groups (id) ON DELETE CASCADE,
+    FOREIGN KEY (subscription_id) REFERENCES subscriptions (id) ON DELETE CASCADE,
     FOREIGN KEY (topic_id) REFERENCES topics (id) ON DELETE CASCADE,
-    CONSTRAINT u_subscriptions UNIQUE (consumer_group_id, topic_id),
-    INDEX idx_subscriptions__consumer_group (consumer_group_id, id)
+    CONSTRAINT u_subscription_topics UNIQUE (subscription_id, topic_id),
+    INDEX idx_subscription_topics__subscription (subscription_id, id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
-    COMMENT='Links consumer groups to the topics they consume';
+    COMMENT='Links subscriptions to the topics they consume';
 
 CREATE TABLE cursors (
     id               BIGINT AUTO_INCREMENT PRIMARY KEY,
-    subscription_id  BIGINT NOT NULL,
-    partition_id     BIGINT NOT NULL,
-    random_key       INT    NOT NULL,
-    position         BIGINT NOT NULL DEFAULT 0,
-    FOREIGN KEY (subscription_id)   REFERENCES subscriptions (id) ON DELETE CASCADE,
-    FOREIGN KEY (partition_id)      REFERENCES partitions (id) ON DELETE CASCADE,
-    CONSTRAINT u_cursors UNIQUE (subscription_id, partition_id),
+    subscription_topic_id BIGINT NOT NULL,
+    subscription_id       BIGINT NOT NULL,
+    partition_id          BIGINT NOT NULL,
+    random_key            INT    NOT NULL,
+    position              BIGINT NOT NULL DEFAULT 0,
+    FOREIGN KEY (subscription_topic_id) REFERENCES subscription_topics (id) ON DELETE CASCADE,
+    FOREIGN KEY (subscription_id)       REFERENCES subscriptions (id) ON DELETE CASCADE,
+    FOREIGN KEY (partition_id)          REFERENCES partitions (id) ON DELETE CASCADE,
+    CONSTRAINT u_cursors UNIQUE (subscription_topic_id, partition_id),
     INDEX idx_cursors__random_1 (random_key, id),
     INDEX idx_cursors__subscription_random (subscription_id, random_key, id)
 ) ENGINE=InnoDB
@@ -139,21 +141,39 @@ CREATE INDEX idx_cursors__random_key ON cursors(random_key);
 
 CREATE TABLE consumers (
     id                   VARCHAR(36)  PRIMARY KEY,
-    consumer_group_id    BIGINT       NOT NULL,
+    subscription_id      BIGINT       NOT NULL,
     weight               DOUBLE       NOT NULL DEFAULT 1,
     heartbeat_detected_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     heartbeat_interval   DOUBLE       NOT NULL,
     heartbeat_deadline   DATETIME(3)  NOT NULL,
-    INDEX idx_consumers__consumer_group (consumer_group_id),
+    INDEX idx_consumers__subscription (subscription_id),
     INDEX idx_consumers__heartbeat_detected_at (heartbeat_detected_at),
-    FOREIGN KEY (consumer_group_id) REFERENCES consumer_groups(id)
+    FOREIGN KEY (subscription_id) REFERENCES subscriptions(id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
-    COMMENT='Registered consumers per consumer group, with capacity weight and heartbeat timestamp';
+    COMMENT='Registered consumers per subscription, with capacity weight and heartbeat timestamp';
+
+CREATE TABLE consumer_subscriptions (
+    consumer_id VARCHAR(36) NOT NULL,
+    subscription_topic_id BIGINT NOT NULL,
+    topic_id BIGINT NOT NULL,
+    PRIMARY KEY (consumer_id, subscription_topic_id),
+    INDEX idx_consumer_subscriptions__subscription_topic (subscription_topic_id),
+    INDEX idx_consumer_subscriptions__topic (topic_id),
+    FOREIGN KEY (consumer_id) REFERENCES consumers(id) ON DELETE CASCADE,
+    FOREIGN KEY (subscription_topic_id) REFERENCES subscription_topics(id) ON DELETE CASCADE,
+    FOREIGN KEY (topic_id) REFERENCES topics(id) ON DELETE CASCADE
+) ENGINE=InnoDB
+    DEFAULT CHARSET=utf8mb4
+    COLLATE=utf8mb4_bin
+    COMMENT='Links consumers to subscription topics they consume';
 
 CREATE TABLE leases (
     cursor_id           BIGINT PRIMARY KEY,
+    subscription_id     BIGINT NOT NULL,
+    topic_id            BIGINT NOT NULL,
+    partition_id        BIGINT NOT NULL,
     consumer_id         VARCHAR(36) NOT NULL,
     version             BIGINT NOT NULL DEFAULT 1,
     acquired_at         DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -162,8 +182,14 @@ CREATE TABLE leases (
     state               ENUM('ACTIVE', 'RELEASING') NOT NULL DEFAULT 'ACTIVE',
     INDEX idx_leases__state (cursor_id, state),
     INDEX idx_leases__consumer (consumer_id),
-    FOREIGN KEY (cursor_id) REFERENCES cursors(id),
-    FOREIGN KEY (consumer_id) REFERENCES consumers(id)
+    INDEX idx_leases__subscription (subscription_id),
+    INDEX idx_leases__topic (topic_id),
+    INDEX idx_leases__partition (partition_id),
+    FOREIGN KEY (cursor_id) REFERENCES cursors(id) ON DELETE CASCADE,
+    FOREIGN KEY (subscription_id) REFERENCES subscriptions(id) ON DELETE CASCADE,
+    FOREIGN KEY (topic_id) REFERENCES topics(id) ON DELETE CASCADE,
+    FOREIGN KEY (partition_id) REFERENCES partitions(id) ON DELETE CASCADE,
+    FOREIGN KEY (consumer_id) REFERENCES consumers(id) ON DELETE CASCADE
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
@@ -194,9 +220,8 @@ CREATE TABLE topics_cache (
 -- VIEW: unleased_cursors_view
 -- List cursors leases that are not leased and have active work to perform
 CREATE OR REPLACE ALGORITHM = MERGE VIEW unleased_cursors_view AS
-    SELECT c.*, st.consumer_group_id
+    SELECT c.*, p.topic_id
       FROM cursors c
-      JOIN subscriptions st ON c.subscription_id = st.id
       JOIN partitions p     ON c.partition_id = p.id
  LEFT JOIN leases l         ON c.id = l.cursor_id
  LEFT JOIN consumers w      ON l.consumer_id = w.id
@@ -210,14 +235,13 @@ CREATE OR REPLACE ALGORITHM = MERGE VIEW unleased_cursors_view AS
 -- VIEW: leased_cursors_view
 -- List active leases. Normal use will filter by consumer_id
 CREATE OR REPLACE ALGORITHM = MERGE VIEW leased_cursors_view AS
-    SELECT c.*, st.consumer_group_id,
-           w.id AS consumer_id,
+    SELECT c.*, w.id AS consumer_id,
            l.cursor_id AS lease_id,
+           l.topic_id,
            l.acquired_at
      FROM consumers w
       JOIN leases l ON w.id = l.consumer_id
       JOIN cursors c ON l.cursor_id = c.id
-      JOIN subscriptions st ON c.subscription_id = st.id
      WHERE w.heartbeat_detected_at < w.heartbeat_deadline
        AND l.state = 'ACTIVE'
   ORDER BY consumer_id, c.id;

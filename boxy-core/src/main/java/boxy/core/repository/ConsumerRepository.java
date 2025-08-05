@@ -29,11 +29,11 @@ public final class ConsumerRepository extends BaseRepository {
         return query("SELECT * FROM consumers ORDER BY id LIMIT ? OFFSET ?", CONSUMER_MAPPER, limit, offset);
     }
 
-    public CheckInResult checkIn(final String consumerId, final long consumerGroupId, final double weight) {
+    public CheckInResult checkIn(final String consumerId, final long subscriptionId, final double weight) {
         try (final var connection = ds.getConnection();
              final var statement = connection.prepareCall("{CALL sp_consumers__check_in(?, ?, ?)}")) {
             statement.setString(1, consumerId);
-            statement.setLong(2, consumerGroupId);
+            statement.setLong(2, subscriptionId);
             statement.setDouble(3, weight);
 
             // Execute, then process the results

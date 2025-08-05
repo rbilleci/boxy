@@ -2,7 +2,7 @@ package boxy.core.it;
 
 import boxy.core.repository.EventRepository;
 import boxy.core.repository.CursorRepository;
-import boxy.core.repository.SubscriptionRepository;
+import boxy.core.repository.SubscriptionTopicRepository;
 import boxy.core.domain.Cursor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,28 +18,28 @@ public class ProcessorIT extends BaseIT {
 
     private CursorRepository cursorRepository;
     private EventRepository eventRepository;
-    private SubscriptionRepository subscriptionRepository;
+    private SubscriptionTopicRepository subscriptionTopicRepository;
     private TestData data;
 
     @BeforeEach
     void setup() {
         cursorRepository = new CursorRepository(dataSource);
         eventRepository = new EventRepository(dataSource);
-        subscriptionRepository = new SubscriptionRepository(dataSource);
+        subscriptionTopicRepository = new SubscriptionTopicRepository(dataSource);
         data = TestData.seed(dataSource);
     }
 
     @Test
     void leasesAvailable_whenViewHasOneItem_returnsListWithOneItem() {
-        final var consumerGroupId = data.consumerGroups().getFirst().id();
+        final var subscriptionId = data.subscriptions().getFirst().id();
         // PUBLISH
         eventRepository.publish(PATH_A, TOPIC_A, "partitionKey", DATA);
         // VALIDATE
-        final var leasable = cursorRepository.findLeasable(consumerGroupId, 100, 0);
+        final var leasable = cursorRepository.findLeasable(subscriptionId, 100, 0);
         assertThat(leasable).hasSize(1);
         final var result = leasable.getFirst();
-        final var subscription = subscriptionRepository.find(CONSUMER_GROUP_A, PATH_A, TOPIC_A).orElseThrow();
-        assertThat(result.subscriptionId()).isEqualTo(subscription.id());
+        final var subscription = subscriptionTopicRepository.find(SUBSCRIPTION_A, PATH_A, TOPIC_A).orElseThrow();
+        assertThat(result.subscriptionTopicId()).isEqualTo(subscription.id());
         assertThat(result.position()).isEqualTo(0L);
     }
 

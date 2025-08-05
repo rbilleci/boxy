@@ -1,6 +1,6 @@
 CREATE PROCEDURE sp_consumers__heartbeat(
     IN p_consumer_id VARCHAR(36),
-    IN p_consumer_group_id BIGINT,
+    IN p_subscription_id BIGINT,
     IN p_weight DOUBLE,
     OUT p_status VARCHAR(255)
 )
@@ -20,15 +20,15 @@ BEGIN
 
     -- INSERT CONSUMER
     ELSE
-        INSERT INTO consumers (id, consumer_group_id, weight, heartbeat_interval, heartbeat_deadline)
+        INSERT INTO consumers (id, subscription_id, weight, heartbeat_interval, heartbeat_deadline)
         SELECT p_consumer_id,
-               p_consumer_group_id,
+               p_subscription_id,
                p_weight,
                hp.heartbeat_interval_baseline,
                v_timestamp + INTERVAL 1 SECOND
           FROM (SELECT COALESCE(MAX(active_consumers),0) AS active_consumers
-                  FROM subscriptions
-                 WHERE consumer_group_id = p_consumer_group_id) cg
+                  FROM subscription_topics
+                 WHERE subscription_id = p_subscription_id) cg
           CROSS JOIN heartbeat_policies hp
           CROSS JOIN lease_policies lp
          WHERE cg.active_consumers < lp.active_consumers_limit;
