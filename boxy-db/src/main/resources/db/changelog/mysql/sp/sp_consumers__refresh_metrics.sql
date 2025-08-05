@@ -5,8 +5,8 @@ BEGIN
     DECLARE v_heartbeat_interval DOUBLE;
 
     -- GET METRICS
-    SELECT hp.heartbeat_deadline_multiplier,
-           COALESCE(MAX(st.heartbeat_interval), hp.heartbeat_interval_baseline)
+    SELECT MAX(hp.heartbeat_deadline_multiplier),
+           COALESCE(MAX(st.heartbeat_interval), MAX(hp.heartbeat_interval_baseline))
       INTO v_heartbeat_deadline_multiplier,
            v_heartbeat_interval
       FROM heartbeat_policies hp
