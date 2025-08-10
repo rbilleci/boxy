@@ -196,10 +196,10 @@ CREATE TABLE leases (
 
 CREATE TABLE events (
     id              BIGINT AUTO_INCREMENT PRIMARY KEY,
-    published_at    DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) NOT NULL,
+    sequence        BIGINT DEFAULT NULL,
     partition_id    BIGINT NOT NULL,
     data            JSON   NOT NULL,
-    INDEX idx_events__cover(partition_id, id)
+    INDEX idx_events__sequence(sequence)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin

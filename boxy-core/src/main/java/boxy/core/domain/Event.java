@@ -1,10 +1,8 @@
 package boxy.core.domain;
 
-import java.time.Instant;
-
 public record Event(
         long id,
-        Instant timestamp,
+        Long sequence,
         long partitionId,
         String data) {
 }
