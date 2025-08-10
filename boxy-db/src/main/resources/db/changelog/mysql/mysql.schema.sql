@@ -6,9 +6,9 @@ CREATE TABLE namespaces (
     path_hash        BINARY(16)      GENERATED ALWAYS AS (UNHEX(MD5(path))) STORED,
     created_at       DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     last_modified_at DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
-    INDEX idx_namespaces__path_hash (path_hash),
     CONSTRAINT u_namespaces__parent UNIQUE (parent_id, name),
-    FOREIGN KEY (parent_id) REFERENCES namespaces(id) ON DELETE CASCADE
+    FOREIGN KEY (parent_id) REFERENCES namespaces(id) ON DELETE CASCADE,
+    INDEX idx_namespaces__path_hash (path_hash)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
@@ -19,10 +19,10 @@ CREATE TABLE namespace_closures (
     descendant_id BIGINT NOT NULL,
     depth         TINYINT NOT NULL,
     PRIMARY KEY (ancestor_id, descendant_id),
-    INDEX idx_namespace_closures_ancestor (ancestor_id),
-    INDEX idx_namespace_closures_descendant (descendant_id),
     FOREIGN KEY (ancestor_id) REFERENCES namespaces(id) ON DELETE CASCADE,
-    FOREIGN KEY (descendant_id) REFERENCES namespaces(id) ON DELETE CASCADE
+    FOREIGN KEY (descendant_id) REFERENCES namespaces(id) ON DELETE CASCADE,
+    INDEX idx_namespace_closures_ancestor (ancestor_id),
+    INDEX idx_namespace_closures_descendant (descendant_id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
@@ -35,9 +35,9 @@ CREATE TABLE topics (
     partitions          INT NOT NULL DEFAULT 1,
     created_at          DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     last_modified_at    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
-    INDEX idx_topics__cover (namespace_id, name, id, partitions),
     CONSTRAINT u_topics UNIQUE (namespace_id, name),
-    FOREIGN KEY (namespace_id) REFERENCES namespaces (id)
+    FOREIGN KEY (namespace_id) REFERENCES namespaces (id),
+    INDEX idx_topics__cover (namespace_id, name, partitions)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
@@ -48,9 +48,8 @@ CREATE TABLE partitions (
     topic_id            BIGINT NOT NULL,
     partition_number    INT NOT NULL,
     high_watermark      BIGINT DEFAULT 0 NOT NULL,
-    INDEX idx_partitions__cover (topic_id, partition_number, id),
-    FOREIGN KEY (topic_id) REFERENCES topics (id),
-    CONSTRAINT u_partitions UNIQUE (topic_id, partition_number)
+    CONSTRAINT u_partitions UNIQUE (topic_id, partition_number),
+    FOREIGN KEY (topic_id) REFERENCES topics (id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
@@ -110,9 +109,9 @@ CREATE TABLE subscription_topics (
     active_consumers_weight     DOUBLE NOT NULL DEFAULT 0,
     created_at          DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     last_modified_at    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+    CONSTRAINT u_subscription_topics UNIQUE (subscription_id, topic_id),
     FOREIGN KEY (subscription_id) REFERENCES subscriptions (id) ON DELETE CASCADE,
     FOREIGN KEY (topic_id) REFERENCES topics (id) ON DELETE CASCADE,
-    CONSTRAINT u_subscription_topics UNIQUE (subscription_id, topic_id),
     INDEX idx_subscription_topics__subscription (subscription_id, id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
@@ -127,19 +126,17 @@ CREATE TABLE cursors (
     partition_id          BIGINT NOT NULL,
     random_key            INT    NOT NULL,
     position              BIGINT NOT NULL DEFAULT 0,
+    CONSTRAINT u_cursors UNIQUE (subscription_topic_id, partition_id),
     FOREIGN KEY (subscription_id)       REFERENCES subscriptions (id) ON DELETE CASCADE,
     FOREIGN KEY (subscription_topic_id) REFERENCES subscription_topics (id) ON DELETE CASCADE,
     FOREIGN KEY (topic_id)             REFERENCES topics (id) ON DELETE CASCADE,
     FOREIGN KEY (partition_id)          REFERENCES partitions (id) ON DELETE CASCADE,
-    CONSTRAINT u_cursors UNIQUE (subscription_topic_id, partition_id),
     INDEX idx_cursors__random_1 (random_key, id),
     INDEX idx_cursors__subscription_random (subscription_id, random_key, id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
     COMMENT='Maintains the last cursor position for each subscription/partition';
-
-CREATE INDEX idx_cursors__random_key ON cursors(random_key);
 
 CREATE TABLE consumers (
     id                   VARCHAR(36)  PRIMARY KEY,
@@ -148,9 +145,9 @@ CREATE TABLE consumers (
     heartbeat_detected_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     heartbeat_interval   DOUBLE       NOT NULL,
     heartbeat_deadline   DATETIME(3)  NOT NULL,
+    FOREIGN KEY (subscription_id) REFERENCES subscriptions(id),
     INDEX idx_consumers__subscription (subscription_id),
-    INDEX idx_consumers__heartbeat_detected_at (heartbeat_detected_at),
-    FOREIGN KEY (subscription_id) REFERENCES subscriptions(id)
+    INDEX idx_consumers__heartbeat_detected_at (heartbeat_detected_at)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
@@ -161,11 +158,11 @@ CREATE TABLE consumer_subscriptions (
     subscription_topic_id BIGINT NOT NULL,
     topic_id BIGINT NOT NULL,
     PRIMARY KEY (consumer_id, subscription_topic_id),
-    INDEX idx_consumer_subscriptions__subscription_topic (subscription_topic_id),
-    INDEX idx_consumer_subscriptions__topic (topic_id),
     FOREIGN KEY (consumer_id) REFERENCES consumers(id) ON DELETE CASCADE,
     FOREIGN KEY (subscription_topic_id) REFERENCES subscription_topics(id) ON DELETE CASCADE,
-    FOREIGN KEY (topic_id) REFERENCES topics(id) ON DELETE CASCADE
+    FOREIGN KEY (topic_id) REFERENCES topics(id) ON DELETE CASCADE,
+    INDEX idx_consumer_subscriptions__subscription_topic (subscription_topic_id),
+    INDEX idx_consumer_subscriptions__topic (topic_id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
@@ -182,16 +179,16 @@ CREATE TABLE leases (
     released_at         DATETIME(3) NULL,
     release_deadline    DATETIME(3) NULL,
     state               ENUM('ACTIVE', 'RELEASING') NOT NULL DEFAULT 'ACTIVE',
-    INDEX idx_leases__state (cursor_id, state),
-    INDEX idx_leases__consumer (consumer_id),
-    INDEX idx_leases__subscription (subscription_id),
-    INDEX idx_leases__topic (topic_id),
-    INDEX idx_leases__partition (partition_id),
     FOREIGN KEY (cursor_id) REFERENCES cursors(id) ON DELETE CASCADE,
     FOREIGN KEY (subscription_id) REFERENCES subscriptions(id) ON DELETE CASCADE,
     FOREIGN KEY (topic_id) REFERENCES topics(id) ON DELETE CASCADE,
     FOREIGN KEY (partition_id) REFERENCES partitions(id) ON DELETE CASCADE,
-    FOREIGN KEY (consumer_id) REFERENCES consumers(id) ON DELETE CASCADE
+    FOREIGN KEY (consumer_id) REFERENCES consumers(id) ON DELETE CASCADE,
+    INDEX idx_leases__state (state, cursor_id),
+    INDEX idx_leases__consumer (consumer_id),
+    INDEX idx_leases__subscription (subscription_id),
+    INDEX idx_leases__topic (topic_id),
+    INDEX idx_leases__partition (partition_id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
