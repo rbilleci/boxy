@@ -15,4 +15,8 @@ public final class EventRepository extends BaseRepository {
     public void publish(final long partitionId, final String data) {
         update("{CALL sp_events__publish_advanced(?,?)}", partitionId, data);
     }
+
+    public void sequence(final long topicId, final int batchSize) {
+        update("{CALL sp_events__sequence(?,?)}", topicId, batchSize);
+    }
 }
