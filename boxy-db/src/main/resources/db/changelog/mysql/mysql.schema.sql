@@ -194,17 +194,24 @@ CREATE TABLE leases (
     COLLATE=utf8mb4_bin
     COMMENT='Implements distributed locking for processing cursor positions—tracks consumer, version, and state';
 
-CREATE TABLE events (
-    id              BIGINT AUTO_INCREMENT PRIMARY KEY,
-    sequence        BIGINT DEFAULT NULL,
-    partition_id    BIGINT NOT NULL,
-    data            JSON   NOT NULL,
-    INDEX idx_events__sequence(sequence)
+CREATE TABLE IF NOT EXISTS unprocessed_events (
+    id           BIGINT PRIMARY KEY,
+    partition_id BIGINT NOT NULL
 ) ENGINE=InnoDB
-    DEFAULT CHARSET=utf8mb4
-    COLLATE=utf8mb4_bin
-    ROW_FORMAT = DYNAMIC
-    COMMENT='Append-only event store per partition; JSON payloads in sequence order';
+  ROW_FORMAT=COMPACT;
+
+CREATE TABLE IF NOT EXISTS sequences (
+    partition_id BIGINT NOT NULL,
+    sequence     BIGINT AUTO_INCREMENT,
+    event_id     BIGINT NOT NULL,
+    PRIMARY KEY (partition_id, sequence, event_id)
+) ENGINE=InnoDB
+  ROW_FORMAT=COMPACT;
+
+CREATE TABLE IF NOT EXISTS events (
+    id   BIGINT AUTO_INCREMENT PRIMARY KEY,
+    data LONGBLOB NOT NULL
+) ENGINE=InnoDB;
 
 CREATE TABLE topics_cache (
   path_hash    BINARY(16)    NOT NULL,

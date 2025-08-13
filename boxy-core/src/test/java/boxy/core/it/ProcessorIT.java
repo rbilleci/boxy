@@ -34,6 +34,7 @@ public class ProcessorIT extends BaseIT {
         final var subscriptionId = data.subscriptions().getFirst().id();
         // PUBLISH
         eventRepository.publish(PATH_A, TOPIC_A, "partitionKey", DATA);
+        eventRepository.sequence(100);
         // VALIDATE
         final var leasable = cursorRepository.findLeasable(subscriptionId, 100, 0);
         assertThat(leasable).hasSize(1);
@@ -54,6 +55,7 @@ public class ProcessorIT extends BaseIT {
         eventRepository.publish(PATH_B, TOPIC_C, "pk6", DATA);
         eventRepository.publish(PATH_B, TOPIC_D, "pk7", DATA);
         eventRepository.publish(PATH_B, TOPIC_D, "pk8", DATA);
+        eventRepository.sequence(100);
         // VALIDATE
         final var leasable = cursorRepository.findLeasable(100, 0);
         assertThat(leasable).hasSize(16);
