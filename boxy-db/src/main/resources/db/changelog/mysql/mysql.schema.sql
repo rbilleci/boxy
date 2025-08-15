@@ -201,10 +201,10 @@ CREATE TABLE IF NOT EXISTS unprocessed_events (
   ROW_FORMAT=COMPACT;
 
 CREATE TABLE IF NOT EXISTS sequences (
-    partition_id BIGINT NOT NULL,
     sequence     BIGINT AUTO_INCREMENT,
+    partition_id BIGINT NOT NULL,
     event_id     BIGINT NOT NULL,
-    PRIMARY KEY (partition_id, sequence, event_id)
+    PRIMARY KEY (sequence, partition_id, event_id)
 ) ENGINE=InnoDB
   ROW_FORMAT=COMPACT;
 
