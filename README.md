@@ -74,15 +74,18 @@ Boxy is released under the **Apache License 2.0** and is under active developmen
 Liquibase migrations for the schema are under `boxy-db/src/main/resources/db/changelog`. The schema models:
 
 ```mermaid
-erDiagram
-    namespaces ||--o{ topics : owns
-    topics ||--o{ partitions : has
-    partitions ||--o{ events : stores
-    subscriptions ||--o{ subscription_topics : links
-    subscriptions ||--o{ cursors : positions
-    subscription_topics ||--o{ cursors : positions
-    cursors ||--o{ leases : locks
-    consumers ||--o{ leases : holds
+    erDiagram
+        namespaces ||--o{ topics : owns
+        topics ||--o{ partitions : has
+        partitions ||--o{ unprocessed_events : queues
+        partitions ||--o{ sequences : sequences
+        events ||--|| unprocessed_events : references
+        events ||--|| sequences : references
+        subscriptions ||--o{ subscription_topics : links
+        subscriptions ||--o{ cursors : positions
+        subscription_topics ||--o{ cursors : positions
+        cursors ||--o{ leases : locks
+        consumers ||--o{ leases : holds
 ```
 
 ### Key Tables and Views
@@ -90,7 +93,9 @@ erDiagram
 - **namespaces**: hierarchical containers for topics.
 - **topics**: belong to namespaces and declare a partition count.
 - **partitions**: per-topic shards that track a `high_watermark`.
-- **events**: append-only records stored per partition.
+  - **events**: raw event payloads; partition and sequence metadata are tracked separately.
+  - **unprocessed_events**: queue linking newly published events to partitions until sequenced.
+  - **sequences**: per-partition sequence numbers referencing events.
 - **subscription_topics**: links subscriptions to the topics they consume and stores precomputed statistics.
 - **cursors**: tracks the position per subscription and partition and stores the `subscription_id`,
   `subscription_topic_id`, and `topic_id` for join-free lookups. Each row is assigned a persistent
