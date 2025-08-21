@@ -9,8 +9,6 @@ Boxy turns your transactional outbox into an event stream and allows you to buil
 favorite programming language. 
 Tenant isolation is provided through a hierarchical namespace system.
 
-Boxy is released under the **Apache License 2.0** and is under active development.
-
 ## Table of Contents
 
 - [Design Highlights](#design-highlights)
