@@ -68,17 +68,6 @@ CREATE TABLE heartbeat_policies (
 
 INSERT INTO heartbeat_policies (id) VALUES (1);
 
-CREATE TABLE lease_policies (
-    id                      TINYINT NOT NULL PRIMARY KEY CHECK (id = 1),
-    active_consumers_limit  INT     NOT NULL DEFAULT 16,
-    lease_release_period    INT     NOT NULL DEFAULT 10
-) ENGINE=InnoDB
-    DEFAULT CHARSET=utf8mb4
-    COLLATE=utf8mb4_bin
-    COMMENT='Stores cluster-wide lease configuration';
-
-INSERT INTO lease_policies (id) VALUES (1);
-
 CREATE TABLE metrics_policies (
     id                      TINYINT NOT NULL PRIMARY KEY CHECK (id = 1),
     metrics_refresh_interval INT    NOT NULL DEFAULT 3

@@ -31,10 +31,6 @@
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_lease_policies__update.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
         <sqlFile path="sp/sp_metrics_policies__update.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
