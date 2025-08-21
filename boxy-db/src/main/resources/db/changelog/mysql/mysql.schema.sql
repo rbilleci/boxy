@@ -166,8 +166,8 @@ CREATE TABLE IF NOT EXISTS unprocessed_events (
 CREATE TABLE IF NOT EXISTS sequences (
     sequence     BIGINT AUTO_INCREMENT,
     partition_id BIGINT NOT NULL,
-    event_id     BIGINT NOT NULL,
-    PRIMARY KEY (sequence, partition_id, event_id)
+    event_ids    JSON NOT NULL,
+    PRIMARY KEY (sequence, partition_id)
 ) ENGINE=InnoDB
   ROW_FORMAT=COMPACT;
 
