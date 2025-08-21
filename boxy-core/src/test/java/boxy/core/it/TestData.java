@@ -7,15 +7,12 @@ import javax.sql.DataSource;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 public record TestData(Topic topic,
                        long namespaceAId,
                        long namespaceBId,
                        List<Subscription> subscriptions,
-                       Cursor cursor,
-                       Consumer consumer1,
-                       Consumer consumer2) {
+                       Cursor cursor) {
 
     public static final int DEFAULT_PARTITIONS = 16;
     public static final String SUBSCRIPTION_A = "sub-a";
@@ -28,15 +25,12 @@ public record TestData(Topic topic,
     public static final String TOPIC_B = "topic-b";
     public static final String TOPIC_C = "topic-c";
     public static final String TOPIC_D = "topic-d";
-    public static final String PARTY_1 = UUID.randomUUID().toString();
-    public static final String PARTY_2 = UUID.randomUUID().toString();
 
     public static TestData seed(final DataSource ds) {
         final var namespaceRepository = new NamespaceRepository(ds);
         final var topicRepository = new TopicRepository(ds);
         final var subscriptionRepository = new SubscriptionRepository(ds);
         final var cursorRepository = new CursorRepository(ds);
-        final var consumerRepository = new ConsumerRepository(ds);
 
         // Create the namespaces
         final var namespaceAId = namespaceRepository.create(PATH_A);
@@ -70,18 +64,12 @@ public record TestData(Topic topic,
         final var cursor = cursorRepository.findAll(subscriptions.getFirst().id()).getFirst();
 
         System.out.println(new HeartbeatPolicyRepository(ds).get());
-        consumerRepository.checkIn(PARTY_1, subscriptions.get(0).id(), 1);
-        consumerRepository.checkIn(PARTY_2, subscriptions.get(1).id(), 1);
-        final var consumer1 = consumerRepository.find(PARTY_1).orElseThrow();
-        final var consumer2 = consumerRepository.find(PARTY_2).orElseThrow();
 
         return new TestData(
                 topicA,
                 namespaceAId,
                 namespaceBId,
                 subscriptions,
-                cursor,
-                consumer1,
-                consumer2);
+                cursor);
     }
 }

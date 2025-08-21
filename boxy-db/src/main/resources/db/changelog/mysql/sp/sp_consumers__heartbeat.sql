@@ -26,12 +26,7 @@ BEGIN
                p_weight,
                hp.heartbeat_interval_baseline,
                v_timestamp + INTERVAL 1 SECOND
-          FROM (SELECT COALESCE(MAX(active_consumers),0) AS active_consumers
-                  FROM subscription_topics
-                 WHERE subscription_id = p_subscription_id) cg
-          CROSS JOIN heartbeat_policies hp
-          CROSS JOIN lease_policies lp
-         WHERE cg.active_consumers < lp.active_consumers_limit;
+          FROM heartbeat_policies hp;
         SET p_status = IF(ROW_COUNT() > 0, 'ACCEPTED', 'REJECTED');
     END IF;
 

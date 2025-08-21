@@ -21,7 +21,7 @@ import javax.sql.DataSource;
 
 public abstract class BaseIT {
 
-    private static final Set<String> PROTECTED_TABLES = Set.of("heartbeat_policies", "metrics_policies", "lease_policies");
+    private static final Set<String> PROTECTED_TABLES = Set.of("heartbeat_policies", "metrics_policies");
 
     @Container
     private static final MySQLContainer<?> MYSQL =
