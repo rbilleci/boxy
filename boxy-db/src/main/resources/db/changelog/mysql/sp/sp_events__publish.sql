@@ -16,7 +16,9 @@ BEGIN
     SET v_partition_id = fn_resolve_partition_id(v_topic_id, v_partition_number);
 
     -- EVENT PUBLICATION
-    INSERT INTO events(data) VALUES (p_data);
-    SET v_event_id = LAST_INSERT_ID();
-    INSERT INTO unprocessed_events(id, partition_id) VALUES (v_event_id, v_partition_id);
+    START TRANSACTION;
+        INSERT INTO events(data) VALUES (p_data);
+        SET v_event_id = LAST_INSERT_ID();
+        INSERT INTO unprocessed_events(id, partition_id) VALUES (v_event_id, v_partition_id);
+    COMMIT;
 END;
