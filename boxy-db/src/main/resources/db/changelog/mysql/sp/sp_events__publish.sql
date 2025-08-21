@@ -8,7 +8,6 @@ BEGIN
     DECLARE v_partitions INT;
     DECLARE v_partition_id BIGINT;
     DECLARE v_topic_id BIGINT;
-    DECLARE v_event_id BIGINT;
 
     -- RESOLVE THE TOPIC AND PARTITION COUNT
     CALL sp_topics__cache_get(p_path, p_topic, v_topic_id, v_partitions);
@@ -18,7 +17,6 @@ BEGIN
     -- EVENT PUBLICATION
     START TRANSACTION;
         INSERT INTO events(data) VALUES (p_data);
-        SET v_event_id = LAST_INSERT_ID();
-        INSERT INTO unprocessed_events(id, partition_id) VALUES (v_event_id, v_partition_id);
+        INSERT INTO unprocessed_events(id, partition_id) VALUES (LAST_INSERT_ID(), v_partition_id);
     COMMIT;
 END;

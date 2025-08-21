@@ -65,7 +65,7 @@ public class BenchmarkIT extends BaseIT {
 
         for (int run = 0; run < 3; run++) {
             histogram.reset();
-            for (int i = 0; i < 2_000; i++) {
+            for (int i = 0; i < 5_000; i++) {
                 final var start = System.nanoTime();
                 eventRepository.publish(PATH, TOPIC, "k" + i, DATA);
                 histogram.recordValue(System.nanoTime() - start);
