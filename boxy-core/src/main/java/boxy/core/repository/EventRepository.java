@@ -16,8 +16,4 @@ public final class EventRepository extends BaseRepository {
         update("{CALL sp_events__publish_advanced(?,?)}", partitionId, data);
     }
 
-    public int sequence(final int batchSize) {
-        return queryOne("{CALL sp_events__sequence(?)}", rs -> rs.getInt("sequenced_events"), batchSize)
-                .orElse(0);
-    }
 }

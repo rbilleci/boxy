@@ -25,7 +25,7 @@ public abstract class BaseIT {
 
     @Container
     private static final MySQLContainer<?> MYSQL =
-            new MySQLContainer<>(DockerImageName.parse("mysql:8.0.33"))
+            new MySQLContainer<>(DockerImageName.parse("mysql:8.0.43"))
                     .withDatabaseName("events_db")
                     // FOR PERFORMANCE USE IN-MEMORY TMP-FS
                     .withTmpFs(Map.of("/var/lib/mysql", "rw"))
@@ -46,6 +46,7 @@ public abstract class BaseIT {
 
     @BeforeAll
     static void setupDB() throws SQLException, LiquibaseException {
+
         System.setProperty("DB_HOST", MYSQL.getHost());
         System.setProperty("DB_PORT", MYSQL.getMappedPort(MySQLContainer.MYSQL_PORT).toString());
         System.setProperty("DB_NAME", MYSQL.getDatabaseName());
