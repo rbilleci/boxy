@@ -23,6 +23,7 @@ BEGIN
         -- INSERT THE SEQUENCE BATCHES
         -- WE CAN'T USE JSON_ARRAYAGG(id ORDER BY id) ON MYSQL 8.0.x
         -- WE CAN OPTIMIZE THIS TO USE JSON_ARRAYAGG WHEN WE MOVE TO A NEWER VERSION AS THE MINIMUM
+        SET SESSION group_concat_max_len = p_batch_size * 2500;
         INSERT INTO sequences (partition_id, event_ids)
              SELECT partition_id,
                     CAST(CONCAT('[', GROUP_CONCAT(id ORDER BY id SEPARATOR ','), ']') AS JSON) AS event_ids
