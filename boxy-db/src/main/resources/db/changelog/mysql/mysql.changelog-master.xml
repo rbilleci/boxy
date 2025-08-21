@@ -61,10 +61,6 @@
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_consumers__check_in.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
         <sqlFile path="sp/sp_consumers__subscribe.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
@@ -148,20 +144,6 @@
 
           <!-- CURSORS -->
         <sqlFile path="sp/sp_cursors__commit.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-
-        <!-- LEASES -->
-        <sqlFile path="sp/sp_leases__release.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-        <sqlFile path="sp/sp_leases__release_excess.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-        <sqlFile path="sp/sp_leases__acquire.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>

@@ -33,15 +33,4 @@ public final class CursorRepository extends BaseRepository {
                 CURSOR_MAPPER, subscriptionId);
     }
 
-
-    public List<Cursor> findLeasable(final int limit, final int offset) {
-        return query("SELECT * FROM unleased_cursors_view ORDER BY id LIMIT ? OFFSET ?",
-                CURSOR_MAPPER, limit, offset);
-    }
-
-    public List<Cursor> findLeasable(final long subscriptionId, final int limit, final int offset) {
-        return query("SELECT * FROM unleased_cursors_view WHERE subscription_id = ? ORDER BY id LIMIT ? OFFSET ?",
-                CURSOR_MAPPER, subscriptionId, limit, offset);
-    }
-
 }
