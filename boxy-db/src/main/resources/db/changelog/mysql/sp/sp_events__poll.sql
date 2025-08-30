@@ -22,6 +22,7 @@ BEGIN
                    c.partition_id,
                    s.sequence,
                    s.event_ids,
+                   JSON_LENGTH(s.event_ids) AS event_count,
                    SUM(JSON_LENGTH(s.event_ids)) OVER (
                        ORDER BY (c.random_key >= v_start_key) DESC, c.random_key, c.id
                        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
@@ -40,7 +41,7 @@ BEGIN
                AND (c.locked_until IS NULL OR c.locked_until < v_now OR c.locked_by_consumer_id = p_consumer_id)
                AND p.high_watermark > c.position
        ) t
-     WHERE t.cum_events <= p_batch_size;
+     WHERE t.cum_events - t.event_count < p_batch_size;
 
     UPDATE cursors c
        JOIN temp_selected_sequences tss ON c.id = tss.cursor_id
