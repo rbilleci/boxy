@@ -59,7 +59,7 @@ class EventPollIT extends BaseIT {
 
         try (var conn = dataSource.getConnection();
              var ps = conn.prepareStatement(
-                     "SELECT locked_by_consumer_id FROM cursors WHERE subscription_id = ? AND partition_id = ?")) {
+                     "SELECT locked_by FROM cursors WHERE subscription_id = ? AND partition_id = ?")) {
             ps.setLong(1, subscriptionId);
             ps.setLong(2, partitionId);
             try (var rs = ps.executeQuery()) {
