@@ -38,20 +38,20 @@ BEGIN
                      LIMIT 1
                 ) s ON TRUE
              WHERE c.subscription_id = p_subscription_id
-               AND (c.locked_until IS NULL OR c.locked_until < v_now OR c.locked_by_consumer_id = p_consumer_id)
+               AND (c.locked_until IS NULL OR c.locked_until < v_now OR c.locked_by = p_consumer_id)
                AND p.high_watermark > c.position
        ) t
      WHERE t.cum_events - t.event_count < p_batch_size;
 
     UPDATE cursors c
        JOIN temp_selected_sequences tss ON c.id = tss.cursor_id
-       SET c.locked_by_consumer_id = p_consumer_id,
+       SET c.locked_by = p_consumer_id,
            c.locked_until = DATE_ADD(v_now, INTERVAL 3 SECOND)
-     WHERE c.locked_until IS NULL OR c.locked_until < v_now OR c.locked_by_consumer_id = p_consumer_id;
+     WHERE c.locked_until IS NULL OR c.locked_until < v_now OR c.locked_by = p_consumer_id;
 
     DELETE tss FROM temp_selected_sequences tss
       JOIN cursors c ON c.id = tss.cursor_id
-     WHERE c.locked_by_consumer_id <> p_consumer_id;
+     WHERE c.locked_by <> p_consumer_id;
 
     SELECT tss.cursor_id,
            tss.partition_id,
