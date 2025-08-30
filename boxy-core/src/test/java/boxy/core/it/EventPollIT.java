@@ -38,7 +38,7 @@ class EventPollIT extends BaseIT {
 
         try (var conn = dataSource.getConnection();
              var seq = conn.prepareCall("{CALL sp_events__sequence(?)}")) {
-            seq.setInt(1, 10);
+            seq.setInt(1, 100);
             seq.execute();
         }
 
@@ -82,7 +82,7 @@ class EventPollIT extends BaseIT {
 
         try (var conn = dataSource.getConnection();
              var seq = conn.prepareCall("{CALL sp_events__sequence(?)}")) {
-            seq.setInt(1, 1);
+            seq.setInt(1, 100);
             seq.execute();
         }
 
@@ -91,7 +91,7 @@ class EventPollIT extends BaseIT {
              var poll = conn.prepareCall("{CALL sp_events__poll(?,?,?)}")) {
             poll.setLong(1, subscriptionId);
             poll.setString(2, consumerId);
-            poll.setInt(3, 2);
+            poll.setInt(3, 100);
             try (var rs = poll.executeQuery()) {
                 while (rs.next()) {
                     polled.add(rs.getLong("event_id"));
@@ -99,7 +99,7 @@ class EventPollIT extends BaseIT {
             }
         }
 
-        assertThat(polled).hasSize(2);
+        assertThat(polled).hasSize(3);
     }
 
     @Test
@@ -115,7 +115,7 @@ class EventPollIT extends BaseIT {
 
         try (var conn = dataSource.getConnection();
              var seq = conn.prepareCall("{CALL sp_events__sequence(?)}")) {
-            seq.setInt(1, 10);
+            seq.setInt(1, 100);
             seq.execute();
         }
 
