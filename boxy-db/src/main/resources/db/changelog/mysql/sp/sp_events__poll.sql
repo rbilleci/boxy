@@ -12,7 +12,7 @@ BEGIN
         partition_id BIGINT NOT NULL,
         sequence BIGINT NOT NULL,
         event_ids JSON NOT NULL
-    ) ENGINE = MEMORY;
+    ) ENGINE = InnoDB;
     DELETE FROM temp_selected_sequences;
 
     INSERT INTO temp_selected_sequences(cursor_id, partition_id, sequence, event_ids)
@@ -23,14 +23,14 @@ BEGIN
                    s.sequence,
                    s.event_ids,
                    SUM(JSON_LENGTH(s.event_ids)) OVER (
-                       ORDER BY (c.random_key >= v_start_key) DESC, c.random_key
+                       ORDER BY (c.random_key >= v_start_key) DESC, c.random_key, c.id
                        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
                    ) AS cum_events
               FROM cursors c
               JOIN partitions p ON p.id = c.partition_id
               JOIN LATERAL (
                     SELECT s.sequence, s.event_ids
-                      FROM sequences s
+                      FROM sequences s FORCE INDEX (idx_sequences__partition_sequence)
                      WHERE s.partition_id = c.partition_id
                        AND s.sequence > c.position
                      ORDER BY s.sequence
