@@ -28,13 +28,14 @@ BEGIN
                    ) AS cum_events
               FROM cursors c
               JOIN partitions p ON p.id = c.partition_id
-              JOIN sequences s ON s.partition_id = c.partition_id
-                               AND s.sequence = (
-                                   SELECT MIN(sequence)
-                                     FROM sequences
-                                    WHERE partition_id = c.partition_id
-                                      AND sequence > c.position
-                               )
+              JOIN LATERAL (
+                    SELECT s.sequence, s.event_ids
+                      FROM sequences s
+                     WHERE s.partition_id = c.partition_id
+                       AND s.sequence > c.position
+                     ORDER BY s.sequence
+                     LIMIT 1
+                ) s ON TRUE
              WHERE c.subscription_id = p_subscription_id
                AND (c.locked_until IS NULL OR c.locked_until < v_now OR c.locked_by_consumer_id = p_consumer_id)
                AND p.high_watermark > c.position
