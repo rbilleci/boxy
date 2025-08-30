@@ -134,9 +134,13 @@
                    splitStatements="false"
                    stripComments="false"/>
          <sqlFile path="sp/sp_events__sequence.sql"
-                   relativeToChangelogFile="true"
-                   splitStatements="false"
-                   stripComments="false"/>
+                  relativeToChangelogFile="true"
+                  splitStatements="false"
+                  stripComments="false"/>
+        <sqlFile path="sp/sp_events__poll.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
 
           <!-- CURSORS -->
         <sqlFile path="sp/sp_cursors__commit.sql"
