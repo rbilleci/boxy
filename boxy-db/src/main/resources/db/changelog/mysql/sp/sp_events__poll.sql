@@ -15,15 +15,15 @@ BEGIN
             c.partition_id,
             s.sequence,
             s.event_ids,
-            JSON_LENGTH(s.event_ids) AS event_count,
-            SUM(JSON_LENGTH(s.event_ids)) OVER (
+            s.event_count,
+            SUM(s.event_count) OVER (
                 ORDER BY (c.random_key >= v_start_key) DESC, c.random_key, c.id
                 ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
             ) AS cumulative_events
         FROM cursors c
         JOIN partitions p ON p.id = c.partition_id
         JOIN LATERAL (
-            SELECT s.sequence, s.event_ids
+            SELECT s.sequence, s.event_ids, s.event_count
             FROM sequences s FORCE INDEX (idx_sequences__partition_sequence)
             WHERE s.partition_id = c.partition_id
               AND s.sequence > c.position
