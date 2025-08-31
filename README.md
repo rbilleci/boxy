@@ -50,12 +50,12 @@ Tenant isolation is provided through a hierarchical namespace system.
 
 ## Roadmap
 
-### V1 (August 2025)
+### V1
 
 1. Simple Consumer API for Java
 2. Simple Producer API for Java
 
-### V2 (September 2025)
+### V2
 
 1. Multi-language Consumer APIs (Java, Go, Rust, Python, CLI) 
 2. Multi-language Producer APIs

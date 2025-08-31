@@ -10,8 +10,6 @@
 
     <packaging>pom</packaging>
     <modules>
-        <module>boxy-api-producer</module>
-        <module>boxy-api-consumer</module>
         <module>boxy-core</module>
         <module>boxy-db</module>
     </modules>
