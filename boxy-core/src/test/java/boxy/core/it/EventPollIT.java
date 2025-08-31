@@ -26,6 +26,44 @@ class EventPollIT extends BaseIT {
         data = TestData.seed(dataSource);
     }
 
+
+    @Test
+    void poll_benchmarkOverhead() throws SQLException {
+        final long subscriptionId = data.subscriptions().getFirst().id();
+        final long partitionId =
+                partitionRepository.find(TestData.PATH_A, TestData.TOPIC_A, 0).orElseThrow().id();
+        final String consumerId = "consumer-0";
+
+        eventRepository.publish(partitionId, "{}");
+        eventRepository.publish(partitionId, "{}");
+        eventRepository.publish(partitionId, "{}");
+
+        try (var conn = dataSource.getConnection();
+             var seq = conn.prepareCall("{CALL sp_events__sequence(?)}")) {
+            seq.setInt(1, 100);
+            seq.execute();
+        }
+
+        try (var conn = dataSource.getConnection();
+             var poll = conn.prepareCall("{CALL sp_events__poll(?,?,?)}")) {
+            poll.setLong(1, subscriptionId);
+            poll.setString(2, consumerId);
+            poll.setInt(3, 10);
+
+            final var start = System.currentTimeMillis();
+            for (int i = 0; i < 10_000; i++) {
+                try (var rs = poll.executeQuery()) {
+                    while (rs.next()) {
+                        rs.getLong("event_id");
+                    }
+                }
+            }
+            final var end = System.currentTimeMillis();
+            System.out.printf("polling took %s ms\n", (end - start));
+        }
+    }
+
+
     @Test
     void poll_returnsEventsAndLocksCursor() throws SQLException {
         final long subscriptionId = data.subscriptions().getFirst().id();
