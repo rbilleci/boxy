@@ -115,13 +115,17 @@ CREATE TABLE cursors (
     partition_id          BIGINT NOT NULL,
     random_key            INT    NOT NULL,
     position              BIGINT NOT NULL DEFAULT 0,
+    locked_by             VARCHAR(36) NULL,
+    locked_until          DATETIME(3) NULL,
     CONSTRAINT u_cursors UNIQUE (subscription_topic_id, partition_id),
     FOREIGN KEY (subscription_id)       REFERENCES subscriptions (id) ON DELETE CASCADE,
     FOREIGN KEY (subscription_topic_id) REFERENCES subscription_topics (id) ON DELETE CASCADE,
     FOREIGN KEY (topic_id)             REFERENCES topics (id) ON DELETE CASCADE,
     FOREIGN KEY (partition_id)          REFERENCES partitions (id) ON DELETE CASCADE,
     INDEX idx_cursors__random_1 (random_key, id),
-    INDEX idx_cursors__subscription_random (subscription_id, random_key, id)
+    INDEX idx_cursors__subscription_random (subscription_id, random_key, id),
+    INDEX idx_cursors__lock (locked_until),
+    INDEX idx_cursors__subscription_lock_random (subscription_id, locked_until, random_key, id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
@@ -167,7 +171,8 @@ CREATE TABLE IF NOT EXISTS sequences (
     sequence     BIGINT AUTO_INCREMENT,
     partition_id BIGINT NOT NULL,
     event_ids    JSON NOT NULL,
-    PRIMARY KEY (sequence, partition_id)
+    PRIMARY KEY (sequence, partition_id),
+    INDEX idx_sequences__partition_sequence (partition_id, sequence)
 ) ENGINE=InnoDB
   ROW_FORMAT=COMPACT;
 

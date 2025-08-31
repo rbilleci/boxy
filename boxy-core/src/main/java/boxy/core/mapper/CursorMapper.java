@@ -15,6 +15,10 @@ public class CursorMapper implements RowMapper<Cursor> {
                 rs.getLong("topic_id"),
                 rs.getLong("partition_id"),
                 rs.getInt("random_key"),
-                rs.getLong("position"));
+                rs.getLong("position"),
+                rs.getString("locked_by"),
+                rs.getTimestamp("locked_until") == null ?
+                        null :
+                        rs.getTimestamp("locked_until").toInstant());
     }
 }
