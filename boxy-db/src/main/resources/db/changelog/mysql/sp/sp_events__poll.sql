@@ -19,7 +19,7 @@ BEGIN
             SUM(JSON_LENGTH(s.event_ids)) OVER (
                 ORDER BY (c.random_key >= v_start_key) DESC, c.random_key, c.id
                 ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-            ) AS cum_events
+            ) AS cumulative_events
         FROM cursors c
         JOIN partitions p ON p.id = c.partition_id
         JOIN LATERAL (
@@ -37,7 +37,7 @@ BEGIN
     selected AS (
         SELECT cursor_id, partition_id, sequence, event_ids
         FROM candidate
-        WHERE cum_events - event_count < p_batch_size
+        WHERE cumulative_events - event_count < p_batch_size
     )
     SELECT
         COALESCE(
