@@ -141,6 +141,10 @@
                   relativeToChangelogFile="true"
                   splitStatements="false"
                   stripComments="false"/>
+        <sqlFile path="sp/event_sequencer.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
         <sqlFile path="sp/sp_events__poll.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"

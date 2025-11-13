@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.sql.SQLException;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,7 +38,7 @@ class EventPollIT extends BaseIT {
         eventRepository.publish(partitionId, "{}");
         eventRepository.publish(partitionId, "{}");
 
-        sequence(100);
+        awaitSequencer(partitionId);
 
         try (var conn = dataSource.getConnection();
              var poll = conn.prepareCall("{CALL sp_events__poll(?,?,?)}")) {
@@ -71,7 +70,7 @@ class EventPollIT extends BaseIT {
         eventRepository.publish(partitionId, "{\"v\":1}");
         eventRepository.publish(partitionId, "{\"v\":2}");
 
-        sequence(100);
+        awaitSequencer(partitionId);
 
         final List<Long> polled = new ArrayList<>();
         try (var conn = dataSource.getConnection();
@@ -111,7 +110,7 @@ class EventPollIT extends BaseIT {
         eventRepository.publish(partitionId, "{}");
         eventRepository.publish(partitionId, "{}");
 
-        sequence(100);
+        awaitSequencer(partitionId);
 
         final List<Long> polled = new ArrayList<>();
         try (var conn = dataSource.getConnection();
@@ -140,7 +139,7 @@ class EventPollIT extends BaseIT {
         eventRepository.publish(partitionId, "{}");
         eventRepository.publish(partitionId, "{}");
 
-        sequence(100);
+        awaitSequencer(partitionId);
 
         final List<Long> polled = new ArrayList<>();
         try (var conn = dataSource.getConnection();
@@ -169,7 +168,7 @@ class EventPollIT extends BaseIT {
             eventRepository.publish(partitionId, "{}");
         }
 
-        sequence(10);
+        awaitSequencer(partitionId);
 
         final List<Long> polled = new ArrayList<>();
         try (var conn = dataSource.getConnection();
@@ -187,13 +186,30 @@ class EventPollIT extends BaseIT {
         assertThat(polled).hasSize(10);
     }
 
-    private void sequence(int batchSize) throws SQLException {
+    private void awaitSequencer(long partitionId) throws SQLException {
+        final long deadline = System.currentTimeMillis() + 5_000;
+        while (System.currentTimeMillis() < deadline) {
+            if (hasSequencedEvents(partitionId)) {
+                return;
+            }
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new AssertionError("Interrupted while waiting for sequencer", e);
+            }
+        }
+        throw new AssertionError("Sequencer did not process events for partition " + partitionId);
+    }
+
+    private boolean hasSequencedEvents(long partitionId) throws SQLException {
         try (var conn = dataSource.getConnection();
-             var seq = conn.prepareCall("{CALL sp_events__sequence(?, ?)}")) {
-            seq.setInt(1, batchSize);
-            seq.registerOutParameter(2, Types.INTEGER);
-            seq.execute();
-            seq.getInt(2);
+             var ps = conn.prepareStatement(
+                     "SELECT COUNT(*) FROM sequences WHERE partition_id = ?")) {
+            ps.setLong(1, partitionId);
+            try (var rs = ps.executeQuery()) {
+                return rs.next() && rs.getLong(1) > 0;
+            }
         }
     }
 }
