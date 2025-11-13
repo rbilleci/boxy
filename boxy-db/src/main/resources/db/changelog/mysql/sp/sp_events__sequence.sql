@@ -52,5 +52,6 @@ BEGIN
 
     COMMIT;
 
+    SET @sp_events__sequence_has_events = v_has_events;
     SELECT v_has_events AS has_events;
 END;
