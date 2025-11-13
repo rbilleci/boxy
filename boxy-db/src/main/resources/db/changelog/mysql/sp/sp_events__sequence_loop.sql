@@ -5,9 +5,7 @@ BEGIN
     DECLARE v_elapsed_seconds INT DEFAULT 0;
 
     main_loop: LOOP
-        CALL sp_events__sequence(p_batch_size);
-
-        SET v_has_events = IFNULL(@sp_events__sequence_has_events, 0);
+        CALL sp_events__sequence_internal(p_batch_size, v_has_events);
 
         IF v_has_events = 1 THEN
             SET v_no_event_start = NULL;
