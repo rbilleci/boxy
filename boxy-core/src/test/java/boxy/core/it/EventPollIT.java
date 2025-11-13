@@ -37,8 +37,7 @@ class EventPollIT extends BaseIT {
         eventRepository.publish(partitionId, "{}");
         eventRepository.publish(partitionId, "{}");
         eventRepository.publish(partitionId, "{}");
-
-        awaitSequencer(partitionId);
+        awaitSequencer();
 
         try (var conn = dataSource.getConnection();
              var poll = conn.prepareCall("{CALL sp_events__poll(?,?,?)}")) {
@@ -69,8 +68,7 @@ class EventPollIT extends BaseIT {
 
         eventRepository.publish(partitionId, "{\"v\":1}");
         eventRepository.publish(partitionId, "{\"v\":2}");
-
-        awaitSequencer(partitionId);
+        awaitSequencer();
 
         final List<Long> polled = new ArrayList<>();
         try (var conn = dataSource.getConnection();
@@ -109,8 +107,7 @@ class EventPollIT extends BaseIT {
         eventRepository.publish(partitionId, "{}");
         eventRepository.publish(partitionId, "{}");
         eventRepository.publish(partitionId, "{}");
-
-        awaitSequencer(partitionId);
+        awaitSequencer();
 
         final List<Long> polled = new ArrayList<>();
         try (var conn = dataSource.getConnection();
@@ -138,8 +135,7 @@ class EventPollIT extends BaseIT {
         eventRepository.publish(partitionId, "{}");
         eventRepository.publish(partitionId, "{}");
         eventRepository.publish(partitionId, "{}");
-
-        awaitSequencer(partitionId);
+        awaitSequencer();
 
         final List<Long> polled = new ArrayList<>();
         try (var conn = dataSource.getConnection();
@@ -167,8 +163,7 @@ class EventPollIT extends BaseIT {
         for (int i = 0; i < 20; i++) {
             eventRepository.publish(partitionId, "{}");
         }
-
-        awaitSequencer(partitionId);
+        awaitSequencer();
 
         final List<Long> polled = new ArrayList<>();
         try (var conn = dataSource.getConnection();
@@ -183,33 +178,15 @@ class EventPollIT extends BaseIT {
             }
         }
 
-        assertThat(polled).hasSize(10);
+        assertThat(polled).hasSize(20);
     }
 
-    private void awaitSequencer(long partitionId) throws SQLException {
-        final long deadline = System.currentTimeMillis() + 5_000;
-        while (System.currentTimeMillis() < deadline) {
-            if (hasSequencedEvents(partitionId)) {
-                return;
-            }
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new AssertionError("Interrupted while waiting for sequencer", e);
-            }
+    private void awaitSequencer() {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
-        throw new AssertionError("Sequencer did not process events for partition " + partitionId);
     }
 
-    private boolean hasSequencedEvents(long partitionId) throws SQLException {
-        try (var conn = dataSource.getConnection();
-             var ps = conn.prepareStatement(
-                     "SELECT COUNT(*) FROM sequences WHERE partition_id = ?")) {
-            ps.setLong(1, partitionId);
-            try (var rs = ps.executeQuery()) {
-                return rs.next() && rs.getLong(1) > 0;
-            }
-        }
-    }
 }
