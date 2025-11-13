@@ -48,19 +48,6 @@ Tenant isolation is provided through a hierarchical namespace system.
 - Each namespace name a limit of 500 characters.
 - Each topic name has a limit of 500 characters.
 
-## Roadmap
-
-### V1
-
-1. Simple Consumer API for Java
-2. Simple Producer API for Java
-
-### V2
-
-1. Multi-language Consumer APIs (Java, Go, Rust, Python, CLI) 
-2. Multi-language Producer APIs
-3. Postgres support
-
 ---
 
 ## Boxy Core and Boxy DB Overview
