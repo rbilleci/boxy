@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,11 +39,7 @@ class EventPollIT extends BaseIT {
         eventRepository.publish(partitionId, "{}");
         eventRepository.publish(partitionId, "{}");
 
-        try (var conn = dataSource.getConnection();
-             var seq = conn.prepareCall("{CALL sp_events__sequence(?)}")) {
-            seq.setInt(1, 100);
-            seq.execute();
-        }
+        sequence(100);
 
         try (var conn = dataSource.getConnection();
              var poll = conn.prepareCall("{CALL sp_events__poll(?,?,?)}")) {
@@ -74,11 +71,7 @@ class EventPollIT extends BaseIT {
         eventRepository.publish(partitionId, "{\"v\":1}");
         eventRepository.publish(partitionId, "{\"v\":2}");
 
-        try (var conn = dataSource.getConnection();
-             var seq = conn.prepareCall("{CALL sp_events__sequence(?)}")) {
-            seq.setInt(1, 100);
-            seq.execute();
-        }
+        sequence(100);
 
         final List<Long> polled = new ArrayList<>();
         try (var conn = dataSource.getConnection();
@@ -118,11 +111,7 @@ class EventPollIT extends BaseIT {
         eventRepository.publish(partitionId, "{}");
         eventRepository.publish(partitionId, "{}");
 
-        try (var conn = dataSource.getConnection();
-             var seq = conn.prepareCall("{CALL sp_events__sequence(?)}")) {
-            seq.setInt(1, 100);
-            seq.execute();
-        }
+        sequence(100);
 
         final List<Long> polled = new ArrayList<>();
         try (var conn = dataSource.getConnection();
@@ -151,11 +140,7 @@ class EventPollIT extends BaseIT {
         eventRepository.publish(partitionId, "{}");
         eventRepository.publish(partitionId, "{}");
 
-        try (var conn = dataSource.getConnection();
-             var seq = conn.prepareCall("{CALL sp_events__sequence(?)}")) {
-            seq.setInt(1, 100);
-            seq.execute();
-        }
+        sequence(100);
 
         final List<Long> polled = new ArrayList<>();
         try (var conn = dataSource.getConnection();
@@ -184,11 +169,7 @@ class EventPollIT extends BaseIT {
             eventRepository.publish(partitionId, "{}");
         }
 
-        try (var conn = dataSource.getConnection();
-             var seq = conn.prepareCall("{CALL sp_events__sequence(?)}")) {
-            seq.setInt(1, 10);
-            seq.execute();
-        }
+        sequence(10);
 
         final List<Long> polled = new ArrayList<>();
         try (var conn = dataSource.getConnection();
@@ -204,5 +185,15 @@ class EventPollIT extends BaseIT {
         }
 
         assertThat(polled).hasSize(10);
+    }
+
+    private void sequence(int batchSize) throws SQLException {
+        try (var conn = dataSource.getConnection();
+             var seq = conn.prepareCall("{CALL sp_events__sequence(?, ?)}")) {
+            seq.setInt(1, batchSize);
+            seq.registerOutParameter(2, Types.INTEGER);
+            seq.execute();
+            seq.getInt(2);
+        }
     }
 }
