@@ -1,4 +1,4 @@
-CREATE PROCEDURE sp_events__sequence(IN p_batch_size INT)
+CREATE PROCEDURE sp_events__sequence(IN p_batch_size INT, OUT p_has_events INT)
 BEGIN
     DECLARE v_has_events INT DEFAULT 0;
 
@@ -52,5 +52,5 @@ BEGIN
 
     COMMIT;
 
-    SELECT v_has_events AS has_events;
+    SET p_has_events = v_has_events;
 END;

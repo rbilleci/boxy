@@ -32,6 +32,8 @@ public abstract class BaseIT {
                     .withCommand(
                             // FOR TRIGGER SUPPORT
                             "mysqld", "--log-bin-trust-function-creators=1",
+                            // ENABLE MYSQL EVENT SCHEDULER FOR BACKGROUND JOBS
+                            "--event_scheduler=ON",
                             // PERFORMANCE TWEAKS
                             "--innodb_file_per_table=ON",
                             "--innodb_flush_log_at_trx_commit=0",  // never fsync on each commit

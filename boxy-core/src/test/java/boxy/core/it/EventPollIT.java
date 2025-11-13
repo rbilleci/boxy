@@ -37,12 +37,7 @@ class EventPollIT extends BaseIT {
         eventRepository.publish(partitionId, "{}");
         eventRepository.publish(partitionId, "{}");
         eventRepository.publish(partitionId, "{}");
-
-        try (var conn = dataSource.getConnection();
-             var seq = conn.prepareCall("{CALL sp_events__sequence(?)}")) {
-            seq.setInt(1, 100);
-            seq.execute();
-        }
+        awaitSequencer();
 
         try (var conn = dataSource.getConnection();
              var poll = conn.prepareCall("{CALL sp_events__poll(?,?,?)}")) {
@@ -73,12 +68,7 @@ class EventPollIT extends BaseIT {
 
         eventRepository.publish(partitionId, "{\"v\":1}");
         eventRepository.publish(partitionId, "{\"v\":2}");
-
-        try (var conn = dataSource.getConnection();
-             var seq = conn.prepareCall("{CALL sp_events__sequence(?)}")) {
-            seq.setInt(1, 100);
-            seq.execute();
-        }
+        awaitSequencer();
 
         final List<Long> polled = new ArrayList<>();
         try (var conn = dataSource.getConnection();
@@ -117,12 +107,7 @@ class EventPollIT extends BaseIT {
         eventRepository.publish(partitionId, "{}");
         eventRepository.publish(partitionId, "{}");
         eventRepository.publish(partitionId, "{}");
-
-        try (var conn = dataSource.getConnection();
-             var seq = conn.prepareCall("{CALL sp_events__sequence(?)}")) {
-            seq.setInt(1, 100);
-            seq.execute();
-        }
+        awaitSequencer();
 
         final List<Long> polled = new ArrayList<>();
         try (var conn = dataSource.getConnection();
@@ -150,12 +135,7 @@ class EventPollIT extends BaseIT {
         eventRepository.publish(partitionId, "{}");
         eventRepository.publish(partitionId, "{}");
         eventRepository.publish(partitionId, "{}");
-
-        try (var conn = dataSource.getConnection();
-             var seq = conn.prepareCall("{CALL sp_events__sequence(?)}")) {
-            seq.setInt(1, 100);
-            seq.execute();
-        }
+        awaitSequencer();
 
         final List<Long> polled = new ArrayList<>();
         try (var conn = dataSource.getConnection();
@@ -183,12 +163,7 @@ class EventPollIT extends BaseIT {
         for (int i = 0; i < 20; i++) {
             eventRepository.publish(partitionId, "{}");
         }
-
-        try (var conn = dataSource.getConnection();
-             var seq = conn.prepareCall("{CALL sp_events__sequence(?)}")) {
-            seq.setInt(1, 10);
-            seq.execute();
-        }
+        awaitSequencer();
 
         final List<Long> polled = new ArrayList<>();
         try (var conn = dataSource.getConnection();
@@ -203,6 +178,15 @@ class EventPollIT extends BaseIT {
             }
         }
 
-        assertThat(polled).hasSize(10);
+        assertThat(polled).hasSize(20);
     }
+
+    private void awaitSequencer() {
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }
