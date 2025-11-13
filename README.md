@@ -34,9 +34,9 @@ Tenant isolation is provided through a hierarchical namespace system.
 - **Scalable Polling**: consumers stagger check-ins to minimize database queries (e.g. ≈10 checks/s instead of hundreds)
 
 ## Architecture Decisions
-- APIs for consumers and producers are kept simple, easy to integrate, and easy to use.
+- APIs for consumers and producers are designed to be easy to use.
 - Publishing an event should be possible when only knowing the path and topic name.
-- Third-party libraries are minimized to those that are necessary.
+- Third-party libraries are minimized.
 - For safety: boxy never deletes events. Event deletion is left to be orchestrated by you.
 - For easy portability across programming languages and runtimes, all mutations are strictly performed by stored procedures.
 - Namespace and Topic Names are case-sensitive.
@@ -197,28 +197,21 @@ mvn liquibase:update -Dliquibase.url=jdbc:mysql://localhost:3306/events_db -Dliq
 ```
 
 
-### Advanced Configuration
-
-You can configure various aspects of Boxy:
-
-```java
-BoxySubscription subscription = BoxySubscription.builder()
-    .dataSource(dataSource)
-    .name("order-processor")
-    .build();
-
-BoxyConsumer consumer = subscription.createConsumer(BoxyConsumer.builder()
-    .id("consumer-1")
-    .weight(2)                     // Higher weight gets proportionally more partitions
-    .build());
-```
-
-Cluster-wide heartbeat and metrics settings can be adjusted by updating the `heartbeat_policies` and `metrics_policies` tables.
-
 ## FAQ
 
-#### How is the schema managed?
-Liquibase is used for schema management, but we do not use the database agnostic schema definitions. When this was attempted it was found that 1) the resulting YAML files were overly complex and required too many exceptions, and 2) the generated schemas would not perform as well as hand-crafted schemas without additional exceptions. Since we aim to support a wide range of databases, a decision was made to maintain complete control over the schema.
+### If my application models multi-tenancy using a database schema per tenant, should I install boxy in each each tenant?
+
+If your application models multi-tenancy by placing each tenant in its own database schema, 
+you should still use a single boxy schema. Boxy is designed to be multi-tenant and support hierarchical namespaces, 
+so you should use the top-level namespace to designate the tenant.
+
+
+### How is the schema managed?
+Liquibase is used for schema management, but we do not use the database agnostic schema definitions. 
+When this was attempted it was found that 1) the resulting YAML files were overly complex and required too many 
+exceptions, and 2) the generated schemas would not perform as well as hand-crafted schemas without 
+additional exceptions. Since we aim to support a wide range of databases, a decision was made to maintain complete 
+control over the schema.
 
 ## Contributing
 
@@ -241,14 +234,6 @@ Contributions to Boxy are welcome! Here's how you can contribute:
    ```
 
 6. **Submit a Pull Request**: Push your changes to your fork and submit a pull request to the main repository.
-
-### Development Guidelines
-
-- Follow the existing code style and conventions.
-- Keep changes focused on a single issue or feature.
-- Document new code with Javadoc comments.
-- Update the README.md if your changes affect the public API or usage instructions.
-- Add appropriate tests for your changes.
 
 ## License
 
