@@ -6,9 +6,16 @@ CREATE PROCEDURE sp_events__poll(
 BEGIN
     DECLARE v_start_key INT DEFAULT fn_random_int();
     DECLARE v_now       DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3);
-    DECLARE v_sel       JSON;  -- holds the selected rows once
 
-    /* 1) Build the selected set once into v_sel (no result set emitted) */
+    CREATE TEMPORARY TABLE IF NOT EXISTS temp_polled_events (
+        cursor_id    BIGINT PRIMARY KEY,
+        partition_id BIGINT NOT NULL,
+        sequence     BIGINT NOT NULL,
+        event_id     BIGINT NOT NULL
+    ) ENGINE = MEMORY;
+    DELETE FROM temp_polled_events;
+
+    /* 1) Materialize the candidate rows up to the requested batch size */
     WITH candidate AS (
         SELECT
             c.id AS cursor_id,
@@ -31,54 +38,30 @@ BEGIN
         WHERE c.subscription_id = p_subscription_id
           AND (c.locked_until IS NULL OR c.locked_until < v_now OR c.locked_by = p_consumer_id)
           AND p.high_watermark > c.position
-    ),
-    selected AS (
-        SELECT cursor_id, partition_id, sequence, event_id
-        FROM candidate
-        WHERE row_num <= p_batch_size
     )
-    SELECT
-        COALESCE(
-            JSON_ARRAYAGG(
-                JSON_OBJECT(
-                    'cursor_id',    cursor_id,
-                    'partition_id', partition_id,
-                    'sequence',     sequence,
-                    'event_id',     event_id
-                )
-            ),
-            JSON_ARRAY()
-        )
-    INTO v_sel
-    FROM selected;
+    INSERT INTO temp_polled_events (cursor_id, partition_id, sequence, event_id)
+    SELECT cursor_id, partition_id, sequence, event_id
+    FROM candidate
+    WHERE row_num <= p_batch_size;
 
     /* 2) Lock the selected cursors */
     UPDATE cursors c
-    JOIN JSON_TABLE(v_sel, '$[*]'
-        COLUMNS (cursor_id BIGINT PATH '$.cursor_id')
-    ) sel ON sel.cursor_id = c.id
+    JOIN temp_polled_events sel ON sel.cursor_id = c.id
     SET c.locked_by    = p_consumer_id,
         c.locked_until = DATE_ADD(v_now, INTERVAL 3 SECOND)
     WHERE c.locked_until IS NULL OR c.locked_until < v_now OR c.locked_by = p_consumer_id;
 
     /* 3) Return the events for rows we actually hold now */
     SELECT
-        jt.cursor_id,
+        sel.cursor_id,
         c.partition_id,
-        jt.sequence,
+        sel.sequence,
         e.id   AS event_id,
         e.data
-    FROM JSON_TABLE(v_sel, '$[*]'
-        COLUMNS (
-            cursor_id    BIGINT PATH '$.cursor_id',
-            partition_id BIGINT PATH '$.partition_id',
-            sequence     BIGINT PATH '$.sequence',
-            event_id     BIGINT PATH '$.event_id'
-        )
-    ) jt
+    FROM temp_polled_events sel
     JOIN cursors c
-      ON c.id = jt.cursor_id
+      ON c.id = sel.cursor_id
      AND c.locked_by = p_consumer_id
     JOIN events e
-      ON e.id = jt.event_id;
+      ON e.id = sel.event_id;
 END;
