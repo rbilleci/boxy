@@ -125,62 +125,6 @@ class EventPollIT extends BaseIT {
         assertThat(polled).hasSize(3);
     }
 
-    @Test
-    void poll_returnsOversizedSequence() throws SQLException {
-        final long subscriptionId = data.subscriptions().getFirst().id();
-        final long partitionId =
-                partitionRepository.find(TestData.PATH_A, TestData.TOPIC_A, 0).orElseThrow().id();
-        final String consumerId = "consumer-3";
-
-        eventRepository.publish(partitionId, "{}");
-        eventRepository.publish(partitionId, "{}");
-        eventRepository.publish(partitionId, "{}");
-        awaitSequencer();
-
-        final List<Long> polled = new ArrayList<>();
-        try (var conn = dataSource.getConnection();
-             var poll = conn.prepareCall("{CALL sp_events__poll(?,?,?)}")) {
-            poll.setLong(1, subscriptionId);
-            poll.setString(2, consumerId);
-            poll.setInt(3, 2);
-            try (var rs = poll.executeQuery()) {
-                while (rs.next()) {
-                    polled.add(rs.getLong("event_id"));
-                }
-            }
-        }
-
-        assertThat(polled).hasSize(3);
-    }
-
-    @Test
-    void poll_returnsOnlyFirstOversizedSequence() throws SQLException {
-        final long subscriptionId = data.subscriptions().getFirst().id();
-        final long partitionId =
-                partitionRepository.find(TestData.PATH_A, TestData.TOPIC_A, 0).orElseThrow().id();
-        final String consumerId = "consumer-4";
-
-        for (int i = 0; i < 20; i++) {
-            eventRepository.publish(partitionId, "{}");
-        }
-        awaitSequencer();
-
-        final List<Long> polled = new ArrayList<>();
-        try (var conn = dataSource.getConnection();
-             var poll = conn.prepareCall("{CALL sp_events__poll(?,?,?)}")) {
-            poll.setLong(1, subscriptionId);
-            poll.setString(2, consumerId);
-            poll.setInt(3, 3);
-            try (var rs = poll.executeQuery()) {
-                while (rs.next()) {
-                    polled.add(rs.getLong("event_id"));
-                }
-            }
-        }
-
-        assertThat(polled).hasSize(20);
-    }
-
     private void awaitSequencer() {
         try {
             Thread.sleep(1000);

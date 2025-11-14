@@ -14,16 +14,14 @@ BEGIN
             c.id AS cursor_id,
             c.partition_id,
             s.sequence,
-            s.event_ids,
-            s.event_count,
-            SUM(s.event_count) OVER (
+            s.event_id,
+            ROW_NUMBER() OVER (
                 ORDER BY (c.random_key >= v_start_key) DESC, c.random_key, c.id
-                ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-            ) AS cumulative_events
+            ) AS row_num
         FROM cursors c
         JOIN partitions p ON p.id = c.partition_id
         JOIN LATERAL (
-            SELECT s.sequence, s.event_ids, s.event_count
+            SELECT s.sequence, s.event_id
             FROM sequences s FORCE INDEX (idx_sequences__partition_sequence)
             WHERE s.partition_id = c.partition_id
               AND s.sequence > c.position
@@ -35,9 +33,9 @@ BEGIN
           AND p.high_watermark > c.position
     ),
     selected AS (
-        SELECT cursor_id, partition_id, sequence, event_ids
+        SELECT cursor_id, partition_id, sequence, event_id
         FROM candidate
-        WHERE cumulative_events - event_count < p_batch_size
+        WHERE row_num <= p_batch_size
     )
     SELECT
         COALESCE(
@@ -46,7 +44,7 @@ BEGIN
                     'cursor_id',    cursor_id,
                     'partition_id', partition_id,
                     'sequence',     sequence,
-                    'event_ids',    event_ids
+                    'event_id',     event_id
                 )
             ),
             JSON_ARRAY()
@@ -75,8 +73,7 @@ BEGIN
             cursor_id    BIGINT PATH '$.cursor_id',
             partition_id BIGINT PATH '$.partition_id',
             sequence     BIGINT PATH '$.sequence',
-            NESTED PATH '$.event_ids[*]'
-                COLUMNS (event_id BIGINT PATH '$')
+            event_id     BIGINT PATH '$.event_id'
         )
     ) jt
     JOIN cursors c
