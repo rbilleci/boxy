@@ -9,10 +9,11 @@ BEGIN
 
     DROP TEMPORARY TABLE IF EXISTS tmp_selected_sequences;
     CREATE TEMPORARY TABLE tmp_selected_sequences (
-        cursor_id    BIGINT PRIMARY KEY,
+        cursor_id    BIGINT,
         partition_id BIGINT,
         sequence     BIGINT,
-        event_id     BIGINT
+        event_id     BIGINT,
+        PRIMARY KEY (cursor_id, sequence)
     ) ENGINE = MEMORY;
 
     /* 1) Capture the rows we plan to lock */
