@@ -2,10 +2,6 @@ CREATE PROCEDURE sp_events__sequence(IN p_batch_size INT, OUT p_has_events INT)
 BEGIN
     DECLARE v_has_events INT DEFAULT 0;
 
-    CREATE TEMPORARY TABLE IF NOT EXISTS temp_claimed_ids (
-        id BIGINT PRIMARY KEY,
-        partition_id BIGINT NOT NULL
-        ) ENGINE = MEMORY;
     DELETE FROM temp_claimed_ids;
 
     -- COPY EVENTS INTO TEMPORARY TABLE

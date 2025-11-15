@@ -4,6 +4,11 @@ BEGIN
     DECLARE v_no_event_start TIMESTAMP(3) DEFAULT NULL;
     DECLARE v_elapsed_seconds INT DEFAULT 0;
 
+    CREATE TEMPORARY TABLE IF NOT EXISTS temp_claimed_ids (
+        id BIGINT PRIMARY KEY,
+        partition_id BIGINT NOT NULL
+        ) ENGINE = MEMORY;
+
     main_loop: LOOP
         CALL sp_events__sequence(p_batch_size, v_has_events);
 
