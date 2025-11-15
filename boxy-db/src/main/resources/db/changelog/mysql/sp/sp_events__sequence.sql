@@ -15,9 +15,9 @@ BEGIN
         ORDER BY id
         LIMIT p_batch_size;
 
+    -- FOR PERFORMANCE: START THE TRANSACTION AFTER COPYING INTO THE TEMP TABLE
     START TRANSACTION;
 
-    -- START THE TRANSACTION AFTER COPYING IN DATA TO THE TMP TABLE
         -- INSERT INDIVIDUAL SEQUENCES
         INSERT INTO sequences (partition_id, event_id)
             SELECT partition_id, id
