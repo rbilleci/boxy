@@ -8,18 +8,16 @@ BEGIN
         ) ENGINE = MEMORY;
     DELETE FROM temp_claimed_ids;
 
+    -- COPY EVENTS INTO TEMPORARY TABLE
+    INSERT INTO temp_claimed_ids (id, partition_id)
+        SELECT id, partition_id
+        FROM unprocessed_events
+        ORDER BY id
+        LIMIT p_batch_size;
+
     START TRANSACTION;
 
-        -- COPY EVENTS INTO TEMPORARY TABLE
-        INSERT INTO temp_claimed_ids (id, partition_id)
-            SELECT id, partition_id FROM (
-                SELECT id,
-                       partition_id,
-                       ROW_NUMBER() OVER (PARTITION BY partition_id ORDER BY id) AS rn
-                FROM unprocessed_events
-            ) e
-            WHERE e.rn <= p_batch_size;
-
+    -- START THE TRANSACTION AFTER COPYING IN DATA TO THE TMP TABLE
         -- INSERT INDIVIDUAL SEQUENCES
         INSERT INTO sequences (partition_id, event_id)
             SELECT partition_id, id
