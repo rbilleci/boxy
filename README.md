@@ -74,7 +74,7 @@ Liquibase migrations for the schema are under `boxy-db/src/main/resources/db/cha
 - **partitions**: per-topic shards that track a `high_watermark`.
   - **events**: raw event payloads; partition and sequence metadata are tracked separately.
   - **unprocessed_events**: queue linking newly published events to partitions until sequenced.
-  - **sequences**: per-partition sequence numbers referencing events.
+  - **sequences**: per-partition sequence numbers referencing single events (one row per event).
 - **subscription_topics**: links subscriptions to the topics they consume and stores precomputed statistics.
 - **cursors**: tracks the position per subscription and partition and stores the `subscription_id`,
   `subscription_topic_id`, and `topic_id` for join-free lookups. Each row is assigned a persistent

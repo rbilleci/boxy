@@ -20,16 +20,11 @@ BEGIN
             ) e
             WHERE e.rn <= p_batch_size;
 
-        -- INSERT THE SEQUENCE BATCHES
-        -- WE CAN'T USE JSON_ARRAYAGG(id ORDER BY id) ON MYSQL 8.0.x
-        -- WE CAN OPTIMIZE THIS TO USE JSON_ARRAYAGG WHEN WE MOVE TO A NEWER VERSION AS THE MINIMUM
-        SET SESSION group_concat_max_len = p_batch_size * 2500;
-        INSERT INTO sequences (partition_id, event_ids, event_count)
-             SELECT partition_id,
-                    CAST(CONCAT('[', GROUP_CONCAT(id ORDER BY id SEPARATOR ','), ']') AS JSON) AS event_ids,
-                    COUNT(*) AS event_count
-               FROM temp_claimed_ids
-              GROUP BY partition_id;
+        -- INSERT INDIVIDUAL SEQUENCES
+        INSERT INTO sequences (partition_id, event_id)
+            SELECT partition_id, id
+            FROM temp_claimed_ids
+            ORDER BY partition_id, id;
 
         -- DETERMINE IF THERE WERE ANY SEQUENCED EVENTS
         SET v_has_events = IF(ROW_COUNT() > 0, 1, 0);
@@ -39,14 +34,13 @@ BEGIN
         DELETE ue FROM temp_claimed_ids b
             STRAIGHT_JOIN unprocessed_events ue ON b.id = ue.id;
 
-        -- UPDATE HIGH WATERMARKS
+        -- UPDATE HIGH WATERMARKS ONCE PER PARTITION USING JUST-INSERTED ROWS
         UPDATE partitions p
         JOIN (
             SELECT s.partition_id, MAX(s.sequence) AS max_sequence
-            FROM sequences s
-            JOIN (SELECT DISTINCT partition_id FROM temp_claimed_ids) t
-                ON s.partition_id = t.partition_id
-            GROUP BY s.partition_id
+              FROM sequences s
+              JOIN temp_claimed_ids t ON s.event_id = t.id
+             GROUP BY s.partition_id
         ) seqs ON p.id = seqs.partition_id
         SET p.high_watermark = seqs.max_sequence;
 
