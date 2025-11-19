@@ -1,11 +1,11 @@
-CREATE FUNCTION fn_resolve_topic_id(p_topic_path VARCHAR(4000))
+CREATE FUNCTION fn_resolve_topic_id(p_topic_path VARCHAR(4510))
     RETURNS BIGINT
     DETERMINISTIC
     READS SQL DATA
 BEGIN
     DECLARE v_delimiter VARCHAR(10);
     DECLARE v_delimiter_length INT;
-    DECLARE v_topic_name VARCHAR(4000);
+    DECLARE v_topic_name VARCHAR(500);
     DECLARE v_namespace_path VARCHAR(4000);
     DECLARE v_namespace_id BIGINT;
     DECLARE v_topic_id BIGINT;
