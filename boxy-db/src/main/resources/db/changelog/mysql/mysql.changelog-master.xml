@@ -133,11 +133,11 @@
                   relativeToChangelogFile="true"
                   splitStatements="false"
                   stripComments="false"/>
-         <sqlFile path="sp/sp_events__sequence.sql"
+         <sqlFile path="sp/sp_sequence.sql"
                   relativeToChangelogFile="true"
                   splitStatements="false"
                   stripComments="false"/>
-         <sqlFile path="sp/sp_events__sequence_loop.sql"
+         <sqlFile path="sp/sp_sequence_loop.sql"
                   relativeToChangelogFile="true"
                   splitStatements="false"
                   stripComments="false"/>
