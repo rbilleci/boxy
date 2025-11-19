@@ -16,12 +16,9 @@ import org.testcontainers.utility.DockerImageName;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.Set;
 import javax.sql.DataSource;
 
 public abstract class BaseIT {
-
-    private static final Set<String> PROTECTED_TABLES = Set.of("heartbeat_policies", "metrics_policies");
 
     @Container
     private static final MySQLContainer<?> MYSQL =
@@ -89,12 +86,6 @@ public abstract class BaseIT {
              final var rs = stmt.executeQuery("SELECT quote_ident(tablename) FROM pg_tables WHERE schemaname = 'public'")) {
 
             final var tables = new ArrayList<String>();
-            while (rs.next()) {
-                final var table = rs.getString(1);
-                if (!PROTECTED_TABLES.contains(table.toLowerCase())) {
-                    tables.add(rs.getString(1));
-                }
-            }
             for (final var table : tables) {
                 stmt.addBatch("ALTER TABLE %s DISABLE TRIGGER ALL;".formatted(table));
             }
@@ -114,9 +105,8 @@ public abstract class BaseIT {
             try (var rs = stmt.executeQuery("SELECT table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema = DATABASE()")) {
                 while (rs.next()) {
                     final var table = rs.getString(1);
-                    if (!PROTECTED_TABLES.contains(table.toLowerCase())) {
-                        stmt.addBatch("TRUNCATE TABLE `%s`".formatted(table));
-                    }
+                    stmt.addBatch("TRUNCATE TABLE `%s`".formatted(table));
+
                 }
                 stmt.executeBatch();
             }

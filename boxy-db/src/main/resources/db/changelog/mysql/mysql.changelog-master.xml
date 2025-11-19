@@ -26,34 +26,8 @@
                  splitStatements="false"
                  stripComments="false"/>
 
-        <!-- SP: POLICIES -->
-        <sqlFile path="sp/sp_heartbeat_policies__update.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-        <sqlFile path="sp/sp_metrics_policies__update.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-
         <!-- SP: CONSUMERS -->
         <sqlFile path="sp/sp_consumers__delete.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-        <sqlFile path="sp/sp_consumers__gc.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-        <sqlFile path="sp/sp_consumers__heartbeat.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-        <sqlFile path="sp/sp_consumers__refresh_metrics.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-        <sqlFile path="sp/sp_consumers__shutdown.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
@@ -85,10 +59,6 @@
                  stripComments="false"/>
 
         <!-- SP: SUBSCRIPTIONS -->
-        <sqlFile path="sp/sp_subscription_topics__refresh_metrics.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
         <sqlFile path="sp/sp_subscriptions__create.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"

@@ -26,8 +26,4 @@ public final class ConsumerRepository extends BaseRepository {
         update("{CALL sp_consumers__delete(?)}", id);
     }
 
-    public void shutdown(final String id) {
-        update("{CALL sp_consumers__shutdown(?)}", id);
-    }
-
 }

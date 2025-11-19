@@ -81,7 +81,6 @@ Liquibase migrations for the schema are under `boxy-db/src/main/resources/db/cha
   `random_key` used for evenly distributing start positions among consumers.
 - **consumers**: registers each consumer’s `subscription_id`, `weight`, and `heartbeat_detected_at`.
 - **subscriptions**: defines logical groups of consumers.
-- **heartbeat_policies**, **metrics_policies**: singleton tables providing cluster-wide configuration.
 - **topics_cache**: in-memory table for quick topic lookups.
 
 ### Subscription Statistics
@@ -99,15 +98,6 @@ These statistics are used for:
 - **Adaptive Heartbeat Intervals**: The heartbeat interval is adjusted based on the number of active consumers to maintain a target QPS (queries per second) for the cluster.
 
 Precomputing these statistics reduces the need for expensive queries during consumer check-ins.
-
-### Cluster Policies
-
-The following tables define cluster-wide defaults and each contains exactly one row:
-
-- `heartbeat_policies`: `heartbeat_deadline_multiplier`, `heartbeat_interval_baseline`, `heartbeat_interval_limit`, `heartbeat_target_qps`
-- `metrics_policies`: `metrics_refresh_interval`
-
-Operators can adjust these records to tune cluster behavior.
 
 ## Domain Classes
 

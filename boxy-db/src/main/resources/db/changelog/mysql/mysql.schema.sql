@@ -55,29 +55,6 @@ CREATE TABLE partitions (
     COLLATE=utf8mb4_bin
     COMMENT='Tracks partitions for each topic';
 
-CREATE TABLE heartbeat_policies (
-    id                           TINYINT NOT NULL PRIMARY KEY CHECK (id = 1),
-    heartbeat_deadline_multiplier DOUBLE NOT NULL DEFAULT 5.0,
-    heartbeat_interval_baseline   DOUBLE NOT NULL DEFAULT 3.0,
-    heartbeat_interval_limit      DOUBLE NOT NULL DEFAULT 60.0,
-    heartbeat_target_qps          DOUBLE NOT NULL DEFAULT 10.0
-) ENGINE=InnoDB
-    DEFAULT CHARSET=utf8mb4
-    COLLATE=utf8mb4_bin
-    COMMENT='Stores cluster-wide heartbeat configuration';
-
-INSERT INTO heartbeat_policies (id) VALUES (1);
-
-CREATE TABLE metrics_policies (
-    id                      TINYINT NOT NULL PRIMARY KEY CHECK (id = 1),
-    metrics_refresh_interval INT    NOT NULL DEFAULT 3
-) ENGINE=InnoDB
-    DEFAULT CHARSET=utf8mb4
-    COLLATE=utf8mb4_bin
-    COMMENT='Stores cluster-wide metrics configuration';
-
-INSERT INTO metrics_policies (id) VALUES (1);
-
 CREATE TABLE subscriptions (
     id                              BIGINT AUTO_INCREMENT PRIMARY KEY,
     name                            VARCHAR(500) NOT NULL,
