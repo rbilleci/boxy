@@ -119,18 +119,6 @@ CREATE TABLE consumers (
     COLLATE=utf8mb4_bin
     COMMENT='Registered consumers per subscription, with capacity weight and heartbeat timestamp';
 
-CREATE TABLE leases (
-    cursor_id    BIGINT      PRIMARY KEY,
-    consumer_id  VARCHAR(36) NULL,
-    locked_until DATETIME(3) NULL,
-    FOREIGN KEY (cursor_id)   REFERENCES cursors (id) ON DELETE CASCADE,
-    FOREIGN KEY (consumer_id) REFERENCES consumers (id) ON DELETE SET NULL,
-    INDEX idx_leases__lock (locked_until)
-) ENGINE=InnoDB
-    DEFAULT CHARSET=utf8mb4
-    COLLATE=utf8mb4_bin
-    COMMENT='Tracks cursor leases held by consumers';
-
 CREATE TABLE consumer_registrations (
     consumer_id VARCHAR(36) NOT NULL,
     subscription_topic_id BIGINT NOT NULL,
@@ -145,6 +133,18 @@ CREATE TABLE consumer_registrations (
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
     COMMENT='Links consumers to subscription topics they consume';
+
+CREATE TABLE leases (
+    cursor_id    BIGINT      PRIMARY KEY,
+    consumer_id  VARCHAR(36) NULL,
+    locked_until DATETIME(3) NULL,
+    FOREIGN KEY (cursor_id)   REFERENCES cursors (id) ON DELETE CASCADE,
+    FOREIGN KEY (consumer_id) REFERENCES consumers (id) ON DELETE SET NULL,
+    INDEX idx_leases__lock (locked_until)
+) ENGINE=InnoDB
+    DEFAULT CHARSET=utf8mb4
+    COLLATE=utf8mb4_bin
+    COMMENT='Tracks cursor leases held by consumers';
 
 CREATE TABLE IF NOT EXISTS unprocessed_events (
     id           BIGINT PRIMARY KEY,
