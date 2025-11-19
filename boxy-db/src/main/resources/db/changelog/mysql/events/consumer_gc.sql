@@ -1,5 +1,5 @@
-CREATE EVENT event_sequencer
+CREATE EVENT consumer_gc
     ON SCHEDULE EVERY 1 MINUTE
     ON COMPLETION PRESERVE
     ENABLE
-    DO CALL sp_sequence_loop(1000);
+    DO CALL sp_consumers_gc(60);

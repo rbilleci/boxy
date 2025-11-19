@@ -27,6 +27,10 @@
                  stripComments="false"/>
 
         <!-- SP: CONSUMERS -->
+        <sqlFile path="sp/sp_consumers__gc.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
         <sqlFile path="sp/sp_consumers__delete.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
@@ -115,8 +119,13 @@
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
+
         <!-- Scheduled Events -->
-        <sqlFile path="events/event_sequencer.sql"
+        <sqlFile path="events/sequencer.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="events/consumer_gc.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
