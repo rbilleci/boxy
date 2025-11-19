@@ -1,5 +1,6 @@
 package boxy.core.it;
 
+import boxy.core.repository.ConsumerRepository;
 import boxy.core.repository.EventRepository;
 import boxy.core.repository.PartitionRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,22 +18,27 @@ class EventPollIT extends BaseIT {
 
     private EventRepository eventRepository;
     private PartitionRepository partitionRepository;
+    private ConsumerRepository consumerRepository;
     private TestData data;
 
     @BeforeEach
     void setup() {
         eventRepository = new EventRepository(dataSource);
         partitionRepository = new PartitionRepository(dataSource);
+        consumerRepository = new ConsumerRepository(dataSource);
         data = TestData.seed(dataSource);
     }
 
 
     @Test
     void poll_benchmarkOverhead() throws SQLException {
-        final long subscriptionId = data.subscriptions().getFirst().id();
+        final var subscription = data.subscriptions().getFirst();
+        final long subscriptionId = subscription.id();
         final long partitionId =
                 partitionRepository.find(TestData.PATH_A, TestData.TOPIC_A, 0).orElseThrow().id();
         final String consumerId = "consumer-0";
+
+        consumerRepository.register(consumerId, subscription.name());
 
         eventRepository.publish(partitionId, "{}");
         eventRepository.publish(partitionId, "{}");
@@ -61,10 +67,13 @@ class EventPollIT extends BaseIT {
 
     @Test
     void poll_returnsEventsAndLocksCursor() throws SQLException {
-        final long subscriptionId = data.subscriptions().getFirst().id();
+        final var subscription = data.subscriptions().getFirst();
+        final long subscriptionId = subscription.id();
         final long partitionId =
                 partitionRepository.find(TestData.PATH_A, TestData.TOPIC_A, 0).orElseThrow().id();
         final String consumerId = "consumer-1";
+
+        consumerRepository.register(consumerId, subscription.name());
 
         eventRepository.publish(partitionId, "{\"v\":1}");
         eventRepository.publish(partitionId, "{\"v\":2}");
@@ -87,7 +96,10 @@ class EventPollIT extends BaseIT {
 
         try (var conn = dataSource.getConnection();
              var ps = conn.prepareStatement(
-                     "SELECT locked_by FROM cursors WHERE subscription_id = ? AND partition_id = ?")) {
+                     "SELECT l.consumer_id " +
+                             "FROM leases l " +
+                             "JOIN cursors c ON c.id = l.cursor_id " +
+                             "WHERE c.subscription_id = ? AND c.partition_id = ?")) {
             ps.setLong(1, subscriptionId);
             ps.setLong(2, partitionId);
             try (var rs = ps.executeQuery()) {
@@ -99,10 +111,13 @@ class EventPollIT extends BaseIT {
 
     @Test
     void poll_respectsBatchSize() throws SQLException {
-        final long subscriptionId = data.subscriptions().getFirst().id();
+        final var subscription = data.subscriptions().getFirst();
+        final long subscriptionId = subscription.id();
         final long partitionId =
                 partitionRepository.find(TestData.PATH_A, TestData.TOPIC_A, 0).orElseThrow().id();
         final String consumerId = "consumer-2";
+
+        consumerRepository.register(consumerId, subscription.name());
 
         eventRepository.publish(partitionId, "{}");
         eventRepository.publish(partitionId, "{}");

@@ -92,17 +92,13 @@ CREATE TABLE cursors (
     partition_id          BIGINT NOT NULL,
     random_key            INT    NOT NULL,
     position              BIGINT NOT NULL DEFAULT 0,
-    locked_by             VARCHAR(36) NULL,
-    locked_until          DATETIME(3) NULL,
     CONSTRAINT u_cursors UNIQUE (subscription_topic_id, partition_id),
     FOREIGN KEY (subscription_id)       REFERENCES subscriptions (id) ON DELETE CASCADE,
     FOREIGN KEY (subscription_topic_id) REFERENCES subscription_topics (id) ON DELETE CASCADE,
     FOREIGN KEY (topic_id)             REFERENCES topics (id) ON DELETE CASCADE,
     FOREIGN KEY (partition_id)          REFERENCES partitions (id) ON DELETE CASCADE,
     INDEX idx_cursors__random_1 (random_key, id),
-    INDEX idx_cursors__subscription_random (subscription_id, random_key, id),
-    INDEX idx_cursors__lock (locked_until),
-    INDEX idx_cursors__subscription_lock_random (subscription_id, locked_until, random_key, id)
+    INDEX idx_cursors__subscription_random (subscription_id, random_key, id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
@@ -123,7 +119,19 @@ CREATE TABLE consumers (
     COLLATE=utf8mb4_bin
     COMMENT='Registered consumers per subscription, with capacity weight and heartbeat timestamp';
 
-CREATE TABLE consumer_subscriptions (
+CREATE TABLE leases (
+    cursor_id    BIGINT      PRIMARY KEY,
+    consumer_id  VARCHAR(36) NULL,
+    locked_until DATETIME(3) NULL,
+    FOREIGN KEY (cursor_id)   REFERENCES cursors (id) ON DELETE CASCADE,
+    FOREIGN KEY (consumer_id) REFERENCES consumers (id) ON DELETE SET NULL,
+    INDEX idx_leases__lock (locked_until)
+) ENGINE=InnoDB
+    DEFAULT CHARSET=utf8mb4
+    COLLATE=utf8mb4_bin
+    COMMENT='Tracks cursor leases held by consumers';
+
+CREATE TABLE consumer_registrations (
     consumer_id VARCHAR(36) NOT NULL,
     subscription_topic_id BIGINT NOT NULL,
     topic_id BIGINT NOT NULL,
@@ -131,8 +139,8 @@ CREATE TABLE consumer_subscriptions (
     FOREIGN KEY (consumer_id) REFERENCES consumers(id) ON DELETE CASCADE,
     FOREIGN KEY (subscription_topic_id) REFERENCES subscription_topics(id) ON DELETE CASCADE,
     FOREIGN KEY (topic_id) REFERENCES topics(id) ON DELETE CASCADE,
-    INDEX idx_consumer_subscriptions__subscription_topic (subscription_topic_id),
-    INDEX idx_consumer_subscriptions__topic (topic_id)
+    INDEX idx_consumer_registrations__subscription_topic (subscription_topic_id),
+    INDEX idx_consumer_registrations__topic (topic_id)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin

@@ -31,15 +31,11 @@
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_consumers__delete.sql"
+        <sqlFile path="sp/sp_consumers__register.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_consumers__subscribe.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-        <sqlFile path="sp/sp_consumers__unsubscribe.sql"
+        <sqlFile path="sp/sp_consumers__deregister.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>

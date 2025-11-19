@@ -23,6 +23,7 @@ BEGIN
              SELECT v_topic_id, v_id, v_subscription_id, id, fn_random_int(), 0
                FROM partitions
               WHERE topic_id = v_topic_id;
+
     COMMIT;
 
     SELECT v_id AS id;
