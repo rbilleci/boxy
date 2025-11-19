@@ -5,13 +5,6 @@ BEGIN
     START TRANSACTION;
 
     DELETE
-      FROM consumer_registrations
-     WHERE consumer_id IN (
-               SELECT id
-                 FROM consumers
-                WHERE heartbeat_deadline <= v_timestamp);
-
-    DELETE
       FROM consumers
      WHERE heartbeat_deadline <= v_timestamp;
 

@@ -79,7 +79,7 @@ Liquibase migrations for the schema are under `boxy-db/src/main/resources/db/cha
 - **cursors**: tracks the position per subscription and partition and stores the `subscription_id`,
   `subscription_topic_id`, and `topic_id` for join-free lookups. Each row is assigned a persistent
   `random_key` used for evenly distributing start positions among consumers.
-- **consumers**: registers each consumer’s `subscription_id`, `weight`, and `heartbeat_detected_at`.
+- **consumers**: registers each consumer’s `subscription_id`, `weight`, `heartbeat_detected_at`, and `topic_ids` JSON array of topic identifiers.
 - **subscriptions**: defines logical groups of consumers.
 - **topics_cache**: in-memory table for quick topic lookups.
 
@@ -112,6 +112,7 @@ classDiagram
         +Instant heartbeatDetectedAt
         +double heartbeatInterval
         +Instant heartbeatDeadline
+        +List~Long~ topicIds
     }
     class Cursor {
         +long id

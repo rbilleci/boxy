@@ -1,6 +1,7 @@
 package boxy.core.domain;
 
 import java.time.Instant;
+import java.util.List;
 
 public record Consumer(
         String id,
@@ -8,5 +9,6 @@ public record Consumer(
         double weight,
         Instant heartbeatDetectedAt,
         double heartbeatInterval,
-        Instant heartbeatDeadline) {
+        Instant heartbeatDeadline,
+        List<Long> topicIds) {
 }
