@@ -5,7 +5,7 @@ BEGIN
     START TRANSACTION;
 
     DELETE
-      FROM consumer_subscriptions
+      FROM consumer_registrations
      WHERE consumer_id IN (
                SELECT id
                  FROM consumers

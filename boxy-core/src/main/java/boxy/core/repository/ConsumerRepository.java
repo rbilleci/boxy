@@ -22,8 +22,12 @@ public final class ConsumerRepository extends BaseRepository {
         return query("SELECT * FROM consumers ORDER BY id LIMIT ? OFFSET ?", CONSUMER_MAPPER, limit, offset);
     }
 
-    public void delete(final String id) {
-        update("{CALL sp_consumers__delete(?)}", id);
+    public void register(final String consumerId, final String subscriptionName) {
+        update("{CALL sp_consumers__register(?, ?)}", consumerId, subscriptionName);
+    }
+
+    public void deregister(final String id) {
+        update("{CALL sp_consumers__deregister(?)}", id);
     }
 
 }

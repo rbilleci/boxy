@@ -33,7 +33,7 @@ public class SubscriptionIT extends BaseIT {
     @Test
     void deleted_whenDeleted_isNotPresent() {
         subscriptionRepository.find(SUBSCRIPTION_A).orElseThrow();
-        consumerRepository.findAll(100, 0).forEach(c -> consumerRepository.delete(c.id()));
+        consumerRepository.findAll(100, 0).forEach(c -> consumerRepository.deregister(c.id()));
         subscriptionRepository.delete(SUBSCRIPTION_A);
         assertThat(subscriptionRepository.find(SUBSCRIPTION_A)).isNotPresent();
     }
@@ -54,7 +54,7 @@ public class SubscriptionIT extends BaseIT {
 
     @Test
     void findAll_whenEmpty() {
-        consumerRepository.findAll(100, 0).forEach(c -> consumerRepository.delete(c.id()));
+        consumerRepository.findAll(100, 0).forEach(c -> consumerRepository.deregister(c.id()));
         subscriptionRepository.findAll(100, 0).forEach(s -> subscriptionRepository.delete(s.name()));
         assertThat(subscriptionRepository.findAll(100, 0)).isEmpty();
 }

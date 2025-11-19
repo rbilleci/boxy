@@ -29,6 +29,7 @@ BEGIN
             ) AS row_num
         FROM cursors c
         JOIN partitions p ON p.id = c.partition_id
+        LEFT JOIN leases l ON l.cursor_id = c.id
         JOIN LATERAL (
             SELECT s.sequence, s.event_id
             FROM sequences s FORCE INDEX (idx_sequences__partition_sequence)
@@ -37,7 +38,12 @@ BEGIN
             ORDER BY s.sequence
         ) s ON TRUE
         WHERE c.subscription_id = p_subscription_id
-          AND (c.locked_until IS NULL OR c.locked_until < v_now OR c.locked_by = p_consumer_id)
+          AND (
+              l.cursor_id IS NULL OR
+              l.locked_until IS NULL OR
+              l.locked_until < v_now OR
+              l.consumer_id = p_consumer_id
+          )
           AND p.high_watermark > c.position
     )
     SELECT cursor_id, partition_id, sequence, event_id
@@ -45,11 +51,18 @@ BEGIN
     WHERE row_num <= p_batch_size;
 
     /* 2) Lock the selected cursors */
-    UPDATE cursors c
-    JOIN tmp_selected_sequences sel ON sel.cursor_id = c.id
-    SET c.locked_by    = p_consumer_id,
-        c.locked_until = DATE_ADD(v_now, INTERVAL 3 SECOND)
-    WHERE c.locked_until IS NULL OR c.locked_until < v_now OR c.locked_by = p_consumer_id;
+    INSERT INTO leases (cursor_id)
+    SELECT c.id
+      FROM cursors c
+      JOIN tmp_selected_sequences sel ON sel.cursor_id = c.id
+    ON DUPLICATE KEY UPDATE
+        cursor_id = cursor_id;
+
+    UPDATE leases l
+    JOIN tmp_selected_sequences sel ON sel.cursor_id = l.cursor_id
+    SET l.consumer_id  = p_consumer_id,
+        l.locked_until = DATE_ADD(v_now, INTERVAL 3 SECOND)
+    WHERE l.locked_until IS NULL OR l.locked_until < v_now OR l.consumer_id = p_consumer_id;
 
     /* 3) Return the events for rows we actually hold now */
     SELECT
@@ -59,9 +72,10 @@ BEGIN
         e.id   AS event_id,
         e.data
     FROM tmp_selected_sequences sel
-    JOIN cursors c
-      ON c.id = sel.cursor_id
-     AND c.locked_by = p_consumer_id
+    JOIN cursors c ON c.id = sel.cursor_id
+    JOIN leases l
+      ON l.cursor_id = sel.cursor_id
+     AND l.consumer_id = p_consumer_id
     JOIN events e
       ON e.id = sel.event_id;
 
