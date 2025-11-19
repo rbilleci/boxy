@@ -56,7 +56,7 @@ BEGIN
       FROM cursors c
       JOIN tmp_selected_sequences sel ON sel.cursor_id = c.id
     ON DUPLICATE KEY UPDATE
-        cursor_id = cursor_id;
+        cursor_id = leases.cursor_id;
 
     UPDATE leases l
     JOIN tmp_selected_sequences sel ON sel.cursor_id = l.cursor_id

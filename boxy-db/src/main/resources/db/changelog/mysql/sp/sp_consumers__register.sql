@@ -48,7 +48,7 @@ BEGIN
         (SELECT COUNT(*) FROM topic_input),
         (SELECT COUNT(*) FROM resolved WHERE is_valid = 0),
         (SELECT COUNT(*) FROM resolved WHERE is_valid = 1 AND topic_id IS NULL),
-        (SELECT JSON_ARRAYAGG(topic_id ORDER BY topic_id)
+        (SELECT JSON_ARRAYAGG(topic_id)
            FROM (SELECT DISTINCT topic_id FROM resolved WHERE topic_id IS NOT NULL) AS deduped)
     INTO v_input_count, v_invalid_paths, v_missing_topics, v_topic_ids;
 
