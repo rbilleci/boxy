@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static boxy.core.it.TestData.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Testcontainers
@@ -35,10 +36,10 @@ class EventPollIT extends BaseIT {
         final var subscription = data.subscriptions().getFirst();
         final long subscriptionId = subscription.id();
         final long partitionId =
-                partitionRepository.find(TestData.PATH_A, TestData.TOPIC_A, 0).orElseThrow().id();
+                partitionRepository.find(TestData.PATH_A, TOPIC_A, 0).orElseThrow().id();
         final String consumerId = "consumer-0";
 
-        consumerRepository.register(consumerId, subscription.name());
+        consumerRepository.register(consumerId, subscription.name(), List.of(PATH_A + "/" + TOPIC_A));
 
         eventRepository.publish(partitionId, "{}");
         eventRepository.publish(partitionId, "{}");
@@ -70,10 +71,10 @@ class EventPollIT extends BaseIT {
         final var subscription = data.subscriptions().getFirst();
         final long subscriptionId = subscription.id();
         final long partitionId =
-                partitionRepository.find(TestData.PATH_A, TestData.TOPIC_A, 0).orElseThrow().id();
+                partitionRepository.find(TestData.PATH_A, TOPIC_A, 0).orElseThrow().id();
         final String consumerId = "consumer-1";
 
-        consumerRepository.register(consumerId, subscription.name());
+        consumerRepository.register(consumerId, subscription.name(), List.of(PATH_A + "/" + TOPIC_A));
 
         eventRepository.publish(partitionId, "{\"v\":1}");
         eventRepository.publish(partitionId, "{\"v\":2}");
@@ -97,9 +98,9 @@ class EventPollIT extends BaseIT {
         try (var conn = dataSource.getConnection();
              var ps = conn.prepareStatement(
                      "SELECT l.consumer_id " +
-                             "FROM leases l " +
-                             "JOIN cursors c ON c.id = l.cursor_id " +
-                             "WHERE c.subscription_id = ? AND c.partition_id = ?")) {
+                     "FROM leases l " +
+                     "JOIN cursors c ON c.id = l.cursor_id " +
+                     "WHERE c.subscription_id = ? AND c.partition_id = ?")) {
             ps.setLong(1, subscriptionId);
             ps.setLong(2, partitionId);
             try (var rs = ps.executeQuery()) {
@@ -114,10 +115,10 @@ class EventPollIT extends BaseIT {
         final var subscription = data.subscriptions().getFirst();
         final long subscriptionId = subscription.id();
         final long partitionId =
-                partitionRepository.find(TestData.PATH_A, TestData.TOPIC_A, 0).orElseThrow().id();
+                partitionRepository.find(TestData.PATH_A, TOPIC_A, 0).orElseThrow().id();
         final String consumerId = "consumer-2";
 
-        consumerRepository.register(consumerId, subscription.name());
+        consumerRepository.register(consumerId, subscription.name(), List.of(PATH_A + "/" + TOPIC_A));
 
         eventRepository.publish(partitionId, "{}");
         eventRepository.publish(partitionId, "{}");
