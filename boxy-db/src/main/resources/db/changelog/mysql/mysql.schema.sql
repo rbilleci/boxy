@@ -111,6 +111,7 @@ CREATE TABLE consumers (
     heartbeat_detected_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     heartbeat_interval   DOUBLE       NOT NULL,
     heartbeat_deadline   DATETIME(3)  NOT NULL,
+    topic_ids            JSON         NOT NULL DEFAULT (JSON_ARRAY()),
     FOREIGN KEY (subscription_id) REFERENCES subscriptions(id),
     INDEX idx_consumers__subscription (subscription_id),
     INDEX idx_consumers__heartbeat_detected_at (heartbeat_detected_at)
@@ -118,21 +119,6 @@ CREATE TABLE consumers (
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
     COMMENT='Registered consumers per subscription, with capacity weight and heartbeat timestamp';
-
-CREATE TABLE consumer_registrations (
-    consumer_id VARCHAR(36) NOT NULL,
-    subscription_topic_id BIGINT NOT NULL,
-    topic_id BIGINT NOT NULL,
-    PRIMARY KEY (consumer_id, subscription_topic_id),
-    FOREIGN KEY (consumer_id) REFERENCES consumers(id) ON DELETE CASCADE,
-    FOREIGN KEY (subscription_topic_id) REFERENCES subscription_topics(id) ON DELETE CASCADE,
-    FOREIGN KEY (topic_id) REFERENCES topics(id) ON DELETE CASCADE,
-    INDEX idx_consumer_registrations__subscription_topic (subscription_topic_id),
-    INDEX idx_consumer_registrations__topic (topic_id)
-) ENGINE=InnoDB
-    DEFAULT CHARSET=utf8mb4
-    COLLATE=utf8mb4_bin
-    COMMENT='Links consumers to subscription topics they consume';
 
 CREATE TABLE leases (
     cursor_id    BIGINT      PRIMARY KEY,
