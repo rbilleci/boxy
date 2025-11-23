@@ -118,14 +118,16 @@ CREATE TABLE consumers (
     COLLATE=utf8mb4_bin
     COMMENT='Registered consumers per subscription with heartbeat timestamp';
 
-CREATE TABLE leases (
-    cursor_id    BIGINT      PRIMARY KEY,
+CREATE TABLE consumer_leases (
+    id           BIGINT AUTO_INCREMENT PRIMARY KEY,
     consumer_id  VARCHAR(36) NULL,
+    cursor_id    BIGINT      NOT NULL,
     locked_until DATETIME(3) NULL,
     last_read_position BIGINT NOT NULL DEFAULT 0,
+    CONSTRAINT u_consumer_leases__cursor UNIQUE (cursor_id),
     FOREIGN KEY (cursor_id)   REFERENCES cursors (id) ON DELETE CASCADE,
     FOREIGN KEY (consumer_id) REFERENCES consumers (id) ON DELETE CASCADE,
-    INDEX idx_leases__lock (locked_until)
+    INDEX idx_consumer_leases__lock (locked_until)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
