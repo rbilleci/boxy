@@ -113,7 +113,7 @@ class EventPollIT extends BaseIT {
         try (var conn = dataSource.getConnection();
              var ps = conn.prepareStatement(
                      "SELECT l.consumer_id " +
-                             "FROM leases l " +
+                             "FROM consumer_leases l " +
                              "JOIN cursors c ON c.id = l.cursor_id " +
                              "WHERE c.subscription_id = ? AND c.partition_id = ?")) {
             ps.setLong(1, subscriptionId);

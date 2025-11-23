@@ -43,7 +43,7 @@ BEGIN
             ) AS row_num
         FROM cursors c
         JOIN partitions p ON p.id = c.partition_id
-        LEFT JOIN leases l ON l.cursor_id = c.id
+        LEFT JOIN consumer_leases l ON l.cursor_id = c.id
         JOIN LATERAL (
             SELECT s.sequence, s.event_id
             FROM sequences s FORCE INDEX (idx_sequences__partition_sequence)
@@ -69,14 +69,14 @@ BEGIN
     WHERE row_num <= v_batch_size;
 
     /* 2) Lock the selected cursors */
-    INSERT INTO leases (cursor_id)
+    INSERT INTO consumer_leases (cursor_id)
     SELECT c.id
       FROM cursors c
       JOIN tmp_selected_sequences sel ON sel.cursor_id = c.id
     ON DUPLICATE KEY UPDATE
-        cursor_id = leases.cursor_id;
+        cursor_id = consumer_leases.cursor_id;
 
-    UPDATE leases l
+    UPDATE consumer_leases l
     JOIN tmp_selected_sequences sel ON sel.cursor_id = l.cursor_id
     JOIN cursors c ON c.id = l.cursor_id
     SET l.consumer_id  = p_consumer_id,
@@ -87,7 +87,7 @@ BEGIN
         END
     WHERE l.locked_until IS NULL OR l.locked_until < v_now OR l.consumer_id = p_consumer_id;
 
-    UPDATE leases l
+    UPDATE consumer_leases l
     JOIN (
         SELECT cursor_id, MAX(sequence) AS last_sequence
           FROM tmp_selected_sequences
@@ -105,7 +105,7 @@ BEGIN
         e.data
     FROM tmp_selected_sequences sel
     JOIN cursors c ON c.id = sel.cursor_id
-    JOIN leases l
+    JOIN consumer_leases l
       ON l.cursor_id = sel.cursor_id
      AND l.consumer_id = p_consumer_id
     JOIN events e
