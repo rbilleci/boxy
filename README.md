@@ -127,11 +127,11 @@ classDiagram
 
 Consumer-level heartbeat (in the consumers table) remains independent of per-partition state.
 
-Rather than each consumer writing every X seconds, we define:
+Rather than every consumer polling for events N-times per seconds, we define:
 
 - T<sub>cycle</sub>: a fixed “heartbeat cycle” (e.g. 1 s)
 
-- QPS<sub>target</sub>: the desired total heartbeats/sec for the whole cluster (e.g. 10 qps)
+- QPS<sub>target</sub>: the desired total heartbeats/sec for all active consumers of a subscription (e.g. 10 qps)
 
 On each cycle, each consumer flips a weighted coin with probability `p = min(1, target_QPS / N_active)`, 
 and only writes a heartbeat if it “wins” that flip.
@@ -139,9 +139,97 @@ and only writes a heartbeat if it “wins” that flip.
 Properties
 - When N_active ≤ Q_target, then p = 1 → everyone writes → we get N_active QPS (fine for small clusters).
 - When N_active > Q_target, then p = Q_target / N_active → expected cluster rate ≈ Q_target, irrespective of N.
-- We detect failures in a bounded time: expected per-consumer heartbeat interval = 1 s / p = N_active / Q_target seconds; 
+- We detect failures in a bounded time: expected per-consumer heartbeat interval = 1 s / p = N_active / Q_target seconds;
   we pick the dead‐timeout to be a small multiple of that (e.g. 3×).
 
+---
+
+## Client Consumer Protocol
+
+The Client Consumer Protocol defines how a client implementation for a given programming language must interact with Boxy. 
+All interaction occurs via stored procedures, and each client instance is identified by a `session_id` that must 
+be supplied on every call. Database connections do not need to be reused between calls,  
+and transactions may not span multiple client consumer calls.
+
+The protocol specifies how clients register, poll for events, apply backoff when idle, and commit offsets. 
+It is designed to support large-scale fan-out with many concurrent clients while strictly limiting the total polling 
+and heartbeat queries per subscription. As an implementer, you can treat the protocol as a small, well-defined 
+state machine driven by stored procedure calls keyed by `session_id`.
+
+### Consumer Stored Procedures
+
+At a minimum, a client consumer implementation must use the following stored procedures:
+
+#### Registration Procedure
+
+`sp_consumers__register(session_id, subscription_name, topics_json)`
+Registers a consumer against a subscription and declares the set of topics it intends to consume.
+A single consumer is bound to one subscription name for a given topic (or multi-topic pattern).
+A process / service can create multiple consumer instances, each with its own subscription name (even on the same topics), 
+and thereby “use more than one subscription name” overall.
+
+Parameters:
+
+  * `session_id` is the identifier for the consumer session and is used on every subsequent call. 
+       It MUST be a random identifier, and MUST NOT be reused in subsequent registrations.
+  * `subscription_name` refers to a subscription that already links to one or more topics.
+  * `topics_json` is a JSON array of fully qualified topic paths, selecting a subset of the subscription’s topics for this consumer. 
+       A consumer can decide choose to subscribe to all topics for that subscription name or a subset of them.
+
+#### Polling Procedure
+
+`sp_events__poll(session_id)`
+Polling procedure that returns the next events plus polling frequency guidance.
+When a client `poll`s after registration, it will receive events starting from the `last committed position` 
+for the topics it has registered. Subsequent calls to `poll` will receive events from the `last read position` for
+the topics it has registered. 
+
+The server returns zero or more events plus metadata that instructs the client on polling frequency.
+If events are received, the client MAY invoke `sp_events__poll` again immediately or with a short delay,
+ignoring guidance on polling frequency; if no events are received,
+the client MUST the returned metadata to determine the next polling time.
+  
+Parameters:
+* `session_id` identify the session.
+
+
+#### Commit Procedure
+
+`sp_cursors__commit(session_id, cursor_positions_json)`
+Records the consumer’s progress for one or more topics after successful processing of events.
+Each commit advances the stored position for the corresponding cursors, so that subsequent sessions
+continue reading from the `last committed position`.
+
+An implementation can decide when to call `commit`. It is not necessary to call `commit` after every
+call to `poll`. For maximum throughput, it is recommended an implementation call `commit` periodically
+(e.g., every 1-second), and/or after it processes a certain number of events.
+
+An implementation SHOULD call commit before it deregisters if it has successfully processed any events
+since its last commit.
+
+Parameters:
+* `session_id` identify the session.
+* `cursor_positions_json` a JSON map of one or more `cursor_id` and `position` entries, 
+with the `cursor_id` as the map key, and `position` as the map value.
+
+#### Deregistration Procedure
+
+`sp_consumers__deregister(session_id)`
+SHOULD be called when a client is shutting down.
+Before deregistering, an implementation SHOULD complete processing of inflight events and commit cursor positions.
+If an implementation becomes inactive without calling `deregister` other consumers will be blocked until deadlines pass.
+After deregistering, an implementation MUST NOT make further calls with the same `session_id`.
+
+Parameters:
+* `session_id` identify the session.
+
+### Lifecycle and state names
+
+- **Registering** → transient phase before registration completes.
+- **Registered** → successfully registered but no poll yet issued.
+- **Receiving** → polling and receiving event batches without delay.
+- **Backoff** → idle/heartbeat mode driven by server-provided probability.
+- **Deregistering** → deregistering and shutting down.
 
   
 ## Building the Project
@@ -190,7 +278,7 @@ mvn liquibase:update -Dliquibase.url=jdbc:mysql://localhost:3306/events_db -Dliq
 
 ## FAQ
 
-### If my application models multi-tenancy using a database schema per tenant, should I install boxy in each each tenant?
+### If my application models multi-tenancy using a database schema per tenant, should I install boxy in each tenant?
 
 If your application models multi-tenancy by placing each tenant in its own database schema, 
 you should still use a single boxy schema. Boxy is designed to be multi-tenant and support hierarchical namespaces, 
