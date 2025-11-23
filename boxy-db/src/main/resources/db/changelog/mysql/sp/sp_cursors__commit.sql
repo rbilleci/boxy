@@ -24,7 +24,7 @@ BEGIN
 
     INSERT INTO tmp_cursor_updates (cursor_id, position)
     SELECT CAST(jt.cursor_key AS UNSIGNED),
-           CAST(JSON_UNQUOTE(JSON_EXTRACT(p_cursor_positions, CONCAT('$.', jt.cursor_key))) AS UNSIGNED)
+           CAST(JSON_UNQUOTE(JSON_EXTRACT(p_cursor_positions, CONCAT('$."', jt.cursor_key, '"'))) AS UNSIGNED)
       FROM JSON_TABLE(JSON_KEYS(p_cursor_positions), '$[*]' COLUMNS(cursor_key VARCHAR(64) PATH '$')) AS jt;
 
     SELECT COUNT(*) INTO v_input_count FROM tmp_cursor_updates;
