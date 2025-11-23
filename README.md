@@ -174,33 +174,42 @@ At a minimum, a client consumer implementation must use the following stored pro
 `sp_consumers__register(session_id, subscription_name, topics_json)`
 Registers a consumer against a subscription and declares the set of topics it intends to consume.
 A single consumer is bound to one subscription name for a given topic (or multi-topic pattern).
-A process / service can create multiple consumer instances, each with its own subscription name (even on the same topics), 
+A process / service can create multiple consumer instances, each with its own subscription name (even on the same topics),
 and thereby “use more than one subscription name” overall.
 
 Parameters:
 
-  * `session_id` is the identifier for the consumer session and is used on every subsequent call. 
-       It MUST be a random identifier, and MUST NOT be reused in subsequent registrations.
+  * `session_id` is the identifier for the consumer session and is used on every subsequent call.
+       It MUST be a high-entropy identifier (UUIDv4 recommended), MUST NOT be reused across registrations,
+       and the server will reject duplicate `session_id` values that are still active. After a crash the client
+       may immediately re-register with a new `session_id` using the same `subscription_name` and `topics_json`.
   * `subscription_name` refers to a subscription that already links to one or more topics.
-  * `topics_json` is a JSON array of fully qualified topic paths, selecting a subset of the subscription’s topics for this consumer. 
-       A consumer can decide choose to subscribe to all topics for that subscription name or a subset of them.
+  * `topics_json` is a JSON array of fully qualified topic paths, selecting a subset of the subscription’s topics for this consumer.
+       Wildcards/patterns are not supported; unknown topics are rejected with `INVALID_TOPIC`. A consumer may re-register
+       with a new `session_id` and different `topics_json` to change its coverage.
 
 #### Polling Procedure
 
 `sp_events__poll(session_id)`
 Polling procedure that returns the next events plus polling frequency guidance.
-When a client `poll`s after registration, it will receive events starting from the `last committed position` 
+When a client `poll`s after registration, it will receive events starting from the `last committed position`
 for the topics it has registered. Subsequent calls to `poll` will receive events from the `last read position` for
-the topics it has registered. 
+the topics it has registered.
 
 The server returns zero or more events plus metadata that instructs the client on polling frequency.
 If events are received, the client MAY invoke `sp_events__poll` again immediately or with a short delay,
 ignoring guidance on polling frequency; if no events are received,
-the client MUST the returned metadata to determine the next polling time.
+the client MUST use the returned metadata to determine the next polling time.
   
 Parameters:
 * `session_id` identify the session.
 
+Metadata Result Set:
+
+* `polling_probability` (`DOUBLE`): probability **per millisecond** that a client should poll. Clients compute
+  the probability of polling based on elapsed time since the last poll, e.g. `p = 1 - (1 - polling_probability)^(elapsed_ms)`;
+  draw a random number and poll when the threshold is crossed. Clamp polling to a minimum of one poll per 10 seconds
+  to avoid starvation.
 
 #### Commit Procedure
 
@@ -211,34 +220,56 @@ continue reading from the `last committed position`.
 
 An implementation can decide when to call `commit`. It is not necessary to call `commit` after every
 call to `poll`. For maximum throughput, it is recommended an implementation call `commit` periodically
-(e.g., every 1-second), and/or after it processes a certain number of events.
+(e.g., every 1-second) and/or after it processes a certain number of events. Commits are idempotent per position and
+MUST be monotonic per `cursor_id`; stale or decreasing positions are rejected with `STALE_COMMIT`.
 
 An implementation SHOULD call commit before it deregisters if it has successfully processed any events
-since its last commit.
+since its last commit. Batching commits (e.g., “every N events or every T ms, whichever comes first”) is encouraged
+to reduce database writes.
 
 Parameters:
 * `session_id` identify the session.
-* `cursor_positions_json` a JSON map of one or more `cursor_id` and `position` entries, 
-with the `cursor_id` as the map key, and `position` as the map value.
+* `cursor_positions_json` a JSON map of one or more `cursor_id` and `position` entries,
+  with the `cursor_id` as the map key, and `position` as the map value.
 
 #### Deregistration Procedure
 
 `sp_consumers__deregister(session_id)`
 SHOULD be called when a client is shutting down.
 Before deregistering, an implementation SHOULD complete processing of inflight events and commit cursor positions.
-If an implementation becomes inactive without calling `deregister` other consumers will be blocked until deadlines pass.
-After deregistering, an implementation MUST NOT make further calls with the same `session_id`.
+If an implementation becomes inactive without calling `deregister` other consumers will be blocked until deadlines pass
+(`heartbeat_deadline` ≈ 3 × expected heartbeat interval). After deregistering, an implementation MUST NOT make further
+calls with the same `session_id`.
 
 Parameters:
 * `session_id` identify the session.
 
 ### Lifecycle and state names
 
-- **Registering** → transient phase before registration completes.
+- **Unregistered** → transient phase before registration completes.
 - **Registered** → successfully registered but no poll yet issued.
 - **Receiving** → polling and receiving event batches without delay.
 - **Backoff** → idle/heartbeat mode driven by server-provided probability.
 - **Deregistering** → deregistering and shutting down.
+
+State transitions (client side)
+
+| State         | Allowed actions                                         | Transition trigger                                        |
+|---------------|---------------------------------------------------------| --------------------------------------------------------- |
+| Unregistered  | `register`                                              | Success → Registered; error → abort                       |
+| Registered    | `poll`                                                  | First `poll` → Receiving or Backoff (if empty batch)       |
+| Receiving     | `poll`, `commit`, `deregister`                          | Empty batch → Backoff; graceful shutdown → Deregistering   |
+| Backoff       | `poll` per `polling_probability` `commit`, `deregister`, | Events returned → Receiving; timeout → deregister/shutdown |
+| Deregistering | -                                                       | `deregister` success → terminal                            |
+
+### Error handling and observability
+
+| Procedure  | Example error codes/messages         | Recommended client action                          |
+| ---------- |--------------------------------------| -------------------------------------------------- |
+| register   | `INVALID_TOPIC`, `DUPLICATE_SESSION` | Fail fast; regenerate `session_id` and retry       |
+| poll       | `UNKNOWN_SESSION`                    | Re-register if unknown; serialize polls and retry  |
+| commit     | `UNKNOWN_SESSION`, `STALE_COMMIT`    | Re-register if unknown; drop or refresh cursors    |
+| deregister | `UNKNOWN_SESSION`                    | Ignore; session already expired                    |
 
   
 ## Building the Project
