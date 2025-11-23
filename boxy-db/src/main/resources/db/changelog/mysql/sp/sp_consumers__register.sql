@@ -88,7 +88,6 @@ BEGIN
     INSERT INTO consumers (
         id,
         subscription_id,
-        weight,
         heartbeat_detected_at,
         heartbeat_interval,
         heartbeat_deadline,
@@ -96,7 +95,6 @@ BEGIN
     VALUES (
         p_consumer_id,
         v_subscription_id,
-        1.0,
         v_now,
         30,
         DATE_ADD(v_now, INTERVAL 30 SECOND),

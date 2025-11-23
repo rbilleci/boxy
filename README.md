@@ -38,7 +38,7 @@ Tenant isolation is provided through a hierarchical namespace system.
 
 ## Design Highlights
 
-- **Fair-share Load Balancing** across consumers, proportional to capacity weights
+- **Fair-share Load Balancing** across consumers
 - **Low Consumer Lag**: p99 ~5ms for active partitions, and ~100ms for cold partitions
 - **Scalable Polling**: consumers stagger check-ins to minimize database queries (e.g. ≈10 checks/s instead of hundreds)
 
@@ -88,7 +88,7 @@ Liquibase migrations for the schema are under `boxy-db/src/main/resources/db/cha
 - **cursors**: tracks the position per subscription and partition and stores the `subscription_id`,
   `subscription_topic_id`, and `topic_id` for join-free lookups. Each row is assigned a persistent
   `random_key` used for evenly distributing start positions among consumers.
-- **consumers**: registers each consumer’s `subscription_id`, `weight`, `heartbeat_detected_at`, and `topic_ids` JSON array of topic identifiers.
+- **consumers**: registers each consumer’s `subscription_id`, `heartbeat_detected_at`, and `topic_ids` JSON array of topic identifiers.
 - **subscriptions**: defines logical groups of consumers.
 - **topics_cache**: in-memory table for quick topic lookups.
 
@@ -99,7 +99,6 @@ The `subscription_topics` table stores precomputed statistics that are updated w
 - **heartbeat_interval**: Adaptive interval used for consumer heartbeats.
 - **active_partitions**: Count of partitions with new events (high_watermark > position).
 - **active_consumers**: Count of consumers with valid heartbeats.
-- **active_consumers_weight**: Sum of weights of all active consumers in the subscription.
 - **last_modified_at**: Timestamp of the last statistics update.
 
 These statistics are used for:
@@ -117,7 +116,6 @@ classDiagram
     class Consumer {
         +String id
         +long subscriptionId
-        +double weight
         +Instant heartbeatDetectedAt
         +double heartbeatInterval
         +Instant heartbeatDeadline
