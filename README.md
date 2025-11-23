@@ -186,7 +186,7 @@ Parameters:
   * `subscription_name` refers to a subscription that already links to one or more topics.
   * `topics_json` is a JSON array of fully qualified topic paths, selecting a subset of the subscription’s topics for this consumer.
        Wildcards/patterns are not supported; unknown topics are rejected with `INVALID_TOPIC`. A consumer may re-register
-       with a different `topics_json` to change its coverage.
+       with a new `session_id` and different `topics_json` to change its coverage.
 
 #### Polling Procedure
 
@@ -200,21 +200,16 @@ The server returns zero or more events plus metadata that instructs the client o
 If events are received, the client MAY invoke `sp_events__poll` again immediately or with a short delay,
 ignoring guidance on polling frequency; if no events are received,
 the client MUST use the returned metadata to determine the next polling time.
-
-Metadata fields:
-
-* `polling_probability` (`DOUBLE`): probability **per millisecond** that a client should poll. Clients compute
-  the probability of polling based on elapsed time since the last poll, e.g. `p = 1 - (1 - polling_probability)^(elapsed_ms)`;
-  draw a random number and poll when the threshold is crossed. Clamp polling to a minimum of one poll per 5 seconds
-  to avoid starvation.
-* `backoff_reason` (`STRING`, optional): diagnostic hint such as `IDLE` or `OVERLOADED`.
-
-The server rejects concurrent calls with the same `session_id`; clients must serialize polls. In-flight `poll`
-calls may return empty batches to enforce backoff without disconnecting the client.
   
 Parameters:
 * `session_id` identify the session.
 
+Metadata Result Set:
+
+* `polling_probability` (`DOUBLE`): probability **per millisecond** that a client should poll. Clients compute
+  the probability of polling based on elapsed time since the last poll, e.g. `p = 1 - (1 - polling_probability)^(elapsed_ms)`;
+  draw a random number and poll when the threshold is crossed. Clamp polling to a minimum of one poll per 10 seconds
+  to avoid starvation.
 
 #### Commit Procedure
 
@@ -251,7 +246,7 @@ Parameters:
 
 ### Lifecycle and state names
 
-- **Registering** → transient phase before registration completes.
+- **Unregistered** → transient phase before registration completes.
 - **Registered** → successfully registered but no poll yet issued.
 - **Receiving** → polling and receiving event batches without delay.
 - **Backoff** → idle/heartbeat mode driven by server-provided probability.
@@ -259,24 +254,22 @@ Parameters:
 
 State transitions (client side)
 
-| State            | Allowed actions                             | Transition trigger                                        |
-| ---------------- | ------------------------------------------- | --------------------------------------------------------- |
-| Registering      | `register`                                  | Success → Registered; error → abort                       |
-| Registered       | `poll`                                      | First `poll` → Receiving or Backoff (if empty batch)       |
-| Receiving        | `poll`, `commit`, `deregister`              | Empty batch → Backoff; graceful shutdown → Deregistering   |
-| Backoff          | randomized `poll` per `polling_probability` | Events returned → Receiving; timeout → deregister/shutdown |
-| Deregistering    | `commit`, `deregister`                      | `deregister` success → terminal                            |
+| State         | Allowed actions                                         | Transition trigger                                        |
+|---------------|---------------------------------------------------------| --------------------------------------------------------- |
+| Unregistered  | `register`                                              | Success → Registered; error → abort                       |
+| Registered    | `poll`                                                  | First `poll` → Receiving or Backoff (if empty batch)       |
+| Receiving     | `poll`, `commit`, `deregister`                          | Empty batch → Backoff; graceful shutdown → Deregistering   |
+| Backoff       | `poll` per `polling_probability` `commit`, `deregister`, | Events returned → Receiving; timeout → deregister/shutdown |
+| Deregistering | -                                                       | `deregister` success → terminal                            |
 
 ### Error handling and observability
 
-| Procedure  | Example error codes/messages                | Recommended client action                          |
-| ---------- | ------------------------------------------- | -------------------------------------------------- |
-| register   | `INVALID_TOPIC`, `DUPLICATE_SESSION`        | Fail fast; regenerate `session_id` and retry       |
-| poll       | `UNKNOWN_SESSION`, `CONCURRENT_POLL`        | Re-register if unknown; serialize polls and retry  |
-| commit     | `UNKNOWN_SESSION`, `STALE_COMMIT`           | Re-register if unknown; drop or refresh cursors    |
-| deregister | `UNKNOWN_SESSION`                           | Ignore; session already expired                    |
-
-Clients SHOULD log `session_id`, `subscription_name`, `cursor_id`, and `position` with each call for traceability.
+| Procedure  | Example error codes/messages         | Recommended client action                          |
+| ---------- |--------------------------------------| -------------------------------------------------- |
+| register   | `INVALID_TOPIC`, `DUPLICATE_SESSION` | Fail fast; regenerate `session_id` and retry       |
+| poll       | `UNKNOWN_SESSION`                    | Re-register if unknown; serialize polls and retry  |
+| commit     | `UNKNOWN_SESSION`, `STALE_COMMIT`    | Re-register if unknown; drop or refresh cursors    |
+| deregister | `UNKNOWN_SESSION`                    | Ignore; session already expired                    |
 
   
 ## Building the Project
