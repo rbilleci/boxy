@@ -1,5 +1,5 @@
 CREATE PROCEDURE sp_consumers__register(
-    IN p_consumer_id VARCHAR(36),
+    IN p_session_id VARCHAR(36),
     IN p_subscription_name VARCHAR(500),
     IN p_topics JSON)
 BEGIN
@@ -8,8 +8,11 @@ BEGIN
     DECLARE v_input_count INT;
     DECLARE v_invalid_paths INT;
     DECLARE v_missing_topics INT;
+    DECLARE v_missing_subscriptions INT;
     DECLARE v_delimiter VARCHAR(10);
     DECLARE v_delimiter_length INT;
+    DECLARE v_now DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3);
+    DECLARE v_existing_deadline DATETIME(3);
 
     SET v_delimiter = fn_resolve_namespace_delimiter();
     SET v_delimiter_length = CHAR_LENGTH(v_delimiter);
@@ -19,6 +22,15 @@ BEGIN
     END IF;
 
     SELECT id INTO v_subscription_id FROM subscriptions WHERE name = p_subscription_name;
+
+    IF v_subscription_id IS NULL THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Subscription does not exist';
+    END IF;
+
+    SELECT heartbeat_deadline INTO v_existing_deadline FROM consumers WHERE id = p_session_id;
+    IF v_existing_deadline IS NOT NULL AND v_existing_deadline > v_now THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'DUPLICATE_SESSION';
+    END IF;
 
     WITH topic_input AS (
         SELECT TRIM(jt.topic_path) AS topic_path
@@ -48,9 +60,12 @@ BEGIN
         (SELECT COUNT(*) FROM topic_input),
         (SELECT COUNT(*) FROM resolved WHERE is_valid = 0),
         (SELECT COUNT(*) FROM resolved WHERE is_valid = 1 AND topic_id IS NULL),
+        (SELECT COUNT(*) FROM resolved WHERE topic_id IS NOT NULL AND topic_id NOT IN (
+            SELECT topic_id FROM subscription_topics WHERE subscription_id = v_subscription_id
+        )),
         (SELECT JSON_ARRAYAGG(topic_id)
            FROM (SELECT DISTINCT topic_id FROM resolved WHERE topic_id IS NOT NULL) AS deduped)
-    INTO v_input_count, v_invalid_paths, v_missing_topics, v_topic_ids;
+    INTO v_input_count, v_invalid_paths, v_missing_topics, v_missing_subscriptions, v_topic_ids;
 
     IF v_input_count = 0 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'At least one topic must be provided';
@@ -64,6 +79,12 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'One or more topics do not exist';
     END IF;
 
+    IF v_missing_subscriptions > 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'One or more topics are not part of the subscription';
+    END IF;
+
+    DELETE FROM consumers WHERE id = p_session_id;
+
     INSERT INTO consumers (
         id,
         subscription_id,
@@ -73,16 +94,11 @@ BEGIN
         heartbeat_deadline,
         topic_ids)
     VALUES (
-        p_consumer_id,
+        p_session_id,
         v_subscription_id,
         1.0,
-        CURRENT_TIMESTAMP(3),
+        v_now,
         30,
-        DATE_ADD(CURRENT_TIMESTAMP(3), INTERVAL 30 SECOND),
-        v_topic_ids)
-    ON DUPLICATE KEY UPDATE
-        subscription_id = VALUES(subscription_id),
-        heartbeat_detected_at = VALUES(heartbeat_detected_at),
-        heartbeat_deadline = VALUES(heartbeat_deadline),
-        topic_ids = VALUES(topic_ids);
+        DATE_ADD(v_now, INTERVAL 30 SECOND),
+        v_topic_ids);
 END;
