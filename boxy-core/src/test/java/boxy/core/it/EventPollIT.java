@@ -216,12 +216,54 @@ class EventPollIT extends BaseIT {
         assertThat(pollingProbability).isGreaterThan(0);
     }
 
+    @Test
+    void poll_resumesFromLastReadPositionForSession() throws SQLException {
+        final var subscription = data.subscriptions().getFirst();
+        final long partitionId =
+                partitionRepository.find(TestData.PATH_A, TOPIC_A, 0).orElseThrow().id();
+        final String consumerId = "consumer-4";
+
+        consumerRepository.register(consumerId, subscription.name(), List.of(PATH_A + "/" + TOPIC_A));
+
+        eventRepository.publish(partitionId, "{\"v\":4}");
+        eventRepository.publish(partitionId, "{\"v\":5}");
+        awaitSequencer();
+
+        final List<Long> firstPoll = pollEvents(consumerId);
+        final List<Long> secondPoll = pollEvents(consumerId);
+
+        assertThat(firstPoll).hasSize(2);
+        assertThat(secondPoll).isEmpty();
+    }
+
     private void awaitSequencer() {
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private List<Long> pollEvents(final String consumerId) throws SQLException {
+        final List<Long> polled = new ArrayList<>();
+        try (var conn = dataSource.getConnection();
+             var poll = conn.prepareCall("{CALL sp_events__poll(?)}")) {
+            poll.setString(1, consumerId);
+            boolean hasResults = poll.execute();
+            if (hasResults) {
+                try (var rs = poll.getResultSet()) {
+                    while (rs.next()) {
+                        polled.add(rs.getLong("event_id"));
+                    }
+                }
+            }
+            while (poll.getMoreResults()) {
+                try (var ignored = poll.getResultSet()) {
+                    // consume metadata
+                }
+            }
+        }
+        return polled;
     }
 
 }

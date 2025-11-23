@@ -48,7 +48,10 @@ BEGIN
             SELECT s.sequence, s.event_id
             FROM sequences s FORCE INDEX (idx_sequences__partition_sequence)
             WHERE s.partition_id = c.partition_id
-              AND s.sequence > c.position
+              AND s.sequence > IF(
+                  l.consumer_id = p_consumer_id,
+                  COALESCE(l.last_read_position, c.position),
+                  c.position)
             ORDER BY s.sequence
         ) s ON TRUE
         WHERE c.subscription_id = v_subscription_id
@@ -75,9 +78,23 @@ BEGIN
 
     UPDATE leases l
     JOIN tmp_selected_sequences sel ON sel.cursor_id = l.cursor_id
+    JOIN cursors c ON c.id = l.cursor_id
     SET l.consumer_id  = p_consumer_id,
-        l.locked_until = DATE_ADD(v_now, INTERVAL 3 SECOND)
+        l.locked_until = DATE_ADD(v_now, INTERVAL 3 SECOND),
+        l.last_read_position = CASE
+            WHEN l.consumer_id = p_consumer_id THEN COALESCE(l.last_read_position, c.position)
+            ELSE c.position
+        END
     WHERE l.locked_until IS NULL OR l.locked_until < v_now OR l.consumer_id = p_consumer_id;
+
+    UPDATE leases l
+    JOIN (
+        SELECT cursor_id, MAX(sequence) AS last_sequence
+          FROM tmp_selected_sequences
+         GROUP BY cursor_id
+    ) sel ON sel.cursor_id = l.cursor_id
+    SET l.last_read_position = GREATEST(IFNULL(l.last_read_position, 0), sel.last_sequence)
+    WHERE l.consumer_id = p_consumer_id;
 
     /* 3) Return the events for rows we actually hold now */
     SELECT
