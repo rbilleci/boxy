@@ -15,7 +15,6 @@ public class SubscriptionTopicMapper implements RowMapper<SubscriptionTopic> {
                 rs.getDouble("heartbeat_interval"),
                 rs.getInt("active_partitions"),
                 rs.getInt("active_consumers"),
-                rs.getDouble("active_consumers_weight"),
                 rs.getTimestamp("created_at").toInstant(),
                 rs.getTimestamp("last_modified_at").toInstant());
     }

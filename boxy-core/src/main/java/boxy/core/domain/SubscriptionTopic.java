@@ -9,7 +9,6 @@ public record SubscriptionTopic(
         double heartbeatInterval,
         int activePartitions,
         int activeConsumers,
-        double activeConsumersWeight,
         Instant createdAt,
         Instant lastModifiedAt) {
 }

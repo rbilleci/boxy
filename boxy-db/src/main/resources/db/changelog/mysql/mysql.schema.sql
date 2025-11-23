@@ -72,7 +72,6 @@ CREATE TABLE subscription_topics (
     heartbeat_interval          DOUBLE NOT NULL DEFAULT 15.0,
     active_partitions           INT NOT NULL DEFAULT 0,
     active_consumers            INT NOT NULL DEFAULT 0,
-    active_consumers_weight     DOUBLE NOT NULL DEFAULT 0,
     created_at          DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     last_modified_at    DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
     CONSTRAINT u_subscription_topics UNIQUE (subscription_id, topic_id),
@@ -107,7 +106,6 @@ CREATE TABLE cursors (
 CREATE TABLE consumers (
     id                   VARCHAR(36)  PRIMARY KEY,
     subscription_id      BIGINT       NOT NULL,
-    weight               DOUBLE       NOT NULL DEFAULT 1,
     heartbeat_detected_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     heartbeat_interval   DOUBLE       NOT NULL,
     heartbeat_deadline   DATETIME(3)  NOT NULL,
@@ -118,7 +116,7 @@ CREATE TABLE consumers (
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
-    COMMENT='Registered consumers per subscription, with capacity weight and heartbeat timestamp';
+    COMMENT='Registered consumers per subscription with heartbeat timestamp';
 
 CREATE TABLE leases (
     cursor_id    BIGINT      PRIMARY KEY,
