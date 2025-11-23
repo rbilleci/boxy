@@ -124,7 +124,7 @@ CREATE TABLE leases (
     locked_until DATETIME(3) NULL,
     last_read_position BIGINT NOT NULL DEFAULT 0,
     FOREIGN KEY (cursor_id)   REFERENCES cursors (id) ON DELETE CASCADE,
-    FOREIGN KEY (consumer_id) REFERENCES consumers (id) ON DELETE SET NULL,
+    FOREIGN KEY (consumer_id) REFERENCES consumers (id) ON DELETE CASCADE,
     INDEX idx_leases__lock (locked_until)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
