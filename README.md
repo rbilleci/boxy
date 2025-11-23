@@ -155,8 +155,7 @@ It is designed to support large-scale fan-out with many concurrent clients while
 and heartbeat queries per subscription. As an implementer, you can treat the protocol as a small, well-defined 
 state machine driven by stored procedure calls keyed by `consumer_id`.
 
-
-### Stored procedure touchpoints (aligned with Pulsar-like naming)
+### Stored procedure touchpoints
 
 - **Subscribe**: `sp_consumers__register(consumer_id, subscription_name, topics_json)`. Registers the consumer to the
   subscription and the subset of topics it wants from that subscription (JSON array of fully qualified topic paths).
@@ -168,8 +167,6 @@ state machine driven by stored procedure calls keyed by `consumer_id`.
   events are processed.
 
 ### Lifecycle and state names
-
-These names intentionally mirror terms common in Apache Pulsar and industry-standard consumer protocols:
 
 - **Connecting** → transient phase before registration completes.
 - **Subscribed** → successfully registered but no poll yet issued.
