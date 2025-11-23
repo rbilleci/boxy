@@ -157,14 +157,52 @@ state machine driven by stored procedure calls keyed by `consumer_id`.
 
 ### Stored procedure touchpoints
 
-- **Subscribe**: `sp_consumers__register(consumer_id, subscription_name, topics_json)`. Registers the consumer to the
-  subscription and the subset of topics it wants from that subscription (JSON array of fully qualified topic paths).
 - **Unsubscribe**: `sp_consumers__deregister(consumer_id)`. Optional clean-up when a consumer shuts down.
-- **Receive**: `sp_events__poll_v2(subscription_id, consumer_id, batch_size, topics_json OPTIONAL)`. Polling procedure that
-  returns events plus backoff guidance. The topics parameter explicitly requests a subset for the call when the subscription
-  covers multiple topics.
 - **Acknowledge/Commit**: `sp_cursors__commit(cursor_id, position)` or a future multi-commit variant. Records progress after
   events are processed.
+
+### Consumer Stored Procedures
+
+At a minimum, a client consumer implementation must use the following stored procedures:
+
+* **Registration**
+  `sp_consumers__register(consumer_id, subscription_name, topics_json)`
+  Registers a consumer against a subscription and declares the set of topics it intends to consume.
+  A single consumer is bound to one subscription name for a given topic (or multi-topic pattern).
+  A process / service can create multiple consumer instances, each with its own subscription name (even on the same topics), 
+  and thereby “use more than one subscription name” overall.
+
+    * `consumer_id` is the stable identifier used on every subsequent call.
+    * `subscription_name` refers to a subscription that already links to one or more topics via `sp_subscriptions__subscribe`.
+    * `topics_json` is a JSON array of fully qualified topic paths, selecting a subset of the subscription’s topics for this consumer. 
+       A consumer can decide choose to subscribe to all topics for that subscription name or a subset of them.
+
+* **Polling for events**
+  `sp_events__poll(consumer_id)`
+  Polling procedure that returns events plus backoff guidance.
+
+    * `consumer_id` identify the consumer.
+      The server returns zero or more events plus metadata that instructs the client on polling frequency. 
+      If events are delivered, the client typically invokes `sp_events__poll` again immediately; 
+      if no events are available, the client uses the returned metadata to determine the next polling time.
+
+* **Committing offsets (acknowledgement)**
+  `sp_cursors__commit(consumer_id, cursor_positions_json)`
+  Records the consumer’s progress for one or more topics after successful processing of events.
+  Each commit advances the stored position for the corresponding cursor so that subsequent polls 
+  resume from the correct offset.
+
+    * `consumer_id` identify the consumer.
+    * `cursor_positions_json` a JSON map of one or more `cursor_id` and `position` entries, 
+       with the `cursor_id` as the map key, and `position` as the map value.
+
+* **Deregistration and clean-up**
+  `sp_consumers__deregister(consumer_id)`
+  Removes a consumer registration when a client instance shuts down. 
+  Before deregistering, an implementation SHOULD complete processing of inflight events and commmit its cursor positions.
+  If an implementation does not deregister, it may be that other consumers will be blocked until deadlines pass.
+
+
 
 ### Lifecycle and state names
 
