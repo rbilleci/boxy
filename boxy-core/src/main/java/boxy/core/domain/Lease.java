@@ -5,5 +5,6 @@ import java.time.Instant;
 public record Lease(
         long cursorId,
         String consumerId,
-        Instant lockedUntil) {
+        Instant lockedUntil,
+        long lastReadPosition) {
 }
