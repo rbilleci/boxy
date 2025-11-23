@@ -10,6 +10,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.OptionalDouble;
 
 import static boxy.core.it.TestData.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,18 +48,18 @@ class EventPollIT extends BaseIT {
         awaitSequencer();
 
         try (var conn = dataSource.getConnection();
-             var poll = conn.prepareCall("{CALL sp_events__poll(?,?,?)}")) {
-            poll.setLong(1, subscriptionId);
-            poll.setString(2, consumerId);
-            poll.setInt(3, 10);
+             var poll = conn.prepareCall("{CALL sp_events__poll(?)}")) {
+            poll.setString(1, consumerId);
 
             final var start = System.currentTimeMillis();
             for (int i = 0; i < 10_000; i++) {
-                try (var rs = poll.executeQuery()) {
+                poll.execute();
+                try (var rs = poll.getResultSet()) {
                     while (rs.next()) {
                         rs.getLong("event_id");
                     }
                 }
+                poll.getMoreResults();
             }
             final var end = System.currentTimeMillis();
             System.out.printf("polling took %s ms\n", (end - start));
@@ -82,15 +83,15 @@ class EventPollIT extends BaseIT {
 
         final List<Long> polled = new ArrayList<>();
         try (var conn = dataSource.getConnection();
-             var poll = conn.prepareCall("{CALL sp_events__poll(?,?,?)}")) {
-            poll.setLong(1, subscriptionId);
-            poll.setString(2, consumerId);
-            poll.setInt(3, 10);
-            try (var rs = poll.executeQuery()) {
+             var poll = conn.prepareCall("{CALL sp_events__poll(?)}")) {
+            poll.setString(1, consumerId);
+            poll.execute();
+            try (var rs = poll.getResultSet()) {
                 while (rs.next()) {
                     polled.add(rs.getLong("event_id"));
                 }
             }
+            poll.getMoreResults();
         }
 
         assertThat(polled).hasSize(2);
@@ -126,19 +127,44 @@ class EventPollIT extends BaseIT {
         awaitSequencer();
 
         final List<Long> polled = new ArrayList<>();
-        try (var conn = dataSource.getConnection();
-             var poll = conn.prepareCall("{CALL sp_events__poll(?,?,?)}")) {
-            poll.setLong(1, subscriptionId);
-            poll.setString(2, consumerId);
-            poll.setInt(3, 100);
-            try (var rs = poll.executeQuery()) {
+        try (var conn = dataSource.getConnection(); var poll = conn.prepareCall("{CALL sp_events__poll(?)}")) {
+            poll.setString(1, consumerId);
+            poll.execute();
+            try (var rs = poll.getResultSet()) {
                 while (rs.next()) {
                     polled.add(rs.getLong("event_id"));
                 }
             }
+            poll.getMoreResults();
         }
 
         assertThat(polled).hasSize(3);
+    }
+
+    @Test
+    void poll_emptyBatchReturnsBackoffProbability() throws SQLException {
+        final var subscription = data.subscriptions().getFirst();
+        final String consumerId = "consumer-backoff";
+
+        consumerRepository.register(consumerId, subscription.name(), List.of(PATH_A + "/" + TOPIC_A));
+
+        try (var conn = dataSource.getConnection(); var poll = conn.prepareCall("{CALL sp_events__poll(?)}")) {
+            poll.setString(1, consumerId);
+
+            poll.execute();
+            try (var rs = poll.getResultSet()) {
+                assertThat(rs.next()).isFalse();
+            }
+
+            assertThat(poll.getMoreResults()).isTrue();
+            try (var metadata = poll.getResultSet()) {
+                final OptionalDouble probability = metadata.next()
+                        ? OptionalDouble.of(metadata.getDouble("polling_probability"))
+                        : OptionalDouble.empty();
+                assertThat(probability).isPresent();
+                assertThat(probability.getAsDouble()).isGreaterThan(0.0).isLessThan(1.0);
+            }
+        }
     }
 
     private void awaitSequencer() {

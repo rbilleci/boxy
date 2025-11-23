@@ -5,7 +5,9 @@ import boxy.core.domain.Cursor;
 
 import javax.sql.DataSource;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public final class CursorRepository extends BaseRepository {
 
@@ -15,8 +17,8 @@ public final class CursorRepository extends BaseRepository {
         super(ds);
     }
 
-    public void commit(final long id, final long position) {
-        update("{CALL sp_cursors__commit(?,?)}", id, position);
+    public void commit(final String sessionId, final Map<Long, Long> positions) {
+        update("{CALL sp_cursors__commit(?,?)}", sessionId, toJsonObject(positions));
     }
 
     public Optional<Cursor> find(final long id) {
@@ -33,4 +35,12 @@ public final class CursorRepository extends BaseRepository {
                 CURSOR_MAPPER, subscriptionId);
     }
 
+    private String toJsonObject(final Map<Long, Long> positions) {
+        return positions.entrySet()
+                .stream()
+                .map(entry -> "\"" + entry.getKey() + "\":" + entry.getValue())
+                .collect(Collectors.joining(",", "{", "}"));
+    }
+
 }
+
