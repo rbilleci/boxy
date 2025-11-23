@@ -204,7 +204,7 @@ the client MUST use the returned metadata to determine the next polling time.
 Parameters:
 * `session_id` identify the session.
 
-Metadata Result Set:
+The procedure returns two result sets. The first result set will be the events, the second result set will be the metadata with the following columns:
 
 * `polling_probability` (`DOUBLE`): probability **per millisecond** that a client should poll. Clients compute
   the probability of polling based on elapsed time since the last poll, e.g. `p = 1 - (1 - polling_probability)^(elapsed_ms)`;
