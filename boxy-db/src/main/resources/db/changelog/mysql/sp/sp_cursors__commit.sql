@@ -1,5 +1,5 @@
 CREATE PROCEDURE sp_cursors__commit(
-    IN p_session_id VARCHAR(36),
+    IN p_consumer_id VARCHAR(36),
     IN p_cursor_positions JSON)
 BEGIN
     DECLARE v_subscription_id BIGINT;
@@ -10,10 +10,10 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'cursor_positions_json must be a JSON object map';
     END IF;
 
-    SELECT subscription_id INTO v_subscription_id FROM consumers WHERE id = p_session_id;
+    SELECT subscription_id INTO v_subscription_id FROM consumers WHERE id = p_consumer_id;
 
     IF v_subscription_id IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'UNKNOWN_SESSION';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'UNKNOWN_CONSUMER';
     END IF;
 
     DROP TEMPORARY TABLE IF EXISTS tmp_cursor_updates;

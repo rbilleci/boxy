@@ -156,14 +156,14 @@ Properties
 ## Client Consumer Protocol
 
 The Client Consumer Protocol defines how a client implementation for a given programming language must interact with Boxy. 
-All interaction occurs via stored procedures, and each client instance is identified by a `session_id` that must 
+All interaction occurs via stored procedures, and each client instance is identified by a `consumer_id` that must 
 be supplied on every call. Each stored procedure call is atomic. Database connections do not need to be reused between calls,  
 and transactions may not span multiple client consumer calls.
 
 The protocol specifies how clients register, poll for events, apply backoff when idle, and commit offsets. 
 It is designed to support large-scale fan-out with many concurrent clients while strictly limiting the total polling 
 and heartbeat queries per subscription. As an implementer, you can treat the protocol as a small, well-defined 
-state machine driven by stored procedure calls keyed by `session_id`.
+state machine driven by stored procedure calls keyed by `consumer_id`.
 
 ### Consumer Stored Procedures
 
@@ -171,7 +171,7 @@ At a minimum, a client consumer implementation must use the following stored pro
 
 #### Registration Procedure
 
-`sp_consumers__register(session_id, subscription_name, topics_json)`
+`sp_consumers__register(consumer_id, subscription_name, topics_json)`
 Registers a consumer against a subscription and declares the set of topics it intends to consume.
 A single consumer is bound to one subscription name for a given topic (or multi-topic pattern).
 A process / service can create multiple consumer instances, each with its own subscription name (even on the same topics),
@@ -179,18 +179,18 @@ and thereby “use more than one subscription name” overall.
 
 Parameters:
 
-  * `session_id` is the identifier for the consumer session and is used on every subsequent call.
+  * `consumer_id` is the identifier for the consumer and is used on every subsequent call.
        It MUST be a high-entropy identifier (UUIDv4 recommended), MUST NOT be reused across registrations,
-       and the server will reject duplicate `session_id` values that are still active. After a crash the client
-       may immediately re-register with a new `session_id` using the same `subscription_name` and `topics_json`.
+       and the server will reject duplicate `consumer_id` values that are still active. After a crash the client
+       may immediately re-register with a new `consumer_id` using the same `subscription_name` and `topics_json`.
   * `subscription_name` refers to a subscription that already links to one or more topics.
   * `topics_json` is a JSON array of fully qualified topic paths, selecting a subset of the subscription’s topics for this consumer.
        Wildcards/patterns are not supported; unknown topics are rejected with `INVALID_TOPIC`. A consumer may re-register
-       with a new `session_id` and different `topics_json` to change its coverage.
+       with a new `consumer_id` and different `topics_json` to change its coverage.
 
 #### Polling Procedure
 
-`sp_events__poll(session_id)`
+`sp_events__poll(consumer_id)`
 Polling procedure that returns the next events plus polling frequency guidance.
 When a client `poll`s after registration, it will receive events starting from the `last committed position`
 for the topics it has registered. Subsequent calls to `poll` will receive events from the `last read position` for
@@ -202,7 +202,7 @@ ignoring guidance on polling frequency; if no events are received,
 the client MUST use the returned metadata to determine the next polling time.
   
 Parameters:
-* `session_id` identify the session.
+* `consumer_id` identify the consumer.
 
 The procedure returns two result sets. The first result set will be the events, the second result set will be the metadata with the following columns:
 
@@ -213,9 +213,9 @@ The procedure returns two result sets. The first result set will be the events, 
 
 #### Commit Procedure
 
-`sp_cursors__commit(session_id, cursor_positions_json)`
+`sp_cursors__commit(consumer_id, cursor_positions_json)`
 Records the consumer’s progress for one or more topics after successful processing of events.
-Each commit advances the stored position for the corresponding cursors, so that subsequent sessions
+Each commit advances the stored position for the corresponding cursors, so that subsequent consumers
 continue reading from the `last committed position`.
 
 An implementation can decide when to call `commit`. It is not necessary to call `commit` after every
@@ -228,21 +228,21 @@ since its last commit. Batching commits (e.g., “every N events or every T ms, 
 to reduce database writes.
 
 Parameters:
-* `session_id` identify the session.
+* `consumer_id` identify the consumer.
 * `cursor_positions_json` a JSON map of one or more `cursor_id` and `position` entries,
   with the `cursor_id` as the map key, and `position` as the map value.
 
 #### Deregistration Procedure
 
-`sp_consumers__deregister(session_id)`
+`sp_consumers__deregister(consumer_id)`
 SHOULD be called when a client is shutting down.
 Before deregistering, an implementation SHOULD complete processing of inflight events and commit cursor positions.
 If an implementation becomes inactive without calling `deregister` other consumers will be blocked until deadlines pass
 (`heartbeat_deadline` ≈ 3 × expected heartbeat interval). After deregistering, an implementation MUST NOT make further
-calls with the same `session_id`.
+calls with the same `consumer_id`.
 
 Parameters:
-* `session_id` identify the session.
+* `consumer_id` identify the consumer.
 
 ### Lifecycle and state names
 
@@ -264,12 +264,12 @@ State transitions (client side)
 
 ### Error handling and observability
 
-| Procedure  | Example error codes/messages         | Recommended client action                          |
-| ---------- |--------------------------------------| -------------------------------------------------- |
-| register   | `INVALID_TOPIC`, `DUPLICATE_SESSION` | Fail fast; regenerate `session_id` and retry       |
-| poll       | `UNKNOWN_SESSION`                    | Re-register if unknown; serialize polls and retry  |
-| commit     | `UNKNOWN_SESSION`, `STALE_COMMIT`    | Re-register if unknown; drop or refresh cursors    |
-| deregister | `UNKNOWN_SESSION`                    | Ignore; session already expired                    |
+| Procedure  | Example error codes/messages          | Recommended client action                         |
+| ---------- |---------------------------------------|---------------------------------------------------|
+| register   | `INVALID_TOPIC`, `DUPLICATE_CONSUMER` | Fail fast; regenerate `consumer_id` and retry     |
+| poll       | `UNKNOWN_CONSUMER`                    | Re-register if unknown; serialize polls and retry |
+| commit     | `UNKNOWN_CONSUMER`, `STALE_COMMIT`    | Re-register if unknown; drop or refresh cursors   |
+| deregister | `UNKNOWN_CONSUMER`                    | Ignore; consumer already deregistered             |
 
   
 ## Building the Project

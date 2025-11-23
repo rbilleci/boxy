@@ -17,8 +17,8 @@ public final class CursorRepository extends BaseRepository {
         super(ds);
     }
 
-    public void commit(final String sessionId, final Map<Long, Long> cursorPositions) {
-        update("{CALL sp_cursors__commit(?,?)}", sessionId, toJsonObject(cursorPositions));
+    public void commit(final String consumerId, final Map<Long, Long> cursorPositions) {
+        update("{CALL sp_cursors__commit(?,?)}", consumerId, toJsonObject(cursorPositions));
     }
 
     public Optional<Cursor> find(final long id) {

@@ -20,15 +20,15 @@ public class CursorIT extends BaseIT {
     private CursorRepository cursorRepository;
     private ConsumerRepository consumerRepository;
     private TestData data;
-    private String sessionId;
+    private String consumerId;
 
     @BeforeEach
     void setup() {
         cursorRepository = new CursorRepository(dataSource);
         consumerRepository = new ConsumerRepository(dataSource);
         data = TestData.seed(dataSource);
-        sessionId = "cursor-test-session";
-        consumerRepository.register(sessionId, data.subscriptions().getFirst().name(), List.of(PATH_A + "/" + TOPIC_A));
+        consumerId = "cursor-test-consumer";
+        consumerRepository.register(consumerId, data.subscriptions().getFirst().name(), List.of(PATH_A + "/" + TOPIC_A));
     }
 
     @Test
@@ -37,7 +37,7 @@ public class CursorIT extends BaseIT {
         final var subscriptionId = data.subscriptions().getFirst().id();
         final var partitionId = cursor.partitionId();
 
-        cursorRepository.commit(sessionId, Map.of(cursor.id(), 100L));
+        cursorRepository.commit(consumerId, Map.of(cursor.id(), 100L));
         assertThat(cursorRepository.find(subscriptionId, partitionId))
                 .isPresent()
                 .get()
@@ -51,9 +51,9 @@ public class CursorIT extends BaseIT {
         final var subscriptionId = data.subscriptions().getFirst().id();
         final var partitionId = cursor.partitionId();
 
-        cursorRepository.commit(sessionId, Map.of(cursor.id(), 100L));
-        cursorRepository.commit(sessionId, Map.of(cursor.id(), 101L));
-        cursorRepository.commit(sessionId, Map.of(cursor.id(), 102L));
+        cursorRepository.commit(consumerId, Map.of(cursor.id(), 100L));
+        cursorRepository.commit(consumerId, Map.of(cursor.id(), 101L));
+        cursorRepository.commit(consumerId, Map.of(cursor.id(), 102L));
         assertThat(cursorRepository.find(subscriptionId, partitionId))
                 .isPresent()
                 .get()
@@ -67,8 +67,8 @@ public class CursorIT extends BaseIT {
         final var subscriptionId = data.subscriptions().getFirst().id();
         final var partitionId = cursor.partitionId();
 
-        cursorRepository.commit(sessionId, Map.of(cursor.id(), 100L));
-        cursorRepository.commit(sessionId, Map.of(cursor.id(), 10L));
+        cursorRepository.commit(consumerId, Map.of(cursor.id(), 100L));
+        cursorRepository.commit(consumerId, Map.of(cursor.id(), 10L));
         assertThat(cursorRepository.find(subscriptionId, partitionId))
                 .isPresent()
                 .get()
@@ -82,8 +82,8 @@ public class CursorIT extends BaseIT {
         final var subscriptionId = data.subscriptions().getFirst().id();
         final var partitionId = cursor.partitionId();
 
-        cursorRepository.commit(sessionId, Map.of(cursor.id(), 100L));
-        cursorRepository.commit(sessionId, Map.of(cursor.id(), 100L));
+        cursorRepository.commit(consumerId, Map.of(cursor.id(), 100L));
+        cursorRepository.commit(consumerId, Map.of(cursor.id(), 100L));
         assertThat(cursorRepository.find(subscriptionId, partitionId))
                 .isPresent()
                 .get()

@@ -1,5 +1,5 @@
 CREATE PROCEDURE sp_events__poll(
-    IN p_session_id VARCHAR(36)
+    IN p_consumer_id VARCHAR(36)
 )
 BEGIN
     DECLARE v_start_key INT DEFAULT fn_random_int();
@@ -10,16 +10,16 @@ BEGIN
 
     SELECT subscription_id, topic_ids INTO v_subscription_id, v_topic_ids
       FROM consumers
-     WHERE id = p_session_id;
+     WHERE id = p_consumer_id;
 
     IF v_subscription_id IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'UNKNOWN_SESSION';
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'UNKNOWN_CONSUMER';
     END IF;
 
     UPDATE consumers
        SET heartbeat_detected_at = v_now,
            heartbeat_deadline = DATE_ADD(v_now, INTERVAL heartbeat_interval SECOND)
-     WHERE id = p_session_id;
+     WHERE id = p_consumer_id;
 
     DROP TEMPORARY TABLE IF EXISTS tmp_selected_sequences;
     CREATE TEMPORARY TABLE tmp_selected_sequences (
@@ -57,7 +57,7 @@ BEGIN
               l.cursor_id IS NULL OR
               l.locked_until IS NULL OR
               l.locked_until < v_now OR
-              l.consumer_id = p_session_id
+              l.consumer_id = p_consumer_id
           )
           AND p.high_watermark > c.position
     )
@@ -75,9 +75,9 @@ BEGIN
 
     UPDATE leases l
     JOIN tmp_selected_sequences sel ON sel.cursor_id = l.cursor_id
-    SET l.consumer_id  = p_session_id,
+    SET l.consumer_id  = p_consumer_id,
         l.locked_until = DATE_ADD(v_now, INTERVAL 3 SECOND)
-    WHERE l.locked_until IS NULL OR l.locked_until < v_now OR l.consumer_id = p_session_id;
+    WHERE l.locked_until IS NULL OR l.locked_until < v_now OR l.consumer_id = p_consumer_id;
 
     /* 3) Return the events for rows we actually hold now */
     SELECT
@@ -90,7 +90,7 @@ BEGIN
     JOIN cursors c ON c.id = sel.cursor_id
     JOIN leases l
       ON l.cursor_id = sel.cursor_id
-     AND l.consumer_id = p_session_id
+     AND l.consumer_id = p_consumer_id
     JOIN events e
       ON e.id = sel.event_id;
 
