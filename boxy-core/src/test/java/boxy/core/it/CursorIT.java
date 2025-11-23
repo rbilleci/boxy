@@ -1,6 +1,7 @@
 package boxy.core.it;
 
 import boxy.core.domain.Cursor;
+import boxy.core.DataAccessException;
 import boxy.core.repository.ConsumerRepository;
 import boxy.core.repository.CursorRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +14,7 @@ import java.util.Map;
 import static boxy.core.it.TestData.PATH_A;
 import static boxy.core.it.TestData.TOPIC_A;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Testcontainers
 public class CursorIT extends BaseIT {
@@ -68,7 +70,9 @@ public class CursorIT extends BaseIT {
         final var partitionId = cursor.partitionId();
 
         cursorRepository.commit(consumerId, Map.of(cursor.id(), 100L));
-        cursorRepository.commit(consumerId, Map.of(cursor.id(), 10L));
+        assertThatThrownBy(() -> cursorRepository.commit(consumerId, Map.of(cursor.id(), 10L)))
+                .isInstanceOf(DataAccessException.class)
+                .hasMessageContaining("STALE_COMMIT");
         assertThat(cursorRepository.find(subscriptionId, partitionId))
                 .isPresent()
                 .get()
@@ -83,7 +87,9 @@ public class CursorIT extends BaseIT {
         final var partitionId = cursor.partitionId();
 
         cursorRepository.commit(consumerId, Map.of(cursor.id(), 100L));
-        cursorRepository.commit(consumerId, Map.of(cursor.id(), 100L));
+        assertThatThrownBy(() -> cursorRepository.commit(consumerId, Map.of(cursor.id(), 100L)))
+                .isInstanceOf(DataAccessException.class)
+                .hasMessageContaining("STALE_COMMIT");
         assertThat(cursorRepository.find(subscriptionId, partitionId))
                 .isPresent()
                 .get()
