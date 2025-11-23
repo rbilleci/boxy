@@ -127,11 +127,11 @@ classDiagram
 
 Consumer-level heartbeat (in the consumers table) remains independent of per-partition state.
 
-Rather than each consumer writing every X seconds, we define:
+Rather than every consumer polling for events N-times per seconds, we define:
 
 - T<sub>cycle</sub>: a fixed “heartbeat cycle” (e.g. 1 s)
 
-- QPS<sub>target</sub>: the desired total heartbeats/sec for the whole cluster (e.g. 10 qps)
+- QPS<sub>target</sub>: the desired total heartbeats/sec for all active consumers of a subscription (e.g. 10 qps)
 
 On each cycle, each consumer flips a weighted coin with probability `p = min(1, target_QPS / N_active)`, 
 and only writes a heartbeat if it “wins” that flip.
@@ -143,10 +143,18 @@ Properties
   we pick the dead‐timeout to be a small multiple of that (e.g. 3×).
 
 
-## Client Protocol (subscriptions, polling, and offsets)
+## Client Consumer Protocol
 
-Each client communicates exclusively through stored procedures and is identified by a stable `consumer_id`; connections do not
-need to be sticky as long as that ID is reused.
+The Client Consumer Protocol defines how a client implementation for a given programming language must interact with Boxy. 
+All interaction occurs via stored procedures, and each client instance is identified by a stable `consumer_id` that must 
+be supplied on every call. Database connections do not need to be reused between calls,  
+and transactions may not span multiple client consumer calls.
+
+The protocol specifies how clients register, poll for events, apply backoff when idle, and commit offsets. 
+It is designed to support large-scale fan-out with many concurrent clients while strictly limiting the total polling 
+and heartbeat queries per subscription. As an implementer, you can treat the protocol as a small, well-defined 
+state machine driven by stored procedure calls keyed by `consumer_id`.
+
 
 ### Stored procedure touchpoints (aligned with Pulsar-like naming)
 
@@ -255,7 +263,7 @@ mvn liquibase:update -Dliquibase.url=jdbc:mysql://localhost:3306/events_db -Dliq
 
 ## FAQ
 
-### If my application models multi-tenancy using a database schema per tenant, should I install boxy in each each tenant?
+### If my application models multi-tenancy using a database schema per tenant, should I install boxy in each tenant?
 
 If your application models multi-tenancy by placing each tenant in its own database schema, 
 you should still use a single boxy schema. Boxy is designed to be multi-tenant and support hierarchical namespaces, 
