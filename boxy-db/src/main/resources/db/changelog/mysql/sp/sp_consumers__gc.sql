@@ -1,15 +1,12 @@
-CREATE PROCEDURE sp_consumers__gc(IN p_subscription_id BIGINT)
+CREATE PROCEDURE sp_consumers__gc()
 BEGIN
     DECLARE v_timestamp TIMESTAMP(3) DEFAULT CURRENT_TIMESTAMP(3);
 
-    -- DELETE EXPIRED CONSUMERS
-    DELETE w
-      FROM consumers w
- LEFT JOIN subscriptions s ON s.id = w.subscription_id
-     WHERE
-        -- RESTRICT TO THIS SUBSCRIPTION
-           w.subscription_id = p_subscription_id
-        -- CONSUMER EXPIRED OR SUBSCRIPTION DELETED
-       AND ((v_timestamp >= w.heartbeat_deadline) OR (s.id IS NULL));
+    START TRANSACTION;
 
+    DELETE
+      FROM consumers
+     WHERE heartbeat_deadline <= v_timestamp;
+
+    COMMIT;
 END;

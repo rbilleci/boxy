@@ -1,4 +1,4 @@
-CREATE PROCEDURE sp_events__sequence(IN p_batch_size INT, OUT p_has_events INT)
+CREATE PROCEDURE sp_sequence(IN p_batch_size INT, OUT p_has_events INT)
 BEGIN
     DECLARE v_has_events INT DEFAULT 0;
 

@@ -17,6 +17,10 @@
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
+        <sqlFile path="fn/fn_resolve_topic_id.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
         <sqlFile path="fn/fn_resolve_partition_id.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
@@ -26,42 +30,16 @@
                  splitStatements="false"
                  stripComments="false"/>
 
-        <!-- SP: POLICIES -->
-        <sqlFile path="sp/sp_heartbeat_policies__update.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-        <sqlFile path="sp/sp_metrics_policies__update.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-
         <!-- SP: CONSUMERS -->
-        <sqlFile path="sp/sp_consumers__delete.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
         <sqlFile path="sp/sp_consumers__gc.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_consumers__heartbeat.sql"
+        <sqlFile path="sp/sp_consumers__register.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
-        <sqlFile path="sp/sp_consumers__refresh_metrics.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-        <sqlFile path="sp/sp_consumers__shutdown.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-        <sqlFile path="sp/sp_consumers__subscribe.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
-        <sqlFile path="sp/sp_consumers__unsubscribe.sql"
+        <sqlFile path="sp/sp_consumers__deregister.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
@@ -85,10 +63,6 @@
                  stripComments="false"/>
 
         <!-- SP: SUBSCRIPTIONS -->
-        <sqlFile path="sp/sp_subscription_topics__refresh_metrics.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="false"
-                 stripComments="false"/>
         <sqlFile path="sp/sp_subscriptions__create.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
@@ -133,11 +107,11 @@
                   relativeToChangelogFile="true"
                   splitStatements="false"
                   stripComments="false"/>
-         <sqlFile path="sp/sp_events__sequence.sql"
+         <sqlFile path="sp/sp_sequence.sql"
                   relativeToChangelogFile="true"
                   splitStatements="false"
                   stripComments="false"/>
-         <sqlFile path="sp/sp_events__sequence_loop.sql"
+         <sqlFile path="sp/sp_sequence_loop.sql"
                   relativeToChangelogFile="true"
                   splitStatements="false"
                   stripComments="false"/>
@@ -145,8 +119,13 @@
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>
+
         <!-- Scheduled Events -->
-        <sqlFile path="events/event_sequencer.sql"
+        <sqlFile path="events/sequencer.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="events/consumer_gc.sql"
                  relativeToChangelogFile="true"
                  splitStatements="false"
                  stripComments="false"/>

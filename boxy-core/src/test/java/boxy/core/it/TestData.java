@@ -63,8 +63,6 @@ public record TestData(Topic topic,
 
         final var cursor = cursorRepository.findAll(subscriptions.getFirst().id()).getFirst();
 
-        System.out.println(new HeartbeatPolicyRepository(ds).get());
-
         return new TestData(
                 topicA,
                 namespaceAId,

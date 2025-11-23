@@ -1,4 +1,4 @@
-CREATE PROCEDURE sp_events__sequence_loop(IN p_batch_size INT)
+CREATE PROCEDURE sp_sequence_loop(IN p_batch_size INT)
 BEGIN
     DECLARE v_has_events INT DEFAULT 0;
     DECLARE v_no_event_start TIMESTAMP(3) DEFAULT NULL;
@@ -10,7 +10,7 @@ BEGIN
         ) ENGINE = MEMORY;
 
     main_loop: LOOP
-        CALL sp_events__sequence(p_batch_size, v_has_events);
+        CALL sp_sequence(p_batch_size, v_has_events);
 
         IF v_has_events = 1 THEN
             SET v_no_event_start = NULL;

@@ -1,4 +1,4 @@
-CREATE PROCEDURE sp_consumers__delete(IN p_consumer_id VARCHAR(36))
+CREATE PROCEDURE sp_consumers__deregister(IN p_consumer_id VARCHAR(36))
 BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION BEGIN ROLLBACK; END;
     START TRANSACTION;
