@@ -142,114 +142,94 @@ Properties
 - We detect failures in a bounded time: expected per-consumer heartbeat interval = 1 s / p = N_active / Q_target seconds;
   we pick the dead‐timeout to be a small multiple of that (e.g. 3×).
 
+---
 
 ## Client Consumer Protocol
 
 The Client Consumer Protocol defines how a client implementation for a given programming language must interact with Boxy. 
-All interaction occurs via stored procedures, and each client instance is identified by a stable `consumer_id` that must 
+All interaction occurs via stored procedures, and each client instance is identified by a `session_id` that must 
 be supplied on every call. Database connections do not need to be reused between calls,  
 and transactions may not span multiple client consumer calls.
 
 The protocol specifies how clients register, poll for events, apply backoff when idle, and commit offsets. 
 It is designed to support large-scale fan-out with many concurrent clients while strictly limiting the total polling 
 and heartbeat queries per subscription. As an implementer, you can treat the protocol as a small, well-defined 
-state machine driven by stored procedure calls keyed by `consumer_id`.
-
-### Stored procedure touchpoints
-
-- **Unsubscribe**: `sp_consumers__deregister(consumer_id)`. Optional clean-up when a consumer shuts down.
-- **Acknowledge/Commit**: `sp_cursors__commit(cursor_id, position)` or a future multi-commit variant. Records progress after
-  events are processed.
+state machine driven by stored procedure calls keyed by `session_id`.
 
 ### Consumer Stored Procedures
 
 At a minimum, a client consumer implementation must use the following stored procedures:
 
-* **Registration**
-  `sp_consumers__register(consumer_id, subscription_name, topics_json)`
-  Registers a consumer against a subscription and declares the set of topics it intends to consume.
-  A single consumer is bound to one subscription name for a given topic (or multi-topic pattern).
-  A process / service can create multiple consumer instances, each with its own subscription name (even on the same topics), 
-  and thereby “use more than one subscription name” overall.
+#### Registration Procedure
 
-    * `consumer_id` is the stable identifier used on every subsequent call.
-    * `subscription_name` refers to a subscription that already links to one or more topics via `sp_subscriptions__subscribe`.
-    * `topics_json` is a JSON array of fully qualified topic paths, selecting a subset of the subscription’s topics for this consumer. 
+`sp_consumers__register(session_id, subscription_name, topics_json)`
+Registers a consumer against a subscription and declares the set of topics it intends to consume.
+A single consumer is bound to one subscription name for a given topic (or multi-topic pattern).
+A process / service can create multiple consumer instances, each with its own subscription name (even on the same topics), 
+and thereby “use more than one subscription name” overall.
+
+Parameters:
+
+  * `session_id` is the identifier for the consumer session and is used on every subsequent call. 
+       It MUST be a random identifier, and MUST NOT be reused in subsequent registrations.
+  * `subscription_name` refers to a subscription that already links to one or more topics.
+  * `topics_json` is a JSON array of fully qualified topic paths, selecting a subset of the subscription’s topics for this consumer. 
        A consumer can decide choose to subscribe to all topics for that subscription name or a subset of them.
 
-* **Polling for events**
-  `sp_events__poll(consumer_id)`
-  Polling procedure that returns events plus backoff guidance.
+#### Polling Procedure
 
-    * `consumer_id` identify the consumer.
-      The server returns zero or more events plus metadata that instructs the client on polling frequency. 
-      If events are delivered, the client typically invokes `sp_events__poll` again immediately; 
-      if no events are available, the client uses the returned metadata to determine the next polling time.
+`sp_events__poll(session_id)`
+Polling procedure that returns the next events plus polling frequency guidance.
+When a client `poll`s after registration, it will receive events starting from the `last committed position` 
+for the topics it has registered. Subsequent calls to `poll` will receive events from the `last read position` for
+the topics it has registered. 
 
-* **Committing offsets (acknowledgement)**
-  `sp_cursors__commit(consumer_id, cursor_positions_json)`
-  Records the consumer’s progress for one or more topics after successful processing of events.
-  Each commit advances the stored position for the corresponding cursor so that subsequent polls 
-  resume from the correct offset.
-
-    * `consumer_id` identify the consumer.
-    * `cursor_positions_json` a JSON map of one or more `cursor_id` and `position` entries, 
-       with the `cursor_id` as the map key, and `position` as the map value.
-
-* **Deregistration and clean-up**
-  `sp_consumers__deregister(consumer_id)`
-  Removes a consumer registration when a client instance shuts down. 
-  Before deregistering, an implementation SHOULD complete processing of inflight events and commmit its cursor positions.
-  If an implementation does not deregister, it may be that other consumers will be blocked until deadlines pass.
+The server returns zero or more events plus metadata that instructs the client on polling frequency.
+If events are received, the client MAY invoke `sp_events__poll` again immediately or with a short delay,
+ignoring guidance on polling frequency; if no events are received,
+the client MUST the returned metadata to determine the next polling time.
+  
+Parameters:
+* `session_id` identify the session.
 
 
+#### Commit Procedure
+
+`sp_cursors__commit(session_id, cursor_positions_json)`
+Records the consumer’s progress for one or more topics after successful processing of events.
+Each commit advances the stored position for the corresponding cursors, so that subsequent sessions
+continue reading from the `last committed position`.
+
+An implementation can decide when to call `commit`. It is not necessary to call `commit` after every
+call to `poll`. For maximum throughput, it is recommended an implementation call `commit` periodically
+(e.g., every 1-second), and/or after it processes a certain number of events.
+
+An implementation SHOULD call commit before it deregisters if it has successfully processed any events
+since its last commit.
+
+Parameters:
+* `session_id` identify the session.
+* `cursor_positions_json` a JSON map of one or more `cursor_id` and `position` entries, 
+with the `cursor_id` as the map key, and `position` as the map value.
+
+#### Deregistration Procedure
+
+`sp_consumers__deregister(session_id)`
+SHOULD be called when a client is shutting down.
+Before deregistering, an implementation SHOULD complete processing of inflight events and commit cursor positions.
+If an implementation becomes inactive without calling `deregister` other consumers will be blocked until deadlines pass.
+After deregistering, an implementation MUST NOT make further calls with the same `session_id`.
+
+Parameters:
+* `session_id` identify the session.
 
 ### Lifecycle and state names
 
-- **Connecting** → transient phase before registration completes.
-- **Subscribed** → successfully registered but no poll yet issued.
+- **Registering** → transient phase before registration completes.
+- **Registered** → successfully registered but no poll yet issued.
 - **Receiving** → polling and receiving event batches without delay.
 - **Backoff** → idle/heartbeat mode driven by server-provided probability.
-- **Closing** → deregistering and shutting down.
-
-### Protocol requirements
-
-1. **Subscribe (Connecting → Subscribed)**
-   - Clients MUST call `sp_consumers__register` before any poll. The procedure MUST validate topic paths and MUST link the
-     consumer to the subscription.
-   - The client MUST transition to **Subscribed** on success.
-
-2. **Receive loop (Subscribed/Receiving → Receiving)**
-   - Clients MUST call `sp_events__poll_v2` with the subscription ID and consumer ID. When one or more events are returned, the
-     client MUST process them and MUST immediately issue the next poll with no pause. Continuous polling while events are flowing
-     keeps throughput high and doubles as a heartbeat.
-   - After successfully handling a batch, the client MUST call `sp_cursors__commit` (or a multi-commit equivalent) with the
-     highest processed sequence per cursor/partition. Committing after each processed batch minimizes duplicate delivery during
-     failover.
-   - Clients SHOULD size `batch_size` to balance latency and throughput; extremely large batches MAY increase commit latency.
-
-3. **Backoff and heartbeats (Receiving → Backoff → Receiving)**
-   - When `sp_events__poll_v2` returns zero events, the response MUST include a **poll probability** `p` derived from
-     server-side rate limiting for the subscription. The client MUST enter **Backoff** and perform a local timer check every 10 ms.
-   - On each 10 ms tick, the client MUST draw a random number; if it is ≤ `p`, it MUST issue the next poll/heartbeat. Randomized
-     checks MUST be used instead of fixed intervals to avoid synchronized polling that could cause thundering-herd spikes and
-     exceed the target polls/heartbeats per second for the subscription.
-   - The database SHOULD adjust `p` (or equivalent backoff hints) based on current load and the number of active consumers so the
-     cluster remains within the desired QPS budget.
-   - Every poll—whether it returns events or not—MUST update liveness for the consumer. Idle consumers still contribute
-     heartbeats at the probability-weighted cadence supplied by the database.
-
-4. **Acknowledge/Commit semantics**
-   - Clients MUST commit after a batch is processed successfully. They MUST NOT commit ahead of processing to avoid
-     acknowledging unprocessed work.
-   - For multi-partition batches, clients MUST commit the position for each cursor independently so lag tracking remains
-     accurate. A future multi-commit procedure SHOULD be used when available to reduce round-trips.
-
-5. **Unsubscribe (Closing)**
-   - On graceful exit, clients SHOULD call `sp_consumers__deregister` so subscription statistics quickly reflect the reduced
-     consumer set. Implementations MUST tolerate abrupt termination without deregistration; liveness will still age out via
-     heartbeat deadlines.
-
+- **Deregistering** → deregistering and shutting down.
 
   
 ## Building the Project
