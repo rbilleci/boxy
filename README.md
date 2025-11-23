@@ -157,7 +157,7 @@ Properties
 
 The Client Consumer Protocol defines how a client implementation for a given programming language must interact with Boxy. 
 All interaction occurs via stored procedures, and each client instance is identified by a `session_id` that must 
-be supplied on every call. Database connections do not need to be reused between calls,  
+be supplied on every call. Each stored procedure call is atomic. Database connections do not need to be reused between calls,  
 and transactions may not span multiple client consumer calls.
 
 The protocol specifies how clients register, poll for events, apply backoff when idle, and commit offsets. 
