@@ -139,8 +139,73 @@ and only writes a heartbeat if it “wins” that flip.
 Properties
 - When N_active ≤ Q_target, then p = 1 → everyone writes → we get N_active QPS (fine for small clusters).
 - When N_active > Q_target, then p = Q_target / N_active → expected cluster rate ≈ Q_target, irrespective of N.
-- We detect failures in a bounded time: expected per-consumer heartbeat interval = 1 s / p = N_active / Q_target seconds; 
+- We detect failures in a bounded time: expected per-consumer heartbeat interval = 1 s / p = N_active / Q_target seconds;
   we pick the dead‐timeout to be a small multiple of that (e.g. 3×).
+
+
+## Client Protocol (subscriptions, polling, and offsets)
+
+Each client communicates exclusively through stored procedures and is identified by a stable `consumer_id`; connections do not
+need to be sticky as long as that ID is reused.
+
+### Stored procedure touchpoints (aligned with Pulsar-like naming)
+
+- **Subscribe**: `sp_consumers__register(consumer_id, subscription_name, topics_json)`. Registers the consumer to the
+  subscription and the subset of topics it wants from that subscription (JSON array of fully qualified topic paths).
+- **Unsubscribe**: `sp_consumers__deregister(consumer_id)`. Optional clean-up when a consumer shuts down.
+- **Receive**: `sp_events__poll_v2(subscription_id, consumer_id, batch_size, topics_json OPTIONAL)`. Polling procedure that
+  returns events plus backoff guidance. The topics parameter explicitly requests a subset for the call when the subscription
+  covers multiple topics.
+- **Acknowledge/Commit**: `sp_cursors__commit(cursor_id, position)` or a future multi-commit variant. Records progress after
+  events are processed.
+
+### Lifecycle and state names
+
+These names intentionally mirror terms common in Apache Pulsar and industry-standard consumer protocols:
+
+- **Connecting** → transient phase before registration completes.
+- **Subscribed** → successfully registered but no poll yet issued.
+- **Receiving** → polling and receiving event batches without delay.
+- **Backoff** → idle/heartbeat mode driven by server-provided probability.
+- **Closing** → deregistering and shutting down.
+
+### Protocol requirements
+
+1. **Subscribe (Connecting → Subscribed)**
+   - Clients MUST call `sp_consumers__register` before any poll. The procedure MUST validate topic paths and MUST link the
+     consumer to the subscription.
+   - The client MUST transition to **Subscribed** on success.
+
+2. **Receive loop (Subscribed/Receiving → Receiving)**
+   - Clients MUST call `sp_events__poll_v2` with the subscription ID and consumer ID. When one or more events are returned, the
+     client MUST process them and MUST immediately issue the next poll with no pause. Continuous polling while events are flowing
+     keeps throughput high and doubles as a heartbeat.
+   - After successfully handling a batch, the client MUST call `sp_cursors__commit` (or a multi-commit equivalent) with the
+     highest processed sequence per cursor/partition. Committing after each processed batch minimizes duplicate delivery during
+     failover.
+   - Clients SHOULD size `batch_size` to balance latency and throughput; extremely large batches MAY increase commit latency.
+
+3. **Backoff and heartbeats (Receiving → Backoff → Receiving)**
+   - When `sp_events__poll_v2` returns zero events, the response MUST include a **poll probability** `p` derived from
+     server-side rate limiting for the subscription. The client MUST enter **Backoff** and perform a local timer check every 10 ms.
+   - On each 10 ms tick, the client MUST draw a random number; if it is ≤ `p`, it MUST issue the next poll/heartbeat. Randomized
+     checks MUST be used instead of fixed intervals to avoid synchronized polling that could cause thundering-herd spikes and
+     exceed the target polls/heartbeats per second for the subscription.
+   - The database SHOULD adjust `p` (or equivalent backoff hints) based on current load and the number of active consumers so the
+     cluster remains within the desired QPS budget.
+   - Every poll—whether it returns events or not—MUST update liveness for the consumer. Idle consumers still contribute
+     heartbeats at the probability-weighted cadence supplied by the database.
+
+4. **Acknowledge/Commit semantics**
+   - Clients MUST commit after a batch is processed successfully. They MUST NOT commit ahead of processing to avoid
+     acknowledging unprocessed work.
+   - For multi-partition batches, clients MUST commit the position for each cursor independently so lag tracking remains
+     accurate. A future multi-commit procedure SHOULD be used when available to reduce round-trips.
+
+5. **Unsubscribe (Closing)**
+   - On graceful exit, clients SHOULD call `sp_consumers__deregister` so subscription statistics quickly reflect the reduced
+     consumer set. Implementations MUST tolerate abrupt termination without deregistration; liveness will still age out via
+     heartbeat deadlines.
 
 
   
