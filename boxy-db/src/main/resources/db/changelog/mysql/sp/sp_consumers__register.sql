@@ -1,5 +1,5 @@
 CREATE PROCEDURE sp_consumers__register(
-    IN p_consumer_id VARCHAR(36),
+    IN p_session_id VARCHAR(36),
     IN p_subscription_name VARCHAR(500),
     IN p_topics JSON)
 BEGIN
@@ -27,7 +27,7 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Subscription does not exist';
     END IF;
 
-    SELECT heartbeat_deadline INTO v_existing_deadline FROM consumers WHERE id = p_consumer_id;
+    SELECT heartbeat_deadline INTO v_existing_deadline FROM sessions WHERE id = p_session_id;
     IF v_existing_deadline IS NOT NULL AND v_existing_deadline > v_now THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'DUPLICATE_SESSION';
     END IF;
@@ -86,9 +86,9 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'INVALID_TOPIC';
     END IF;
 
-    DELETE FROM consumers WHERE id = p_consumer_id;
+    DELETE FROM sessions WHERE id = p_session_id;
 
-    INSERT INTO consumers (
+    INSERT INTO sessions (
         id,
         subscription_id,
         weight,
@@ -97,7 +97,7 @@ BEGIN
         heartbeat_deadline,
         topic_ids)
     VALUES (
-        p_consumer_id,
+        p_session_id,
         v_subscription_id,
         1.0,
         v_now,

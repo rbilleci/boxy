@@ -20,13 +20,13 @@ BEGIN
 
     SELECT subscription_id, heartbeat_interval
       INTO v_subscription_id, v_heartbeat_interval
-      FROM consumers WHERE id = p_session_id;
+      FROM sessions WHERE id = p_session_id;
 
     IF v_subscription_id IS NULL THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'UNKNOWN_SESSION';
     END IF;
 
-    UPDATE consumers
+    UPDATE sessions
        SET heartbeat_detected_at = v_now,
            heartbeat_deadline = DATE_ADD(v_now, INTERVAL v_heartbeat_interval SECOND)
      WHERE id = p_session_id;
@@ -35,9 +35,9 @@ BEGIN
     INSERT INTO tmp_selected_sequences (cursor_id, partition_id, sequence, event_id)
     WITH topic_filter AS (
         SELECT jt.topic_id
-          FROM consumers c
-          JOIN JSON_TABLE(c.topic_ids, '$[*]' COLUMNS(topic_id BIGINT PATH '$')) AS jt
-            ON TRUE
+        FROM sessions c
+        JOIN JSON_TABLE(c.topic_ids, '$[*]' COLUMNS(topic_id BIGINT PATH '$')) AS jt
+          ON TRUE
          WHERE c.id = p_session_id
     ),
     candidate AS (
@@ -66,7 +66,7 @@ BEGIN
               l.cursor_id IS NULL OR
               l.locked_until IS NULL OR
               l.locked_until < v_now OR
-              l.consumer_id = p_session_id
+              l.session_id = p_session_id
           )
           AND p.high_watermark > c.position
     )
@@ -86,9 +86,9 @@ BEGIN
 
     UPDATE leases l
     JOIN tmp_selected_sequences sel ON sel.cursor_id = l.cursor_id
-    SET l.consumer_id  = p_session_id,
+    SET l.session_id  = p_session_id,
         l.locked_until = DATE_ADD(v_now, INTERVAL 3 SECOND)
-    WHERE l.locked_until IS NULL OR l.locked_until < v_now OR l.consumer_id = p_session_id;
+    WHERE l.locked_until IS NULL OR l.locked_until < v_now OR l.session_id = p_session_id;
 
     /* 3) Return the events for rows we actually hold now */
     SELECT
@@ -101,7 +101,7 @@ BEGIN
     JOIN cursors c ON c.id = sel.cursor_id
     JOIN leases l
       ON l.cursor_id = sel.cursor_id
-     AND l.consumer_id = p_session_id
+     AND l.session_id = p_session_id
     JOIN events e
       ON e.id = sel.event_id;
 

@@ -14,7 +14,7 @@ public class LeaseMapper implements RowMapper<Lease> {
         final Instant lockedUntilInstant = lockedUntil == null ? null : lockedUntil.toInstant();
         return new Lease(
                 rs.getLong("cursor_id"),
-                rs.getString("consumer_id"),
+                rs.getString("session_id"),
                 lockedUntilInstant);
     }
 }

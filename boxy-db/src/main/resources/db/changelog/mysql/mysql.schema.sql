@@ -104,7 +104,7 @@ CREATE TABLE cursors (
     COLLATE=utf8mb4_bin
     COMMENT='Maintains the last cursor position for each subscription/partition';
 
-CREATE TABLE consumers (
+CREATE TABLE sessions (
     id                   VARCHAR(36)  PRIMARY KEY,
     subscription_id      BIGINT       NOT NULL,
     weight               DOUBLE       NOT NULL DEFAULT 1,
@@ -113,24 +113,24 @@ CREATE TABLE consumers (
     heartbeat_deadline   DATETIME(3)  NOT NULL,
     topic_ids            JSON         NOT NULL DEFAULT (JSON_ARRAY()),
     FOREIGN KEY (subscription_id) REFERENCES subscriptions(id),
-    INDEX idx_consumers__subscription (subscription_id),
-    INDEX idx_consumers__heartbeat_detected_at (heartbeat_detected_at)
+    INDEX idx_sessions__subscription (subscription_id),
+    INDEX idx_sessions__heartbeat_detected_at (heartbeat_detected_at)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
-    COMMENT='Registered consumers per subscription, with capacity weight and heartbeat timestamp';
+    COMMENT='Registered consumer sessions per subscription, with capacity weight and heartbeat timestamp';
 
 CREATE TABLE leases (
     cursor_id    BIGINT      PRIMARY KEY,
-    consumer_id  VARCHAR(36) NULL,
+    session_id   VARCHAR(36) NULL,
     locked_until DATETIME(3) NULL,
-    FOREIGN KEY (cursor_id)   REFERENCES cursors (id) ON DELETE CASCADE,
-    FOREIGN KEY (consumer_id) REFERENCES consumers (id) ON DELETE SET NULL,
+    FOREIGN KEY (cursor_id) REFERENCES cursors (id) ON DELETE CASCADE,
+    FOREIGN KEY (session_id) REFERENCES sessions (id) ON DELETE SET NULL,
     INDEX idx_leases__lock (locked_until)
 ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_bin
-    COMMENT='Tracks cursor leases held by consumers';
+    COMMENT='Tracks cursor leases held by consumer sessions';
 
 CREATE TABLE IF NOT EXISTS unprocessed_events (
     id           BIGINT PRIMARY KEY,

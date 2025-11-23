@@ -5,7 +5,7 @@ BEGIN
     START TRANSACTION;
 
     DELETE
-      FROM consumers
+      FROM sessions
      WHERE heartbeat_deadline <= v_timestamp;
 
     COMMIT;

@@ -38,9 +38,9 @@ class EventPollIT extends BaseIT {
         final long subscriptionId = subscription.id();
         final long partitionId =
                 partitionRepository.find(TestData.PATH_A, TOPIC_A, 0).orElseThrow().id();
-        final String consumerId = "consumer-0";
+        final String sessionId = "consumer-0";
 
-        consumerRepository.register(consumerId, subscription.name(), List.of(PATH_A + "/" + TOPIC_A));
+        consumerRepository.register(sessionId, subscription.name(), List.of(PATH_A + "/" + TOPIC_A));
 
         eventRepository.publish(partitionId, "{}");
         eventRepository.publish(partitionId, "{}");
@@ -49,7 +49,7 @@ class EventPollIT extends BaseIT {
 
         try (var conn = dataSource.getConnection();
              var poll = conn.prepareCall("{CALL sp_events__poll(?)}")) {
-            poll.setString(1, consumerId);
+            poll.setString(1, sessionId);
 
             final var start = System.currentTimeMillis();
             for (int i = 0; i < 10_000; i++) {
@@ -73,9 +73,9 @@ class EventPollIT extends BaseIT {
         final long subscriptionId = subscription.id();
         final long partitionId =
                 partitionRepository.find(TestData.PATH_A, TOPIC_A, 0).orElseThrow().id();
-        final String consumerId = "consumer-1";
+        final String sessionId = "consumer-1";
 
-        consumerRepository.register(consumerId, subscription.name(), List.of(PATH_A + "/" + TOPIC_A));
+        consumerRepository.register(sessionId, subscription.name(), List.of(PATH_A + "/" + TOPIC_A));
 
         eventRepository.publish(partitionId, "{\"v\":1}");
         eventRepository.publish(partitionId, "{\"v\":2}");
@@ -84,7 +84,7 @@ class EventPollIT extends BaseIT {
         final List<Long> polled = new ArrayList<>();
         try (var conn = dataSource.getConnection();
              var poll = conn.prepareCall("{CALL sp_events__poll(?)}")) {
-            poll.setString(1, consumerId);
+            poll.setString(1, sessionId);
             poll.execute();
             try (var rs = poll.getResultSet()) {
                 while (rs.next()) {
@@ -98,7 +98,7 @@ class EventPollIT extends BaseIT {
 
         try (var conn = dataSource.getConnection();
              var ps = conn.prepareStatement(
-                     "SELECT l.consumer_id " +
+                     "SELECT l.session_id " +
                      "FROM leases l " +
                      "JOIN cursors c ON c.id = l.cursor_id " +
                      "WHERE c.subscription_id = ? AND c.partition_id = ?")) {
@@ -106,7 +106,7 @@ class EventPollIT extends BaseIT {
             ps.setLong(2, partitionId);
             try (var rs = ps.executeQuery()) {
                 assertThat(rs.next()).isTrue();
-                assertThat(rs.getString(1)).isEqualTo(consumerId);
+                assertThat(rs.getString(1)).isEqualTo(sessionId);
             }
         }
     }
@@ -117,9 +117,9 @@ class EventPollIT extends BaseIT {
         final long subscriptionId = subscription.id();
         final long partitionId =
                 partitionRepository.find(TestData.PATH_A, TOPIC_A, 0).orElseThrow().id();
-        final String consumerId = "consumer-2";
+        final String sessionId = "consumer-2";
 
-        consumerRepository.register(consumerId, subscription.name(), List.of(PATH_A + "/" + TOPIC_A));
+        consumerRepository.register(sessionId, subscription.name(), List.of(PATH_A + "/" + TOPIC_A));
 
         eventRepository.publish(partitionId, "{}");
         eventRepository.publish(partitionId, "{}");
@@ -128,7 +128,7 @@ class EventPollIT extends BaseIT {
 
         final List<Long> polled = new ArrayList<>();
         try (var conn = dataSource.getConnection(); var poll = conn.prepareCall("{CALL sp_events__poll(?)}")) {
-            poll.setString(1, consumerId);
+            poll.setString(1, sessionId);
             poll.execute();
             try (var rs = poll.getResultSet()) {
                 while (rs.next()) {
@@ -144,12 +144,12 @@ class EventPollIT extends BaseIT {
     @Test
     void poll_emptyBatchReturnsBackoffProbability() throws SQLException {
         final var subscription = data.subscriptions().getFirst();
-        final String consumerId = "consumer-backoff";
+        final String sessionId = "consumer-backoff";
 
-        consumerRepository.register(consumerId, subscription.name(), List.of(PATH_A + "/" + TOPIC_A));
+        consumerRepository.register(sessionId, subscription.name(), List.of(PATH_A + "/" + TOPIC_A));
 
         try (var conn = dataSource.getConnection(); var poll = conn.prepareCall("{CALL sp_events__poll(?)}")) {
-            poll.setString(1, consumerId);
+            poll.setString(1, sessionId);
 
             poll.execute();
             try (var rs = poll.getResultSet()) {

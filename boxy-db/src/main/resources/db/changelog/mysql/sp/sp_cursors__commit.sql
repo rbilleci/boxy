@@ -14,7 +14,7 @@ BEGIN
 
     SELECT subscription_id, topic_ids
       INTO v_subscription_id, v_topic_filter
-      FROM consumers
+      FROM sessions
      WHERE id = p_session_id;
 
     IF v_subscription_id IS NULL THEN

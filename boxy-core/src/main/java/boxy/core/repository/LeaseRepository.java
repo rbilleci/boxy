@@ -19,7 +19,7 @@ public final class LeaseRepository extends BaseRepository {
         return queryOne("SELECT * FROM leases WHERE cursor_id = ?", LEASE_MAPPER, cursorId);
     }
 
-    public List<Lease> findByConsumer(final String consumerId) {
-        return query("SELECT * FROM leases WHERE consumer_id = ? ORDER BY cursor_id", LEASE_MAPPER, consumerId);
+    public List<Lease> findBySession(final String sessionId) {
+        return query("SELECT * FROM leases WHERE session_id = ? ORDER BY cursor_id", LEASE_MAPPER, sessionId);
     }
 }
