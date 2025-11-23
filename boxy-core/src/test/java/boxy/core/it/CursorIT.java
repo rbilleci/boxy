@@ -1,24 +1,34 @@
 package boxy.core.it;
 
-import boxy.core.repository.*;
 import boxy.core.domain.Cursor;
+import boxy.core.repository.ConsumerRepository;
+import boxy.core.repository.CursorRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.util.List;
+import java.util.Map;
 
+import static boxy.core.it.TestData.PATH_A;
+import static boxy.core.it.TestData.TOPIC_A;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Testcontainers
 public class CursorIT extends BaseIT {
 
     private CursorRepository cursorRepository;
+    private ConsumerRepository consumerRepository;
     private TestData data;
+    private String consumerId;
 
     @BeforeEach
     void setup() {
         cursorRepository = new CursorRepository(dataSource);
+        consumerRepository = new ConsumerRepository(dataSource);
         data = TestData.seed(dataSource);
+        consumerId = "cursor-test-consumer";
+        consumerRepository.register(consumerId, data.subscriptions().getFirst().name(), List.of(PATH_A + "/" + TOPIC_A));
     }
 
     @Test
@@ -27,8 +37,7 @@ public class CursorIT extends BaseIT {
         final var subscriptionId = data.subscriptions().getFirst().id();
         final var partitionId = cursor.partitionId();
 
-        // COMMIT HWM
-        cursorRepository.commit(cursor.id(), 100L);
+        cursorRepository.commit(consumerId, Map.of(cursor.id(), 100L));
         assertThat(cursorRepository.find(subscriptionId, partitionId))
                 .isPresent()
                 .get()
@@ -42,10 +51,9 @@ public class CursorIT extends BaseIT {
         final var subscriptionId = data.subscriptions().getFirst().id();
         final var partitionId = cursor.partitionId();
 
-        // COMMIT HWM
-        cursorRepository.commit(cursor.id(), 100L);
-        cursorRepository.commit(cursor.id(), 101L);
-        cursorRepository.commit(cursor.id(), 102L);
+        cursorRepository.commit(consumerId, Map.of(cursor.id(), 100L));
+        cursorRepository.commit(consumerId, Map.of(cursor.id(), 101L));
+        cursorRepository.commit(consumerId, Map.of(cursor.id(), 102L));
         assertThat(cursorRepository.find(subscriptionId, partitionId))
                 .isPresent()
                 .get()
@@ -59,9 +67,8 @@ public class CursorIT extends BaseIT {
         final var subscriptionId = data.subscriptions().getFirst().id();
         final var partitionId = cursor.partitionId();
 
-        // COMMIT HWM
-        cursorRepository.commit(cursor.id(), 100L);
-        cursorRepository.commit(cursor.id(), 10L);
+        cursorRepository.commit(consumerId, Map.of(cursor.id(), 100L));
+        cursorRepository.commit(consumerId, Map.of(cursor.id(), 10L));
         assertThat(cursorRepository.find(subscriptionId, partitionId))
                 .isPresent()
                 .get()
@@ -75,9 +82,8 @@ public class CursorIT extends BaseIT {
         final var subscriptionId = data.subscriptions().getFirst().id();
         final var partitionId = cursor.partitionId();
 
-        // COMMIT HWM
-        cursorRepository.commit(cursor.id(), 100L);
-        cursorRepository.commit(cursor.id(), 100L);
+        cursorRepository.commit(consumerId, Map.of(cursor.id(), 100L));
+        cursorRepository.commit(consumerId, Map.of(cursor.id(), 100L));
         assertThat(cursorRepository.find(subscriptionId, partitionId))
                 .isPresent()
                 .get()
