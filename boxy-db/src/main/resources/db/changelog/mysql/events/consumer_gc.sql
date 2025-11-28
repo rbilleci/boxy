@@ -2,4 +2,4 @@ CREATE EVENT consumer_gc
     ON SCHEDULE EVERY 1 MINUTE
     ON COMPLETION PRESERVE
     ENABLE
-    DO CALL sp_consumers_gc();
+    DO CALL sp_consumers__gc();
