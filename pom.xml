@@ -183,4 +183,144 @@
         </dependencies>
     </dependencyManagement>
 
+    <!--
+      =========================================================================
+      Benchmark profiles
+      =========================================================================
+
+      Three hardware tiers, each with a named Maven profile.  The default build
+      skips benchmarks entirely; activate a profile explicitly:
+
+        mvn test -Pbench-local          # Testcontainers + tmpfs (CI regression)
+        mvn test -Pbench-cloud-small    # External MySQL on db.r6g.large / gp3
+        mvn test -Pbench-cloud-prod     # External MySQL on db.r6g.2xlarge+ / io2
+
+      bench-local: CI-safe.  Runs PipelineBenchmarkIT and BenchmarkIT against a
+        Testcontainers MySQL container with tmpfs and relaxed durability flags
+        (--innodb_flush_log_at_trx_commit=0, --sync_binlog=0, etc.).  Numbers are
+        NOT production-representative — use only as regression guards to detect
+        performance regressions across commits.
+
+      bench-cloud-small: Targets a db.r6g.large (2 vCPU / 16 GB) MySQL 8 instance
+        with gp3 storage (3000 IOPS baseline).  Connection details provided via
+        environment variables (DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD).
+        Expected ceiling: ~100K events/sec sustained.
+
+      bench-cloud-prod: Targets a db.r6g.2xlarge+ (8+ vCPU / 64+ GB) MySQL 8
+        instance with io2 storage (provisioned IOPS ≥64K).  This is the target
+        hardware for the 1M events/sec goal.  Same env vars as bench-cloud-small.
+    -->
+
+    <profiles>
+
+        <!--
+          bench-local — Testcontainers + tmpfs, relaxed durability.
+          Runs BenchmarkIT and PipelineBenchmarkIT.
+          All other *IT tests are excluded to keep the run focused.
+        -->
+        <profile>
+            <id>bench-local</id>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-surefire-plugin</artifactId>
+                            <configuration>
+                                <includes>
+                                    <include>**/it/BenchmarkIT.java</include>
+                                    <include>**/it/PipelineBenchmarkIT.java</include>
+                                </includes>
+                                <argLine>
+                                    --add-opens java.base/java.lang=ALL-UNNAMED
+                                    --add-opens java.base/java.util=ALL-UNNAMED
+                                    --add-opens java.base/java.nio=ALL-UNNAMED
+                                </argLine>
+                                <systemPropertyVariables>
+                                    <!-- Signals benchmarks they are running in local/CI mode -->
+                                    <boxy.bench.profile>local</boxy.bench.profile>
+                                </systemPropertyVariables>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+
+        <!--
+          bench-cloud-small — external MySQL on db.r6g.large / gp3.
+          Skips Testcontainers; connection provided via environment variables.
+          Hardware spec:  2 vCPU, 16 GB RAM, gp3 3000 IOPS
+          MySQL tuning:   innodb_flush_log_at_trx_commit=1 (full durability)
+        -->
+        <profile>
+            <id>bench-cloud-small</id>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-surefire-plugin</artifactId>
+                            <configuration>
+                                <includes>
+                                    <include>**/it/BenchmarkIT.java</include>
+                                    <include>**/it/PipelineBenchmarkIT.java</include>
+                                </includes>
+                                <argLine>
+                                    --add-opens java.base/java.lang=ALL-UNNAMED
+                                    --add-opens java.base/java.util=ALL-UNNAMED
+                                    --add-opens java.base/java.nio=ALL-UNNAMED
+                                </argLine>
+                                <systemPropertyVariables>
+                                    <boxy.bench.profile>cloud-small</boxy.bench.profile>
+                                    <!-- Connection details from environment (set before running) -->
+                                    <DB_TYPE>mysql</DB_TYPE>
+                                </systemPropertyVariables>
+                                <environmentVariables>
+                                    <!-- Inherit DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
+                                         from the shell environment. -->
+                                </environmentVariables>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+
+        <!--
+          bench-cloud-prod — external MySQL on db.r6g.2xlarge+ / io2 (target: 1M events/sec).
+          Hardware spec:  ≥8 vCPU, ≥64 GB RAM, io2 ≥64K IOPS
+          MySQL tuning:   innodb_flush_log_at_trx_commit=2, sync_binlog=0
+        -->
+        <profile>
+            <id>bench-cloud-prod</id>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-surefire-plugin</artifactId>
+                            <configuration>
+                                <includes>
+                                    <include>**/it/BenchmarkIT.java</include>
+                                    <include>**/it/PipelineBenchmarkIT.java</include>
+                                </includes>
+                                <argLine>
+                                    --add-opens java.base/java.lang=ALL-UNNAMED
+                                    --add-opens java.base/java.util=ALL-UNNAMED
+                                    --add-opens java.base/java.nio=ALL-UNNAMED
+                                </argLine>
+                                <systemPropertyVariables>
+                                    <boxy.bench.profile>cloud-prod</boxy.bench.profile>
+                                    <DB_TYPE>mysql</DB_TYPE>
+                                </systemPropertyVariables>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+
+    </profiles>
+
 </project>
