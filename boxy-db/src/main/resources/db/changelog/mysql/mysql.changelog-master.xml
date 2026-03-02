@@ -377,4 +377,34 @@
                  splitStatements="false"
                  stripComments="false"/>
     </changeSet>
+
+    <!--
+      Changeset 12: Schema & data management (items #95-#100).
+      - Add events.created_at TIMESTAMP(3) column for time-based retention (item #95).
+      - Add idx_events__created_at index for efficient cleanup range scans (item #96).
+      - Add sp_events__cleanup procedure for batch event retention (item #97).
+      - Item #98 (unprocessed_events.partition_id index): already done in changeset 5.
+      - sp_events__publish v3: payload size validation from boxy_config (item #99).
+      - sp_events__publish_multi v4: batch size validation from boxy_config (item #100).
+      - Add max.event.payload.bytes and max.batch.size defaults to boxy_config.
+      Items #101-#104 are evaluation items documented in docs/schema.md.
+    -->
+    <changeSet id="12" author="richard.billeci" dbms="mysql">
+        <sqlFile path="sp/events_created_at.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="true"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_events__cleanup.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_events__publish_v3.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_events__publish_multi_v4.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+    </changeSet>
 </databaseChangeLog>
