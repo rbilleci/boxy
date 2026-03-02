@@ -189,6 +189,47 @@ _Numbers pending first cloud run._
 
 ---
 
+## Sequencer Evaluation
+
+### Item #37 — Sequencer Ceiling
+
+The sequencer ceiling is measured by `BenchmarkIT.sequencer_throughput`: publishes a fixed
+batch, then polls `sequences` until all rows appear, reporting events/sec and drain time.
+
+**Ceiling results (pending):** _Run `mvn test -Pbench-local` and record here._
+
+| Profile | Batch size | Drain time (s) | Sequencer throughput (events/sec) |
+|---|---|---|---|
+| bench-local | 1,000 | TBD | TBD |
+| bench-cloud-small | 1,000 | TBD | TBD |
+| bench-cloud-prod | 1,000 | TBD | TBD |
+
+**Interpretation:** If the bench-cloud-prod ceiling is ≥ 1M events/sec, the sequencer is not
+the bottleneck at target load. If below, consider partitioned sequencing (item #39).
+
+### Item #38 — sp_sequence Batch Processing Analysis
+
+The original `sp_sequence` was analysed for optimization opportunities:
+
+**Finding (a) — DELETE path:** The `STRAIGHT_JOIN` hint in `DELETE ue FROM temp_claimed_ids b STRAIGHT_JOIN unprocessed_events ue ON b.id = ue.id` forces the temp table as the outer (driving) table. Without this hint, MySQL might flip the join order and do a full scan of `unprocessed_events`. This was already explicitly tuned and is retained in v2.
+
+**Finding (b) — high_watermark UPDATE:** The v1 implementation joined back into the `sequences` table by `event_id` to find the max sequence per partition. The `sequences` table has no index on `event_id` (only on `(partition_id, sequence)`), meaning this join degrades as `sequences` accumulates rows. The v2 implementation replaces this with `@first_seq + ROW_NUMBER() OVER (ORDER BY partition_id, id) - 1` arithmetic: since InnoDB guarantees contiguous AUTO_INCREMENT values within a single INSERT, no table re-read is needed.
+
+**Benchmark gate (pending):** `BenchmarkIT.sequencer_throughput` must show equal or improved throughput vs v1 baseline.
+
+### Item #39 — Partitioned Sequencing Evaluation
+
+If the single-threaded sequencer cannot reach 1M events/sec, the architecture can be extended to partition the sequencer across multiple threads.
+
+**Design:** Each sequencer thread processes events for a disjoint partition range: e.g., thread 0 handles `partition_id % N == 0`, thread 1 handles `% N == 1`, etc. This requires:
+- `sp_sequence` to accept a `(p_partition_min, p_partition_max)` range parameter
+- Multiple MySQL events (or an application-level scheduler) firing concurrently
+- A composite index on `unprocessed_events(partition_id, id)` (covered by item #42)
+
+**Decision trigger:** Implement partitioned sequencing if bench-cloud-prod ceiling < 500K events/sec (safety margin before the 1M target). Document the decision in this file when benchmark numbers are available.
+
+---
+
 ## Publish Path Evaluation
 
 This section documents the analysis behind publish-path optimizations (items #32–#36).

@@ -154,4 +154,47 @@
                  stripComments="false"/>
     </changeSet>
 
+    <!--
+      Changeset 3: Optimise sp_sequence (item #38).
+      - Replaces the high_watermark UPDATE (which re-joined the sequences table
+        by event_id without an index) with @first_seq + ROW_NUMBER() arithmetic,
+        eliminating the unbounded sequences scan entirely.
+      - Renames OUT parameter p_has_events -> p_processed_count so callers can
+        implement dynamic batch sizing (changeset 4).
+      - Adds detailed inline documentation.
+    -->
+    <changeSet id="3" author="richard.billeci" dbms="mysql">
+        <sqlFile path="sp/sp_sequence_v2.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+    </changeSet>
+
+    <!--
+      Changeset 4: Sequencer loop improvements (items #40 and #41).
+      - Dynamic batch sizing: doubles working batch (up to 10,000) when a full
+        batch is processed, resets to minimum after a partial or empty batch.
+        Improves burst recovery without an extra COUNT(*) query.
+      - Idle sleep reduced from 10ms to 1ms, improving cold-partition latency.
+      Depends on changeset 3 (uses p_processed_count from sp_sequence v2).
+    -->
+    <changeSet id="4" author="richard.billeci" dbms="mysql">
+        <sqlFile path="sp/sp_sequence_loop_v2.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+    </changeSet>
+
+    <!--
+      Changeset 5: Add partition_id index to unprocessed_events (item #42).
+      Enables efficient partition-range scans for future partitioned sequencing
+      and diagnostic queries. Negligible INSERT overhead (table drains rapidly).
+    -->
+    <changeSet id="5" author="richard.billeci" dbms="mysql">
+        <sqlFile path="sp/unprocessed_events_partition_index.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+    </changeSet>
+
 </databaseChangeLog>
