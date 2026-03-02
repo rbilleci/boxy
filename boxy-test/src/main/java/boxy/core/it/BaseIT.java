@@ -89,6 +89,10 @@ public abstract class BaseIT {
              final var rs = stmt.executeQuery("SELECT quote_ident(tablename) FROM pg_tables WHERE schemaname = 'public'")) {
 
             final var tables = new ArrayList<String>();
+            // Fix: populate tables from the ResultSet (Item #116)
+            while (rs.next()) {
+                tables.add(rs.getString(1));
+            }
             for (final var table : tables) {
                 stmt.addBatch("ALTER TABLE %s DISABLE TRIGGER ALL;".formatted(table));
             }

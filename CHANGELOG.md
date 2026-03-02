@@ -13,6 +13,8 @@ Each entry maps to a numbered item in [PRODUCTION_READINESS.md](./PRODUCTION_REA
 ### Completed
 | Date | Item # | Description | Commit |
 |------|--------|-------------|--------|
+| 2026-03-02 | 114-121 | Section 8: Testing — fix PostgreSQL teardown bug (BaseIT), replace Thread.sleep with poll-based sequencer await, ErrorEdgeCaseIT (duplicate consumer/invalid topic/stale commit), ConcurrentConsumerIT (no-duplicate events under contention), EventOrderingIT (monotonic sequence within partition), LeaseExpirationIT (lease takeover after expiry), MapperTest (unit tests with fake ResultSet), StressIT (100 topics/100 consumers @Disabled) | TBD |
+| 2026-03-02 | 110-113 | Section 7: Java core resilience — DataAccessException.isRetryable() (MySQL error classification), RetryPolicy (exponential backoff + full jitter), CircuitBreaker (CLOSED/OPEN/HALF_OPEN state machine) | 9b2a38d |
 | 2026-03-02 | 105-109 | Section 6: Security & input validation — JsonUtils (RFC 8259 escaping), InputValidator (path/name/partition validation), ConsumerRepository+CursorRepository+EventRepository JSON refactor | b61b886 |
 | 2026-03-02 | 95-104 | Section 5: Schema & data management — events.created_at, cleanup SP, payload/batch validation, schema evaluation docs | bf39c68 |
 | 2026-03-02 | 89-94 | Section 4: Configuration externalization — BOXY_POOL_SIZE env vars, boxy_config table, sp_events__poll_v4 (configurable lease lock), sp_sequence_loop_v4 (configurable batch), sp_subscriptions__subscribe_v3 (configurable heartbeat interval) | fdf5ed6 |
@@ -65,8 +67,8 @@ Each entry maps to a numbered item in [PRODUCTION_READINESS.md](./PRODUCTION_REA
 | Section 4: Configuration | 6 | 6 | 0 |
 | Section 5: Schema & Data | 10 | 10 | 0 |
 | Section 6: Security | 5 | 5 | 0 |
-| Section 7: Java Resilience | 4 | 0 | 4 |
-| Section 8: Testing | 8 | 0 | 8 |
+| Section 7: Java Resilience | 4 | 4 | 0 |
+| Section 8: Testing | 8 | 8 | 0 |
 | Section 9: Background Reliability | 8 | 0 | 8 |
 | Section 10: PostgreSQL | 8 | 0 | 8 |
 | Section 11: Docs & DX | 8 | 0 | 8 |
@@ -74,4 +76,4 @@ Each entry maps to a numbered item in [PRODUCTION_READINESS.md](./PRODUCTION_REA
 | Section 13: Branch Hygiene | 4 | 0 | 4 |
 | Section 14: Client SDKs | 6 | 0 | 6 |
 | Section 15: Core Enhancements | 8 | 0 | 8 |
-| **TOTAL** | **156** | **109** | **47** |
+| **TOTAL** | **156** | **121** | **35** |

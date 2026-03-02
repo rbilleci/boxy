@@ -241,12 +241,38 @@ class EventPollIT extends BaseIT {
         assertThat(secondPoll).isEmpty();
     }
 
-    private void awaitSequencer() {
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+    /**
+     * Replace Thread.sleep with polling-based assertion.
+     * Wait for the sequencer to process all events by polling the unprocessed_events table.
+     * Item #115: Replace Thread.sleep(1000) with polling/retry-based assertions.
+     */
+    private void awaitSequencer() throws SQLException {
+        final long timeoutMs = 5000;
+        final long pollIntervalMs = 50;
+        final long startTime = System.currentTimeMillis();
+
+        while (System.currentTimeMillis() - startTime < timeoutMs) {
+            try (var conn = dataSource.getConnection();
+                 var stmt = conn.createStatement();
+                 var rs = stmt.executeQuery("SELECT COUNT(*) as cnt FROM unprocessed_events")) {
+                if (rs.next()) {
+                    final int unprocessedCount = rs.getInt("cnt");
+                    if (unprocessedCount == 0) {
+                        // All events processed
+                        return;
+                    }
+                }
+            }
+            try {
+                Thread.sleep(pollIntervalMs);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Interrupted while waiting for sequencer", e);
+            }
         }
+
+        // Timeout reached
+        throw new RuntimeException("Timeout waiting for sequencer to process events after " + timeoutMs + "ms");
     }
 
     private List<Long> pollEvents(final String consumerId) throws SQLException {
