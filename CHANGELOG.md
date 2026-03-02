@@ -13,6 +13,7 @@ Each entry maps to a numbered item in [PRODUCTION_READINESS.md](./PRODUCTION_REA
 ### Completed
 | Date | Item # | Description | Commit |
 |------|--------|-------------|--------|
+| 2026-03-02 | 37-42 | Sequencer: sp_sequence v2 (ROW_NUMBER watermark), dynamic batch sizing, 1ms sleep, partition index | 74e8605 |
 | 2026-03-02 | 32-36 | Publish path: sp_events__publish_multi v2 (bulk INSERT), EventRepository.publishBatch, PublishRequest, evaluation docs | 9501300 |
 | 2026-03-02 | 28-31 | Benchmark infrastructure: PipelineBenchmarkIT, component benchmarks (sequencer/poll/commit), Maven bench profiles, docs/benchmarks.md | f4c4b58 |
 | 2026-03-02 | 16-27 | Implement boxy-cli with picocli + GraalVM native-image support | 425dec5 |
@@ -41,7 +42,7 @@ Each entry maps to a numbered item in [PRODUCTION_READINESS.md](./PRODUCTION_REA
 | Phase 0D: CLI Implementation | 12 | 12 | 0 |
 | Phase 1A: Benchmark Infrastructure | 4 | 4 | 0 |
 | Phase 1B: Publish Path | 5 | 5 | 0 |
-| Phase 1C: Sequencer | 6 | 0 | 6 |
+| Phase 1C: Sequencer | 6 | 6 | 0 |
 | Phase 1D: Poll Path | 8 | 0 | 8 |
 | Phase 1E: Commit Path | 3 | 0 | 3 |
 | Phase 1F: Schema Performance | 4 | 0 | 4 |
@@ -62,4 +63,4 @@ Each entry maps to a numbered item in [PRODUCTION_READINESS.md](./PRODUCTION_REA
 | Section 13: Branch Hygiene | 4 | 0 | 4 |
 | Section 14: Client SDKs | 6 | 0 | 6 |
 | Section 15: Core Enhancements | 8 | 0 | 8 |
-| **TOTAL** | **156** | **36** | **120** |
+| **TOTAL** | **156** | **42** | **114** |
