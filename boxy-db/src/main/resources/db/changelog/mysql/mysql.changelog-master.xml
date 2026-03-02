@@ -232,4 +232,19 @@
                  stripComments="false"/>
     </changeSet>
 
+    <!--
+      Changeset 8: Covering indexes for poll and commit queries (item #57).
+      - cursors: idx_cursors__poll_cover (subscription_id, topic_id, partition_id,
+        random_key, position) — covers the candidate-selection step in sp_events__poll.
+      - consumer_leases: idx_consumer_leases__commit_cover (cursor_id, consumer_id,
+        locked_until) — covers the commit lease release and the poll lock check.
+      Items #54, #55, #56 are evaluation/documentation items; see docs/benchmarks.md.
+    -->
+    <changeSet id="8" author="richard.billeci" dbms="mysql">
+        <sqlFile path="sp/covering_indexes.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="true"
+                 stripComments="false"/>
+    </changeSet>
+
 </databaseChangeLog>

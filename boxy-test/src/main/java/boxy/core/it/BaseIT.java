@@ -37,7 +37,10 @@ public abstract class BaseIT {
                             "--sync_binlog=0",                     // don't fsync the binary log
                             "--innodb_doublewrite=0",              // skip double‑write buffer
                             "--innodb_flush_method=nosync",        // avoid O_DSYNC/O_DIRECT
-                            "--performance_schema=OFF"             // turn off the perf schema overhead
+                            "--performance_schema=OFF",            // turn off the perf schema overhead
+                            // Item #56: interleaved AUTO_INCREMENT mode — no table-level lock on
+                            // concurrent multi-row INSERTs to events/sequences/unprocessed_events.
+                            "--innodb_autoinc_lock_mode=2"
                     );
 
     protected DataSource dataSource;

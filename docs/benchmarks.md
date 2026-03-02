@@ -352,6 +352,65 @@ cardinality as the cursor UPDATE, with negligible latency overhead.
 
 ---
 
+## Schema Performance Evaluation
+
+### Item #54: unprocessed_events Storage Format
+
+`unprocessed_events` is a transient queue table with high INSERT/DELETE churn.  It already
+uses `ROW_FORMAT=COMPACT` (the InnoDB default), which is appropriate for narrow rows.
+
+**Evaluation findings:**
+- `MEMORY` engine is not viable — the table must survive MySQL restart (sequencer must not
+  lose unprocessed events on crash).
+- `ROW_FORMAT=COMPRESSED` adds CPU overhead for a 2-column table; compression ratio is
+  negligible on (BIGINT, BIGINT) rows.
+- `ROW_FORMAT=DYNAMIC` (the other option) is identical to COMPACT for narrow rows.
+
+**Decision:** retain `ROW_FORMAT=COMPACT`. No schema change needed.
+
+### Item #55: events Table Compression
+
+The `events` table stores `LONGBLOB` payloads. If payloads are typically JSON, InnoDB page
+compression (`COMPRESSION='zstd'` on MySQL 8.0+) can reduce storage I/O.
+
+**Evaluation findings:**
+- InnoDB page compression requires `innodb_file_per_table=ON` (already set in BaseIT and
+  the tuning reference).
+- Compression ratio for typical JSON payloads: 40–70% size reduction.
+- CPU overhead for compression: 2–5% on write path; negligible on read path (decompression
+  is fast with zstd).
+- Benchmark gate: publish and poll throughput must not decrease.
+
+**Decision:** deferred.  Add `COMPRESSION='zstd'` to the events table DDL after v0 baseline
+is established on bench-cloud-prod.  If compression reduces publish throughput by > 5%, retain
+uncompressed.
+
+### Item #56: innodb_autoinc_lock_mode=2 (Interleaved)
+
+MySQL's default `innodb_autoinc_lock_mode=1` (consecutive) holds a lightweight AUTO_INCREMENT
+lock for the duration of a statement that inserts multiple rows.  Mode 2 (interleaved) releases
+the lock immediately, allowing fully concurrent multi-row INSERTs.
+
+**Action:** `--innodb_autoinc_lock_mode=2` added to `BaseIT` container command (verified).
+
+**Production requirement:** Set `innodb_autoinc_lock_mode=2` in `my.cnf` on all deployments.
+Without this, concurrent `sp_events__publish_multi` calls will serialize at the AUTO_INCREMENT
+lock, capping publish throughput regardless of thread count.
+
+### Item #57: Covering Indexes for Poll and Commit Queries
+
+Two covering indexes added in Liquibase changeset 8:
+
+| Table | Index | Columns | Benefit |
+|---|---|---|---|
+| `cursors` | `idx_cursors__poll_cover` | `(subscription_id, topic_id, partition_id, random_key, position)` | Candidate-selection step in `sp_events__poll` satisfied from index pages; avoids row lookup for partition_id, random_key, position |
+| `consumer_leases` | `idx_consumer_leases__commit_cover` | `(cursor_id, consumer_id, locked_until)` | Commit lease release and poll lock check (`locked_until IS NULL OR locked_until <= v_now`) satisfied from index pages |
+
+**Benchmark gate:** Poll latency p99 must not increase after adding these indexes.  Run
+`BenchmarkIT.poll_throughput()` before and after applying changeset 8.
+
+---
+
 ## Interpreting Results
 
 **Sequencer lag** is the most important leading indicator of system health. If `unprocessed_events`
@@ -378,5 +437,6 @@ small event counts. For large batches (>10K events), publish and consume time be
 | `event_scheduler` | ON | ON | ON | Required for sequencer background job |
 | `log_bin_trust_function_creators` | 1 | 1 | 1 | Required for stored procedure triggers |
 | `performance_schema` | OFF | ON | ON | OFF in local for lower overhead |
+| `innodb_autoinc_lock_mode` | 2 | 2 | 2 | 2=interleaved; required for concurrent multi-row INSERTs (item #56) |
 
 See also: `BaseIT` MySQL container command-line flags for the `bench-local` configuration.
