@@ -1,0 +1,157 @@
+# Boxy — Cursor Project Intelligence
+
+## What Is This Project?
+
+Boxy is a multi-tenant event streaming library built directly on top of a relational database
+(MySQL 8.0+, PostgreSQL in progress). It provides Apache Pulsar-like semantics — topics,
+partitions, subscriptions, consumer groups, cursor commits — over a transactional outbox.
+No broker process, no Kafka, no Pulsar.
+
+**The authoritative client protocol is four stored procedures:**
+- `sp_consumers__register` — register a consumer instance
+- `sp_events__poll` — poll for events (returns events + polling probability)
+- `sp_cursors__commit` — commit cursor positions
+- `sp_consumers__deregister` — deregister a consumer
+
+Any language can implement a Boxy client. The Java module (`boxy-core`) is a reference
+implementation, not the authoritative one.
+
+---
+
+## Critical Patterns — Do This
+
+### Stored Procedures
+- Every write procedure MUST have an EXIT HANDLER FOR SQLEXCEPTION with ROLLBACK + RESIGNAL
+- Filename MUST match procedure name exactly: `sp_consumers__register.sql`
+- Double underscore between entity and action: `sp_<entity>__<action>`
+- Comment every parameter, return value, and error code at the top of the file
+- Use MEMORY tables for temp state; always DROP ... IF EXISTS at start AND end
+- Never use FORCE INDEX — add covering indexes and let the optimizer choose
+- Never use dynamic SQL / CONCAT of user input into SQL strings
+
+### Java
+- Java 25 — use records, sealed classes, pattern matching, text blocks, virtual threads
+- No Spring, no Quarkus, no Guice — zero framework dependencies in boxy-core/boxy-mysql
+- All DB access via repository classes extending BaseRepository — no inline JDBC elsewhere
+- Records for all domain objects in boxy.core.domain — immutable, no setters
+- Catch SQLException, wrap in DataAccessException (unchecked) — never swallow exceptions
+- Use SLF4J for logging; always include entity IDs and operation names in log messages
+- No string concatenation to build JSON — use a JSON library
+
+### Liquibase
+- Never edit an existing changeset — add a new one instead (changesets are immutable once applied)
+- Use <sqlFile> with splitStatements="false" and endDelimiter="//"
+- One changeset per stored procedure drop-and-recreate
+
+### Testing
+- Extend BaseIT for all integration tests (Testcontainers MySQL 8.0.43)
+- Use TestData.seed(dataSource) in @BeforeEach for standard fixtures
+- No Thread.sleep() — use Awaitility or polling with timeout
+- Name tests: <method>_<scenario>_<expectedOutcome>
+
+---
+
+## Critical Anti-Patterns — Never Do This
+
+- ❌ Add Thread.sleep() in tests
+- ❌ Add Spring / Quarkus / other framework dependencies to boxy-core
+- ❌ Add FORCE INDEX hints to new SQL
+- ❌ Edit existing Liquibase changesets
+- ❌ Build JSON with string concatenation
+- ❌ Push directly to main or refactor (always use a feature branch + PR)
+- ❌ Write SQL outside of *Repository classes
+- ❌ Commit broken tests
+- ❌ Make performance changes without benchmark evidence
+
+---
+
+## Module Layout
+
+```
+boxy/
+├── boxy-db/          # Liquibase migrations + all SQL
+│   └── db/changelog/mysql/
+│       ├── sp/       # Stored procedures: sp_<entity>__<action>.sql
+│       ├── fn/       # Functions: fn_<name>.sql
+│       └── events/   # MySQL scheduled events
+├── boxy-core/        # Java domain records, repository implementations
+│   └── boxy/core/
+│       ├── domain/   # Immutable Java records
+│       ├── mapper/   # RowMapper implementations
+│       ├── repository/ # JDBC repositories (extends BaseRepository)
+│       ├── DataSourceProvider.java
+│       └── DataAccessException.java
+├── CLAUDE.md         # AI agent context
+├── AGENTS.md         # Agent workflow rules (branch naming, commit format, PR rules)
+└── CONTRIBUTING.md   # Human + agent contributor guide
+```
+
+---
+
+## Key Domain Concepts
+
+| Term | Meaning |
+|------|---------|
+| Namespace | Hierarchical path container (closure table). Case-sensitive. |
+| Topic | Belongs to a namespace; fixed partition count (1–1024). |
+| Partition | Shard of a topic. ID = (topic_id << 16) + partition_number. |
+| Event | LONGBLOB payload. Published into events + unprocessed_events; sequenced by background process. |
+| Subscription | Named consumer group. Links to topics via subscription_topics. |
+| Cursor | Consumption position per (subscription, partition). Has random_key for fair-share distribution. |
+| Consumer | Registered client instance. UUID v4 ID. Has heartbeat deadline. |
+| Consumer Lease | 3s lock: consumer ↔ cursor during active polling. |
+
+---
+
+## Performance Target
+
+1M events/second sustained throughput on AWS r6g.2xlarge or equivalent with provisioned IOPS MySQL.
+All performance changes MUST include before/after benchmark numbers using the BenchmarkIT profile.
+
+---
+
+## Branch Naming
+
+| Contributor | Prefix |
+|------------|--------|
+| Claude / Claude Code | `codex/` |
+| JetBrains Junie | `junie/` |
+| Cursor | `cursor/` |
+| Human | `feat/`, `fix/`, `chore/`, `docs/` |
+
+---
+
+## Commit Format
+
+```
+<type>(<scope>): <description> [item #N]
+
+<why, not what>
+
+Closes: Phase X, item N of PRODUCTION_READINESS.md
+
+Co-Authored-By: <Agent> <noreply@anthropic.com>
+```
+
+Types: feat, fix, perf, refactor, test, docs, chore
+Scopes: agents, cli, core, mysql, pgsql, db, benchmark, ci
+
+---
+
+## Files That Need Paired Updates
+
+- Stored procedure file + its Liquibase changeset
+- Repository method + its mapper + its domain record
+- Performance change + docs/benchmarks.md
+- User-facing change + README.md
+- Any completed item + CHANGELOG.md
+
+---
+
+## Before Starting Any Task
+
+1. Read CLAUDE.md (architecture context)
+2. Read AGENTS.md (workflow rules)
+3. Check PRODUCTION_READINESS.md (current work items)
+4. Check CHANGELOG.md (what's already done)
+5. Create a branch: `cursor/<short-description>`
