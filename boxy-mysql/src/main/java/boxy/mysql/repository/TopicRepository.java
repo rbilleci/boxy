@@ -5,6 +5,7 @@ import boxy.core.mapper.RowMapper;
 import boxy.core.mapper.TopicMapper;
 import boxy.core.domain.Topic;
 import boxy.core.repository.BaseRepository;
+import boxy.core.util.InputValidator;
 
 import javax.sql.DataSource;
 import java.util.Optional;
@@ -19,6 +20,9 @@ public final class TopicRepository extends BaseRepository {
     }
 
     public long create(final String path, final String name, final int partitions) {
+        InputValidator.requireValidPath(path);
+        InputValidator.requireValidName(name, "topic name");
+        InputValidator.requireValidPartitionCount(partitions);
         return queryOne("{CALL sp_topics__create(?,?,?)}", ID_MAPPER, path, name, partitions).orElseThrow();
     }
 

@@ -5,6 +5,7 @@ import boxy.core.mapper.IdMapper;
 import boxy.core.mapper.NamespaceMapper;
 import boxy.core.mapper.RowMapper;
 import boxy.core.repository.BaseRepository;
+import boxy.core.util.InputValidator;
 
 import javax.sql.DataSource;
 import java.util.Optional;
@@ -19,6 +20,7 @@ public final class NamespaceRepository extends BaseRepository {
     }
 
     public long create(final String path) {
+        InputValidator.requireValidPath(path);
         return queryOne("{CALL sp_namespaces__create(?)}", ID_MAPPER, path).orElseThrow();
     }
 
@@ -27,6 +29,8 @@ public final class NamespaceRepository extends BaseRepository {
     }
 
     public void rename(final String path, final String newName) {
+        InputValidator.requireValidPath(path);
+        InputValidator.requireValidName(newName, "newName");
         update("{CALL sp_namespaces__rename(?, ?)}", path, newName);
     }
 

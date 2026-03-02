@@ -3,6 +3,7 @@ package boxy.mysql.repository;
 import boxy.core.mapper.CursorMapper;
 import boxy.core.domain.Cursor;
 import boxy.core.repository.BaseRepository;
+import boxy.core.util.JsonUtils;
 import boxy.mysql.metrics.BoxyMeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import org.slf4j.Logger;
@@ -12,7 +13,6 @@ import javax.sql.DataSource;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public final class CursorRepository extends BaseRepository {
 
@@ -48,9 +48,7 @@ public final class CursorRepository extends BaseRepository {
                 CURSOR_MAPPER, subscriptionId);
     }
 
-    private String toJsonObject(final Map<Long, Long> cursorPositions) {
-        return cursorPositions.entrySet().stream()
-                .map(e -> "\"" + e.getKey() + "\":" + e.getValue())
-                .collect(Collectors.joining(",", "{", "}"));
+    private static String toJsonObject(final Map<Long, Long> cursorPositions) {
+        return JsonUtils.jsonObject(cursorPositions);
     }
 }

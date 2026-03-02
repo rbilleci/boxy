@@ -3,11 +3,11 @@ package boxy.mysql.repository;
 import boxy.core.mapper.ConsumerMapper;
 import boxy.core.domain.Consumer;
 import boxy.core.repository.BaseRepository;
+import boxy.core.util.JsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import javax.sql.DataSource;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.Optional;
 
 public final class ConsumerRepository extends BaseRepository {
@@ -39,13 +39,8 @@ public final class ConsumerRepository extends BaseRepository {
         update("{CALL sp_consumers__deregister(?)}", id);
     }
 
-    private String toJsonArray(final List<String> values) {
-        return values.stream()
-                .map(value -> value
-                        .replace("\\", "\\\\")
-                        .replace("\"", "\\\""))
-                .map(value -> "\"" + value + "\"")
-                .collect(Collectors.joining(",", "[", "]"));
+    private static String toJsonArray(final List<String> values) {
+        return JsonUtils.jsonArray(values);
     }
 
 }

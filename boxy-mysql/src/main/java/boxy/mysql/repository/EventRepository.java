@@ -2,6 +2,7 @@ package boxy.mysql.repository;
 
 import boxy.core.domain.PublishRequest;
 import boxy.core.repository.BaseRepository;
+import boxy.core.util.JsonUtils;
 import boxy.mysql.metrics.BoxyMeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import org.slf4j.Logger;
@@ -9,7 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Repository for publishing events to Boxy topics.
@@ -112,23 +112,16 @@ public final class EventRepository extends BaseRepository {
      * @return JSON array string, e.g. {@code [{"path":"ns","topic":"t","key":"k","data":"..."}]}
      */
     private static String toJsonArray(final List<PublishRequest> events) {
-        return events.stream()
-                .map(e -> "{\"path\":"  + jsonString(e.path())  +
-                          ",\"topic\":" + jsonString(e.topic()) +
-                          ",\"key\":"   + jsonString(e.key())   +
-                          ",\"data\":"  + jsonString(e.data())  + "}")
-                .collect(Collectors.joining(",", "[", "]"));
-    }
-
-    /**
-     * Wraps a string in JSON double-quotes, escaping any embedded backslashes
-     * and double-quotes so the result is valid JSON.
-     *
-     * @param value raw string value (may be {@code null})
-     * @return JSON string literal, or {@code "null"} if {@code value} is {@code null}
-     */
-    private static String jsonString(final String value) {
-        if (value == null) return "null";
-        return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
+        final var sb = new StringBuilder("[");
+        for (int i = 0; i < events.size(); i++) {
+            if (i > 0) sb.append(',');
+            final var e = events.get(i);
+            sb.append("{\"path\":")  .append(JsonUtils.jsonString(e.path()))
+              .append(",\"topic\":") .append(JsonUtils.jsonString(e.topic()))
+              .append(",\"key\":")   .append(JsonUtils.jsonString(e.key()))
+              .append(",\"data\":")  .append(JsonUtils.jsonString(e.data()))
+              .append('}');
+        }
+        return sb.append(']').toString();
     }
 }
