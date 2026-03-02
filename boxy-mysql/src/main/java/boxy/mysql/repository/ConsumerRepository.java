@@ -1,7 +1,8 @@
-package boxy.core.repository;
+package boxy.mysql.repository;
 
 import boxy.core.mapper.ConsumerMapper;
 import boxy.core.domain.Consumer;
+import boxy.core.repository.BaseRepository;
 import javax.sql.DataSource;
 import java.util.List;
 import java.util.stream.Collectors;

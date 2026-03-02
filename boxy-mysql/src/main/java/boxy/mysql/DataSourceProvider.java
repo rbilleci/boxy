@@ -1,4 +1,4 @@
-package boxy.core;
+package boxy.mysql;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;

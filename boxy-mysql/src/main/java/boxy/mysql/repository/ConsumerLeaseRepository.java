@@ -1,7 +1,8 @@
-package boxy.core.repository;
+package boxy.mysql.repository;
 
 import boxy.core.domain.ConsumerLease;
 import boxy.core.mapper.ConsumerLeaseMapper;
+import boxy.core.repository.BaseRepository;
 
 import javax.sql.DataSource;
 import java.util.List;

@@ -1,6 +1,6 @@
 package boxy.core.it;
 
-import boxy.core.DataSourceProvider;
+import boxy.mysql.DataSourceProvider;
 import liquibase.Liquibase;
 import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
@@ -34,7 +34,7 @@ public abstract class BaseIT {
                             // PERFORMANCE TWEAKS
                             "--innodb_file_per_table=ON",
                             "--innodb_flush_log_at_trx_commit=0",  // never fsync on each commit
-                            "--sync_binlog=0",                     // don’t fsync the binary log
+                            "--sync_binlog=0",                     // don't fsync the binary log
                             "--innodb_doublewrite=0",              // skip double‑write buffer
                             "--innodb_flush_method=nosync",        // avoid O_DSYNC/O_DIRECT
                             "--performance_schema=OFF"             // turn off the perf schema overhead

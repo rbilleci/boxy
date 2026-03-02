@@ -1,9 +1,9 @@
 package boxy.core.it;
 
-import boxy.core.repository.EventRepository;
-import boxy.core.repository.PartitionRepository;
-import boxy.core.repository.TopicRepository;
-import boxy.core.repository.NamespaceRepository;
+import boxy.mysql.repository.EventRepository;
+import boxy.mysql.repository.PartitionRepository;
+import boxy.mysql.repository.TopicRepository;
+import boxy.mysql.repository.NamespaceRepository;
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
 import org.junit.jupiter.api.BeforeEach;

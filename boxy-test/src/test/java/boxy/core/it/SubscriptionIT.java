@@ -1,8 +1,8 @@
 package boxy.core.it;
 
-import boxy.core.repository.SubscriptionRepository;
+import boxy.mysql.repository.SubscriptionRepository;
 import boxy.core.domain.Subscription;
-import boxy.core.repository.ConsumerRepository;
+import boxy.mysql.repository.ConsumerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Testcontainers;

@@ -1,5 +1,6 @@
-package boxy.core.repository;
+package boxy.mysql.repository;
 
+import boxy.core.repository.BaseRepository;
 import javax.sql.DataSource;
 
 public final class EventRepository extends BaseRepository {

@@ -1,7 +1,8 @@
-package boxy.core.repository;
+package boxy.mysql.repository;
 
 import boxy.core.mapper.SubscriptionTopicMapper;
 import boxy.core.domain.SubscriptionTopic;
+import boxy.core.repository.BaseRepository;
 
 import javax.sql.DataSource;
 import java.util.List;

@@ -1,9 +1,10 @@
-package boxy.core.repository;
+package boxy.mysql.repository;
 
 import boxy.core.mapper.IdMapper;
 import boxy.core.mapper.RowMapper;
 import boxy.core.mapper.TopicMapper;
 import boxy.core.domain.Topic;
+import boxy.core.repository.BaseRepository;
 
 import javax.sql.DataSource;
 import java.util.Optional;

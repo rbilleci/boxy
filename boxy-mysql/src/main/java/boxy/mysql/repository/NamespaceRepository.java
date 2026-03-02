@@ -1,9 +1,10 @@
-package boxy.core.repository;
+package boxy.mysql.repository;
 
 import boxy.core.domain.Namespace;
 import boxy.core.mapper.IdMapper;
 import boxy.core.mapper.NamespaceMapper;
 import boxy.core.mapper.RowMapper;
+import boxy.core.repository.BaseRepository;
 
 import javax.sql.DataSource;
 import java.util.Optional;
@@ -37,4 +38,3 @@ public final class NamespaceRepository extends BaseRepository {
         return queryOne("SELECT * FROM namespaces WHERE id = fn_resolve_namespace_id(?)", NAMESPACE_MAPPER, path);
     }
 }
-

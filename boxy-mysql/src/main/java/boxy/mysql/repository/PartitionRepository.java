@@ -1,7 +1,8 @@
-package boxy.core.repository;
+package boxy.mysql.repository;
 
 import boxy.core.mapper.PartitionMapper;
 import boxy.core.domain.Partition;
+import boxy.core.repository.BaseRepository;
 
 import javax.sql.DataSource;
 import java.util.Optional;

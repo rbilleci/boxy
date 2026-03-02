@@ -1,7 +1,8 @@
-package boxy.core.repository;
+package boxy.mysql.repository;
 
 import boxy.core.mapper.CursorMapper;
 import boxy.core.domain.Cursor;
+import boxy.core.repository.BaseRepository;
 
 import javax.sql.DataSource;
 import java.util.List;

@@ -9,15 +9,14 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>boxy-core</artifactId>
-    <description>Boxy core: domain records, RowMapper interface, BaseRepository, and DataAccessException. No database driver dependency.</description>
+    <artifactId>boxy-pgsql</artifactId>
+    <description>PostgreSQL-specific repository implementations for Boxy (placeholder — not yet implemented)</description>
 
     <dependencies>
-        <!-- LOGGING API only — no implementation dependency in the core library -->
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
+            <groupId>mvsm</groupId>
+            <artifactId>boxy-core</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
-
 </project>

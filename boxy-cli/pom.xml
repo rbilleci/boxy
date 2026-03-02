@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>mvsm</groupId>
+        <artifactId>boxy</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>boxy-cli</artifactId>
+    <description>Command-line interface for Boxy — schema management, event publishing, and event listening</description>
+    <!--
+      Native-image build targeting macOS ARM64 (aarch64) initially.
+      Cross-platform profiles will be added in Phase 0D.
+      Requires: GraalVM JDK 25 with native-image installed.
+    -->
+
+    <dependencies>
+        <dependency>
+            <groupId>mvsm</groupId>
+            <artifactId>boxy-core</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>mvsm</groupId>
+            <artifactId>boxy-mysql</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+        <!-- Schema migrations for boxy db init / boxy db migrate -->
+        <dependency>
+            <groupId>mvsm</groupId>
+            <artifactId>boxy-db</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+        <!-- CLI argument parsing (GraalVM native-image friendly) -->
+        <!-- picocli dependency will be added in Phase 0D item #26 -->
+
+        <!-- LOGGING -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+        </dependency>
+    </dependencies>
+</project>
