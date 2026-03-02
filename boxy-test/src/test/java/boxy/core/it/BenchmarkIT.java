@@ -1,5 +1,6 @@
 package boxy.core.it;
 
+import boxy.core.domain.PublishRequest;
 import boxy.mysql.repository.ConsumerRepository;
 import boxy.mysql.repository.CursorRepository;
 import boxy.mysql.repository.EventRepository;
@@ -146,6 +147,67 @@ public class BenchmarkIT extends BaseIT {
         final double count = threadCount * opsPerThread;
         final var opsPerSecond = count / totalTime * 1_000;
         System.out.println("Throughput = " + opsPerSecond + " events inserted per second");
+    }
+
+    // =========================================================================
+    // (a+) Batch publish throughput  (item #32 benchmark gate)
+    // =========================================================================
+
+    /**
+     * Compares single-event publish vs batch publish throughput, providing the
+     * benchmark gate for item #32 (sp_events__publish_multi v2).
+     *
+     * <p>For N events, batch publish should show ≥ N × single-event throughput due
+     * to eliminating N-1 extra transaction commits and JDBC round-trips.
+     */
+    @Test
+    void publishBatch_vs_singlePublish() {
+        topicRepository.create(PATH, TOPIC, PARTITIONS);
+
+        final int batchSize  = 50;
+        final int iterations = 100;
+        final int totalEvents = batchSize * iterations;
+
+        // --- Single-event baseline ---
+        final var singleHistogram = new Histogram(TimeUnit.SECONDS.toNanos(10), 3);
+        final long singleStart = System.nanoTime();
+        for (int i = 0; i < totalEvents; i++) {
+            final long t = System.nanoTime();
+            eventRepository.publish(PATH, TOPIC, "k" + i, DATA);
+            singleHistogram.recordValue(System.nanoTime() - t);
+        }
+        final long singleEnd = System.nanoTime();
+
+        // --- Batch publish ---
+        final var batchHistogram = new Histogram(TimeUnit.SECONDS.toNanos(10), 3);
+        final long batchStart = System.nanoTime();
+        for (int i = 0; i < iterations; i++) {
+            final int base = i * batchSize;
+            final var batch = new java.util.ArrayList<PublishRequest>(batchSize);
+            for (int j = 0; j < batchSize; j++) {
+                batch.add(new PublishRequest(PATH, TOPIC, "k" + (base + j), DATA));
+            }
+            final long t = System.nanoTime();
+            eventRepository.publishBatch(batch);
+            batchHistogram.recordValue(System.nanoTime() - t);
+        }
+        final long batchEnd = System.nanoTime();
+
+        // --- Report ---
+        final double singleSec = (singleEnd - singleStart) / 1e9;
+        final double batchSec  = (batchEnd  - batchStart)  / 1e9;
+        final double singleTps = totalEvents / singleSec;
+        final double batchTps  = totalEvents / batchSec;
+
+        System.out.printf("%n=== Publish throughput comparison (batch_size=%d) ===%n", batchSize);
+        System.out.printf("  Single-event: %d events in %.3f s → %.0f events/sec%n",
+                totalEvents, singleSec, singleTps);
+        System.out.printf("  Batch publish: %d events in %.3f s → %.0f events/sec%n",
+                totalEvents, batchSec, batchTps);
+        System.out.printf("  Speedup: %.1fx%n", batchTps / singleTps);
+        System.out.printf("  Single p99=%.3f ms  Batch p99=%.3f ms%n",
+                singleHistogram.getValueAtPercentile(99) / 1e6,
+                batchHistogram.getValueAtPercentile(99)  / 1e6);
     }
 
     // =========================================================================

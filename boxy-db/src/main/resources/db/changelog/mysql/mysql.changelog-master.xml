@@ -137,4 +137,21 @@
                  stripComments="false"/>
 
     </changeSet>
+
+    <!--
+      Changeset 2: Replace sp_events__publish_multi with a single-transaction
+      bulk INSERT implementation (v2).  The v1 loop (N procedure calls, N
+      transactions) is replaced with a set-based approach: JSON_TABLE expands
+      all events in one pass, partition IDs are resolved via a direct JOIN on
+      namespaces + topics, and both tables are committed in one transaction.
+      Expected speedup: 10-50x for batches of >= 10 events.
+      See: sp_events__publish_multi_v2.sql and docs/benchmarks.md.
+    -->
+    <changeSet id="2" author="richard.billeci" dbms="mysql">
+        <sqlFile path="sp/sp_events__publish_multi_v2.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+    </changeSet>
+
 </databaseChangeLog>

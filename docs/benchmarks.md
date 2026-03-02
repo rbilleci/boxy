@@ -11,6 +11,12 @@
 3. [Hardware Tiers & Maven Profiles](#hardware-tiers--maven-profiles)
 4. [How to Run](#how-to-run)
 5. [v0 Baseline Numbers](#v0-baseline-numbers)
+6. [Publish Path Evaluation](#publish-path-evaluation)
+7. [Interpreting Results](#interpreting-results)
+8. [Tuning Reference](#tuning-reference)
+3. [Hardware Tiers & Maven Profiles](#hardware-tiers--maven-profiles)
+4. [How to Run](#how-to-run)
+5. [v0 Baseline Numbers](#v0-baseline-numbers)
 6. [Interpreting Results](#interpreting-results)
 7. [Tuning Reference](#tuning-reference)
 
@@ -178,6 +184,89 @@ Recorded against commit: _TBD_
 Machine: _AWS db.r6g.2xlarge, 8 vCPU / 64 GB, io2 64K IOPS_
 
 _Numbers pending first cloud run._
+
+---
+
+---
+
+## Publish Path Evaluation
+
+This section documents the analysis behind publish-path optimizations (items #32–#36).
+
+### Item #32 — Batch Publish Stored Procedure (sp_events__publish_multi v2)
+
+**Background:** The v1 implementation loops N times, calling `sp_events__publish` once per event
+(N JDBC round-trips, N transaction commits). At 1M events/sec this creates an unsustainable
+commit rate.
+
+**Change:** `sp_events__publish_multi` was rewritten to use `JSON_TABLE` to expand the input array
+in one pass, resolve all partition IDs via a direct JOIN on `namespaces` + `topics` (bypassing the
+MEMORY cache), and commit both `events` and `unprocessed_events` in a single transaction.
+
+**Benchmark gate:** `BenchmarkIT.publishBatch_vs_singlePublish` compares the two paths.
+Expected speedup ≥ 10× for batch sizes ≥ 10 events.
+
+**Results:** _TBD — run `mvn test -Pbench-local` and update this table._
+
+| Batch size | Single events/sec | Batch events/sec | Speedup |
+|---|---|---|---|
+| 50 | TBD | TBD | TBD |
+
+### Item #33 — JDBC Batch Publish (EventRepository.publishBatch)
+
+`EventRepository.publishBatch(List<PublishRequest>)` serialises the list to a JSON array and
+issues a single `CALL sp_events__publish_multi(?)`. This reduces JDBC round-trips from N to 1
+for a batch of N events. The serialisation is done in pure Java (no external JSON library
+dependency) and escapes only the two characters that would break the JSON string format
+(`\` and `"`).
+
+### Item #34 — Topic Cache Lookup Overhead Evaluation
+
+**Cache path:** `sp_events__publish` → `sp_topics__cache_get` → MD5 hash + MEMORY table lookup.
+On cache miss, falls back to a JOIN on `namespaces` + `topics`.
+
+**Bypass paths (already available):**
+- `sp_events__publish_advanced(partition_id, data)` — caller supplies pre-resolved partition ID.
+  Zero cache overhead. Used by producers that cache topic metadata on the application side.
+- `sp_events__publish_multi` v2 — batch path always bypasses the cache via direct JOIN.
+
+**Recommendation:** Measure cache lookup overhead as a percentage of total single-event publish
+time using the `bench-cloud-small` profile. Only remove the cache from the single-event path if
+overhead exceeds 10% of wall time. The MEMORY table lookup is a single index scan (O(1)) so
+cache benefit is only visible when `topics` has a very large number of rows.
+
+**Measurement (pending):** `publishAdvanced_singleThreaded` vs `publish_singleThreaded` latency
+ratio. If p99 ratio > 1.1, the cache is adding measurable overhead; consider pre-resolving
+partition IDs at the producer level using `sp_events__publish_advanced`.
+
+### Item #35 — innodb_flush_log_at_trx_commit Durability vs Throughput
+
+| Setting | Durability guarantee | Typical throughput (relative) | Risk |
+|---|---|---|---|
+| `1` (default) | Full — fsync on every COMMIT | 1× baseline | None |
+| `2` | MySQL-crash safe; OS-crash may lose ≤ 1 s of commits | 2–5× | ≤ 1 second of data on OS crash |
+| `0` | No per-commit fsync | 5–20× | ≤ 1 second of data on MySQL crash |
+
+**Recommendation:** For event streaming workloads where downstream consumers are idempotent
+and message redelivery is acceptable, `innodb_flush_log_at_trx_commit=2` with `sync_binlog=0`
+is the standard production setting. This matches how Kafka and Pulsar configure their brokers.
+Setting `=1` is appropriate for financial ledgers or systems where exactly-once delivery at the
+persistence layer is required.
+
+**Benchmark gate:** Run `publishBatch_vs_singlePublish` with `innodb_flush_log_at_trx_commit`
+set to 0, 1, and 2 on `bench-cloud-small` hardware. Document the results in the table above.
+
+### Item #36 — Batch-mode INSERT Evaluation
+
+**Finding:** The `sp_events__publish_multi` v2 implementation (item #32) already uses a
+single-statement multi-row `INSERT INTO events (data) SELECT ... FROM _pub_batch` which is
+the batch-mode INSERT form. MySQL's `rewriteBatchedStatements=true` JDBC property (already
+set in `DataSourceProvider`) applies only to JDBC `PreparedStatement.addBatch()` calls, not
+to stored-procedure CALLs.
+
+**Conclusion:** Item #36 is effectively superseded by item #32. The batch INSERT is now part
+of the stored procedure itself, achieving the same goal without requiring `rewriteBatchedStatements`
+to be active at the JDBC layer. No additional code changes required.
 
 ---
 
