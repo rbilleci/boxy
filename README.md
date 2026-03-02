@@ -272,7 +272,7 @@ State transitions (client side)
   
 ## Building the Project
 
-Boxy uses Maven and requires Java 17+. From the root:
+Boxy uses Maven and requires Java 25+. From the root:
 
 ```bash
 mvn clean package
@@ -293,9 +293,10 @@ Integration tests use Testcontainers with MySQL (default) or Postgres. Configure
 
 ### Prerequisites
 
-1. Java 17 or higher
+1. **Java 25** (Temurin or GraalVM recommended — required for boxy-cli native build)
 2. MySQL 8.0+ or PostgreSQL 12+
-3. Maven 3.6+
+3. Maven 3.9+
+4. Docker 20+ (required for integration tests via Testcontainers)
 
 ### Database Setup
 
