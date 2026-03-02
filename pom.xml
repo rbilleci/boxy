@@ -9,6 +9,37 @@
     <version>1.0-SNAPSHOT</version>
 
     <packaging>pom</packaging>
+    <name>Boxy Event Queue</name>
+    <description>Boxy: MySQL-based distributed event queue with Pulsar-like semantics. Supports at-least-once delivery, consumer groups with round-robin partition lease balancing, and configurable cursor management.</description>
+    <url>https://github.com/rbilleci/boxy</url>
+    
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>rbilleci</id>
+            <name>Ray Billeci</name>
+            <email>ray.billeci@gmail.com</email>
+            <roles>
+                <role>architect</role>
+                <role>lead developer</role>
+            </roles>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:https://github.com/rbilleci/boxy.git</connection>
+        <developerConnection>scm:git:https://github.com/rbilleci/boxy.git</developerConnection>
+        <url>https://github.com/rbilleci/boxy</url>
+        <tag>HEAD</tag>
+    </scm>
+
     <modules>
         <module>boxy-core</module>
         <module>boxy-mysql</module>
@@ -80,6 +111,15 @@
                         <quiet>true</quiet>
                         <failOnError>true</failOnError>
                     </configuration>
+                    <executions>
+                        <execution>
+                            <id>attach-javadocs</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>jar</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
 
                 <!-- Sources: attach source jars for IDE and repository publishing -->
@@ -87,6 +127,38 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-source-plugin</artifactId>
                     <version>3.3.1</version>
+                    <executions>
+                        <execution>
+                            <id>attach-sources</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>jar-no-fork</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <!-- GPG Signing: required for Maven Central publishing (Section 12, item 109) -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-gpg-plugin</artifactId>
+                    <version>3.2.7</version>
+                    <executions>
+                        <execution>
+                            <id>sign-artifacts</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>sign</goal>
+                            </goals>
+                            <configuration>
+                                <!-- Use gpg2 if available -->
+                                <gpgArguments>
+                                    <arg>--pinentry-mode</arg>
+                                    <arg>loopback</arg>
+                                </gpgArguments>
+                            </configuration>
+                        </execution>
+                    </executions>
                 </plugin>
 
                 <!--
@@ -156,7 +228,7 @@
 
                 <!--
                   Maven Release Plugin: automates version bumping, tagging, and publishing.
-                  Section 1, item 67.
+                  Section 12, item 111.
 
                   Configure before first release:
                     1. Set distributionManagement in this POM (GitHub Packages or Maven Central).
@@ -178,12 +250,28 @@
                         <goals>deploy</goals>
                     </configuration>
                 </plugin>
+
+                <!--
+                  Nexus Staging Maven Plugin: for Maven Central publishing via OSSRH.
+                  Activated in the 'release' profile.
+                -->
+                <plugin>
+                    <groupId>org.sonatype.plugins</groupId>
+                    <artifactId>nexus-staging-maven-plugin</artifactId>
+                    <version>1.7.0</version>
+                    <extensions>true</extensions>
+                    <configuration>
+                        <serverId>ossrh</serverId>
+                        <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+                        <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
 
     <!--
-      Distribution Management: GitHub Packages (Section 1, item 67).
+      Distribution Management: GitHub Packages as default (Section 12, item 109).
       To publish: mvn deploy -DskipTests
       Requires GITHUB_TOKEN with write:packages permission.
       Set in ~/.m2/settings.xml:
@@ -192,6 +280,8 @@
           <username>YOUR_GITHUB_USERNAME</username>
           <password>${env.GITHUB_TOKEN}</password>
         </server>
+
+      For Maven Central: use the 'release' profile (see profiles section below).
     -->
     <distributionManagement>
         <repository>
@@ -199,17 +289,12 @@
             <name>GitHub Packages — boxy</name>
             <url>https://maven.pkg.github.com/rbilleci/boxy</url>
         </repository>
+        <snapshotRepository>
+            <id>github</id>
+            <name>GitHub Packages — boxy (snapshots)</name>
+            <url>https://maven.pkg.github.com/rbilleci/boxy</url>
+        </snapshotRepository>
     </distributionManagement>
-
-    <!--
-      SCM: required by maven-release-plugin (Section 1, item 67).
-    -->
-    <scm>
-        <connection>scm:git:https://github.com/rbilleci/boxy.git</connection>
-        <developerConnection>scm:git:https://github.com/rbilleci/boxy.git</developerConnection>
-        <url>https://github.com/rbilleci/boxy</url>
-        <tag>HEAD</tag>
-    </scm>
 
     <dependencyManagement>
         <dependencies>
@@ -323,33 +408,78 @@
 
     <!--
       =========================================================================
-      Benchmark profiles
+      Profiles: Release, Benchmarking
       =========================================================================
 
-      Three hardware tiers, each with a named Maven profile.  The default build
-      skips benchmarks entirely; activate a profile explicitly:
+      'release' profile: Activated during release:perform to sign artifacts,
+                        publish to Maven Central via OSSRH, and create GitHub
+                        releases. Requires GPG key configured and Maven settings
+                        with OSSRH credentials.
 
-        mvn test -Pbench-local          # Testcontainers + tmpfs (CI regression)
-        mvn test -Pbench-cloud-small    # External MySQL on db.r6g.large / gp3
-        mvn test -Pbench-cloud-prod     # External MySQL on db.r6g.2xlarge+ / io2
-
-      bench-local: CI-safe.  Runs PipelineBenchmarkIT and BenchmarkIT against a
-        Testcontainers MySQL container with tmpfs and relaxed durability flags
-        (--innodb_flush_log_at_trx_commit=0, --sync_binlog=0, etc.).  Numbers are
-        NOT production-representative — use only as regression guards to detect
-        performance regressions across commits.
-
-      bench-cloud-small: Targets a db.r6g.large (2 vCPU / 16 GB) MySQL 8 instance
-        with gp3 storage (3000 IOPS baseline).  Connection details provided via
-        environment variables (DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD).
-        Expected ceiling: ~100K events/sec sustained.
-
-      bench-cloud-prod: Targets a db.r6g.2xlarge+ (8+ vCPU / 64+ GB) MySQL 8
-        instance with io2 storage (provisioned IOPS ≥64K).  This is the target
-        hardware for the 1M events/sec goal.  Same env vars as bench-cloud-small.
+      'bench-*' profiles: Three hardware tiers for benchmarking.
     -->
 
     <profiles>
+
+        <!--
+          release — Maven Central + GitHub Releases (Section 12, items 109-111).
+          Activated during release:perform. Requires:
+            1. ~/.m2/settings.xml with OSSRH server credentials:
+                 <server>
+                   <id>ossrh</id>
+                   <username>JIRA_USERNAME</username>
+                   <password>JIRA_PASSWORD</password>
+                 </server>
+            2. GPG key configured locally (run 'gpg --list-keys' to verify)
+            3. GitHub token for releasing to GitHub Releases (via gh CLI)
+
+          Usage:
+            mvn release:prepare release:perform
+        -->
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.7</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.7.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+            <distributionManagement>
+                <repository>
+                    <id>ossrh</id>
+                    <name>OSSRH Releases</name>
+                    <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+                </repository>
+                <snapshotRepository>
+                    <id>ossrh</id>
+                    <name>OSSRH Snapshots</name>
+                    <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+                </snapshotRepository>
+            </distributionManagement>
+        </profile>
 
         <!--
           bench-local — Testcontainers + tmpfs, relaxed durability.

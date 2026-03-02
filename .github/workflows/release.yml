@@ -1,0 +1,64 @@
+# Release workflow for Boxy
+# Triggered when a new release tag is created (v*.*.*)
+# Creates a GitHub Release with auto-generated notes and downloads
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'oracle'
+          cache: maven
+
+      - name: Build project
+        run: mvn clean package -DskipTests
+
+      - name: Extract version from tag
+        id: extract_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            boxy-core/target/boxy-core-*.jar
+            boxy-mysql/target/boxy-mysql-*.jar
+            boxy-pgsql/target/boxy-pgsql-*.jar
+            boxy-cli/target/boxy-cli-*.jar
+            boxy-db/target/boxy-db-*.jar
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to GitHub Packages
+        run: mvn deploy -DskipTests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Post release notification
+        run: |
+          echo "Released Boxy v${{ steps.extract_version.outputs.version }}"
+          echo "GitHub Release: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ github.ref_name }}"
+          echo "Maven Package: https://github.com/${{ github.repository }}/packages"
