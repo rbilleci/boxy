@@ -74,6 +74,12 @@ public class EventListenCommand implements Callable<Integer> {
             consumerRepo.register(consumerId, subscriptionName, topicPaths);
             System.err.printf("[boxy] Listening as consumer %s. Press Ctrl+C to stop.%n", consumerId);
 
+            // Item #91: read poll batch size from env var once (0 = SP default of 100).
+            final int pollBatchSize = Integer.parseInt(
+                    System.getenv().getOrDefault("BOXY_POLL_BATCH_SIZE",
+                            System.getProperty("BOXY_POLL_BATCH_SIZE", "0")));
+
+
             while (running.get()) {
                 // Call sp_events__poll directly — it returns two result sets:
                 // RS 1: events (cursor_id, partition_id, sequence, event_id, data)
@@ -83,7 +89,7 @@ public class EventListenCommand implements Callable<Integer> {
                 try (final var c = ds.getConnection();
                      final var stmt = c.prepareCall("{CALL sp_events__poll(?, ?)}")) {
                     stmt.setString(1, consumerId);
-                    stmt.setInt(2, 0);  // 0 = use SP default batch size (100)
+                    stmt.setInt(2, pollBatchSize);  // Item #91: configurable via BOXY_POLL_BATCH_SIZE
                     if (stmt.execute()) {
                         try (final ResultSet rs = stmt.getResultSet()) {
                             while (rs.next()) {

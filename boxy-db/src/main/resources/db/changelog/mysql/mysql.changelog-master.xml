@@ -339,4 +339,42 @@
                  stripComments="false"/>
     </changeSet>
 
+
+    <!--
+      Changeset 11: Configuration externalization (items #90-#93).
+      - Create boxy_config table for runtime-configurable stored procedure parameters.
+      - Seed defaults: lease.lock.seconds=3, sequencer.batch.size=1000,
+        heartbeat.interval.seconds=15.
+      - sp_events__poll v4: reads lease.lock.seconds from boxy_config (item #90).
+      - sp_sequence_loop v4: reads sequencer.batch.size from boxy_config when
+        called with 0 (item #92).
+      - sp_subscriptions__subscribe v3: reads heartbeat.interval.seconds from
+        boxy_config (item #93).
+      - Update sequencer event to call sp_sequence_loop(0) so config takes effect.
+      Item #89 (HikariCP pool size via env var): Java-only change in DataSourceProvider.
+      Item #91 (poll batch size via BOXY_POLL_BATCH_SIZE): Java-only change in EventListenCommand.
+      Item #94 (adaptive polling_probability): already done in changeset 6 (sp_events__poll v2).
+    -->
+    <changeSet id="11" author="richard.billeci" dbms="mysql">
+        <sqlFile path="sp/boxy_config.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="true"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_events__poll_v4.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_sequence_loop_v4.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_subscriptions__subscribe_v3.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="events/sequencer_v2.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+    </changeSet>
 </databaseChangeLog>

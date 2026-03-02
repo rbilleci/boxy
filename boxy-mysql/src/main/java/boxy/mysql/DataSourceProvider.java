@@ -96,11 +96,17 @@ public class DataSourceProvider {
                     "Unsupported DB_TYPE '%s'. Supported values: mysql, postgres".formatted(dbType));
         }
 
-        config.setMaximumPoolSize(10);
-        config.setMinimumIdle(1);
-        config.setConnectionTimeout(Duration.ofSeconds(10).toMillis());
-        config.setIdleTimeout(Duration.ofMinutes(5).toMillis());
-        config.setMaxLifetime(Duration.ofMinutes(30).toMillis());
+        // Item #89: pool sizing via environment variables.
+        // BOXY_POOL_SIZE              — max pool size (default: 10)
+        // BOXY_POOL_MIN_IDLE          — min idle connections (default: 1)
+        // BOXY_POOL_CONN_TIMEOUT_MS   — connection timeout in ms (default: 10000)
+        // BOXY_POOL_IDLE_TIMEOUT_MIN  — idle timeout in minutes (default: 5)
+        // BOXY_POOL_MAX_LIFETIME_MIN  — max connection lifetime in minutes (default: 30)
+        config.setMaximumPoolSize(Integer.parseInt(resolveConfigValue("BOXY_POOL_SIZE", "10")));
+        config.setMinimumIdle(Integer.parseInt(resolveConfigValue("BOXY_POOL_MIN_IDLE", "1")));
+        config.setConnectionTimeout(Long.parseLong(resolveConfigValue("BOXY_POOL_CONN_TIMEOUT_MS", "10000")));
+        config.setIdleTimeout(Duration.ofMinutes(Long.parseLong(resolveConfigValue("BOXY_POOL_IDLE_TIMEOUT_MIN", "5"))).toMillis());
+        config.setMaxLifetime(Duration.ofMinutes(Long.parseLong(resolveConfigValue("BOXY_POOL_MAX_LIFETIME_MIN", "30"))).toMillis());
         config.setLeakDetectionThreshold(Duration.ofSeconds(2).toMillis());
         config.setRegisterMbeans(true);
 
