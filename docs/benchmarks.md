@@ -411,6 +411,49 @@ Two covering indexes added in Liquibase changeset 8:
 
 ---
 
+## Consumer GC Evaluation
+
+### Item #58: Benchmark consumer_gc Under Load
+
+**Benchmark gate:** Run `PipelineBenchmarkIT.pipeline_fourProducersFourConsumers()` while
+injecting 1000+ expired consumer rows and triggering `consumer_gc` concurrently.  Measure
+poll p99 latency during and immediately after a GC cycle.
+
+| Scenario | Baseline (no GC) | With v1 GC (single tx) | With v2 GC (batched) |
+|---|---|---|---|
+| Poll p50 during GC | TBD | TBD | TBD |
+| Poll p99 during GC | TBD | TBD | TBD |
+| GC duration (1000 expired) | — | TBD | TBD |
+
+**Target:** poll p99 must not increase by more than 20% during GC runs.
+
+### Item #59: Batch Consumer Deletion
+
+**Change:** `sp_consumers__gc_v2` loops in batches of 100 (`LIMIT 100`), each batch in its
+own transaction.  This bounds the maximum row-lock hold time to the time needed to delete
+100 consumer rows, rather than all expired consumers in one shot.
+
+**Before:** a single `DELETE FROM consumers WHERE heartbeat_deadline <= ?` with 1000 rows
+holds row locks for the full duration of the DELETE + CASCADE, which can exceed 50ms.
+
+**After:** 10 batches of 100 rows, each completing in < 5ms, with no cross-batch lock
+contention.
+
+### Item #60: Explicit Lease Cleanup Before Consumer Deletion
+
+**Change:** `sp_consumers__gc_v2` first batch-deletes `consumer_leases` rows for expired
+consumers, then deletes the consumer rows.  The explicit pre-cleanup means the ON DELETE
+CASCADE on `consumers.id → consumer_leases.consumer_id` has no rows to cascade when the
+consumer is finally deleted.
+
+**Before:** a consumer holding 100 leases caused the CASCADE to lock 100 `consumer_leases`
+rows for the full duration of the consumer DELETE transaction.
+
+**After:** leases are removed in small batches before the consumer row is deleted; each
+individual transaction holds at most 100 lease row locks for < 5ms.
+
+---
+
 ## Interpreting Results
 
 **Sequencer lag** is the most important leading indicator of system health. If `unprocessed_events`

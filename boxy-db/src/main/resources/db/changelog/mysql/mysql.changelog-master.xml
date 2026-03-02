@@ -247,4 +247,20 @@
                  stripComments="false"/>
     </changeSet>
 
+    <!--
+      Changeset 9: sp_consumers__gc v2 (items #58-#60).
+      - Explicit batch lease cleanup before consumer deletion (item #60):
+        DELETE consumer_leases in batches of 100 to avoid large CASCADE.
+      - Batch consumer deletion with LIMIT 100 (item #59): each iteration
+        is its own transaction, bounding row-lock hold time.
+      - Document GC benchmark gate (item #58): gate is PipelineBenchmarkIT
+        with 1000 injected expired consumers; poll p99 must not increase > 20%.
+    -->
+    <changeSet id="9" author="richard.billeci" dbms="mysql">
+        <sqlFile path="sp/sp_consumers__gc_v2.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+    </changeSet>
+
 </databaseChangeLog>
