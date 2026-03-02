@@ -277,8 +277,9 @@ public class BenchmarkIT extends BaseIT {
         final long benchStart = System.nanoTime();
 
         try (var conn = dataSource.getConnection();
-             var poll = conn.prepareCall("{CALL sp_events__poll(?)}")) {
+             var poll = conn.prepareCall("{CALL sp_events__poll(?, ?)}")) {
             poll.setString(1, consumerId);
+            poll.setInt(2, 0);  // 0 = use SP default batch size (100)
             for (int i = 0; i < 2_000; i++) {
                 final long start = System.nanoTime();
                 final boolean hasResults = poll.execute();
@@ -333,8 +334,9 @@ public class BenchmarkIT extends BaseIT {
         // Get the first cursor_id and sequence via a single poll
         final Map<Long, Long> cursorMap = new HashMap<>();
         try (var conn = dataSource.getConnection();
-             var poll = conn.prepareCall("{CALL sp_events__poll(?)}")) {
+             var poll = conn.prepareCall("{CALL sp_events__poll(?, ?)}")) {
             poll.setString(1, consumerId);
+            poll.setInt(2, 0);  // 0 = use SP default batch size (100)
             if (poll.execute()) {
                 try (var rs = poll.getResultSet()) {
                     if (rs.next()) {

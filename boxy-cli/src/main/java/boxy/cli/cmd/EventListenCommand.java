@@ -81,8 +81,9 @@ public class EventListenCommand implements Callable<Integer> {
                 final var events = new ArrayList<long[]>();
                 final var dataList = new ArrayList<String>();
                 try (final var c = ds.getConnection();
-                     final var stmt = c.prepareCall("{CALL sp_events__poll(?)}")) {
+                     final var stmt = c.prepareCall("{CALL sp_events__poll(?, ?)}")) {
                     stmt.setString(1, consumerId);
+                    stmt.setInt(2, 0);  // 0 = use SP default batch size (100)
                     if (stmt.execute()) {
                         try (final ResultSet rs = stmt.getResultSet()) {
                             while (rs.next()) {

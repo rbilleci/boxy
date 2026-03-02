@@ -262,9 +262,10 @@ public class PipelineBenchmarkIT extends BaseIT {
         long count = 0;
 
         try (var conn  = dataSource.getConnection();
-             var poll  = conn.prepareCall("{CALL sp_events__poll(?)}")) {
+             var poll  = conn.prepareCall("{CALL sp_events__poll(?, ?)}")) {
 
             poll.setString(1, consumerId);
+            poll.setInt(2, 0);  // 0 = use SP default batch size (100)
             boolean hasResults = poll.execute();
 
             if (hasResults) {

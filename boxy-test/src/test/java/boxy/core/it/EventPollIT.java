@@ -50,8 +50,9 @@ class EventPollIT extends BaseIT {
         awaitSequencer();
 
         try (var conn = dataSource.getConnection();
-             var poll = conn.prepareCall("{CALL sp_events__poll(?)}")) {
+             var poll = conn.prepareCall("{CALL sp_events__poll(?, ?)}")) {
             poll.setString(1, consumerId);
+            poll.setInt(2, 0);  // 0 = use SP default batch size (100)
 
             final var start = System.currentTimeMillis();
             for (int i = 0; i < 10_000; i++) {
@@ -91,8 +92,9 @@ class EventPollIT extends BaseIT {
 
         final List<Long> polled = new ArrayList<>();
         try (var conn = dataSource.getConnection();
-             var poll = conn.prepareCall("{CALL sp_events__poll(?)}")) {
+             var poll = conn.prepareCall("{CALL sp_events__poll(?, ?)}")) {
             poll.setString(1, consumerId);
+            poll.setInt(2, 0);  // 0 = use SP default batch size (100)
             boolean hasResults = poll.execute();
             if (hasResults) {
                 try (var rs = poll.getResultSet()) {
@@ -141,8 +143,9 @@ class EventPollIT extends BaseIT {
 
         final List<Long> polled = new ArrayList<>();
         try (var conn = dataSource.getConnection();
-             var poll = conn.prepareCall("{CALL sp_events__poll(?)}")) {
+             var poll = conn.prepareCall("{CALL sp_events__poll(?, ?)}")) {
             poll.setString(1, consumerId);
+            poll.setInt(2, 0);  // 0 = use SP default batch size (100)
             boolean hasResults = poll.execute();
             if (hasResults) {
                 try (var rs = poll.getResultSet()) {
@@ -176,8 +179,9 @@ class EventPollIT extends BaseIT {
         long cursorId = -1L;
         long sequence = -1L;
         try (var conn = dataSource.getConnection();
-             var poll = conn.prepareCall("{CALL sp_events__poll(?)}")) {
+             var poll = conn.prepareCall("{CALL sp_events__poll(?, ?)}")) {
             poll.setString(1, consumerId);
+            poll.setInt(2, 0);  // 0 = use SP default batch size (100)
             boolean hasResults = poll.execute();
             if (hasResults) {
                 try (var rs = poll.getResultSet()) {
@@ -197,8 +201,9 @@ class EventPollIT extends BaseIT {
 
         double pollingProbability = -1;
         try (var conn = dataSource.getConnection();
-             var poll = conn.prepareCall("{CALL sp_events__poll(?)}")) {
+             var poll = conn.prepareCall("{CALL sp_events__poll(?, ?)}")) {
             poll.setString(1, consumerId);
+            poll.setInt(2, 0);  // 0 = use SP default batch size (100)
             boolean hasResults = poll.execute();
             if (hasResults) {
                 try (var rs = poll.getResultSet()) {
@@ -247,8 +252,9 @@ class EventPollIT extends BaseIT {
     private List<Long> pollEvents(final String consumerId) throws SQLException {
         final List<Long> polled = new ArrayList<>();
         try (var conn = dataSource.getConnection();
-             var poll = conn.prepareCall("{CALL sp_events__poll(?)}")) {
+             var poll = conn.prepareCall("{CALL sp_events__poll(?, ?)}")) {
             poll.setString(1, consumerId);
+            poll.setInt(2, 0);  // 0 = use SP default batch size (100)
             boolean hasResults = poll.execute();
             if (hasResults) {
                 try (var rs = poll.getResultSet()) {

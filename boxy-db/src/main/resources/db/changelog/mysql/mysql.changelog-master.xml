@@ -197,4 +197,22 @@
                  stripComments="false"/>
     </changeSet>
 
+    <!--
+      Changeset 6: sp_events__poll v2 (items #43-#50).
+      - Add IN p_batch_size parameter (item #49), clamped to [1, 10000].
+      - Update subscription_topics.active_consumers on each poll (item #44).
+      - Compute adaptive polling_probability from subscription stats (item #43):
+          p = min(1, 1 / (heartbeat_interval * max(active_consumers, 1)))
+      - Retain FORCE INDEX hint with detailed documentation (item #47 evaluation).
+      - Retain JSON_CONTAINS filter with evaluation note (item #48).
+      - Document SKIP LOCKED evaluation finding (items #45/#46).
+      - Document pre-computed cursor count evaluation (item #50).
+    -->
+    <changeSet id="6" author="richard.billeci" dbms="mysql">
+        <sqlFile path="sp/sp_events__poll_v2.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+    </changeSet>
+
 </databaseChangeLog>
