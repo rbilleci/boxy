@@ -88,9 +88,128 @@
                     <artifactId>maven-source-plugin</artifactId>
                     <version>3.3.1</version>
                 </plugin>
+
+                <!--
+                  JaCoCo: code coverage reporting with minimum threshold enforcement.
+                  Section 1, item 69.
+
+                  Usage:
+                    mvn verify                       # runs tests + coverage check
+                    mvn jacoco:report                # generate HTML report in target/site/jacoco/
+
+                  Coverage thresholds (enforced during `mvn verify`):
+                    - Line coverage  ≥ 60%
+                    - Branch coverage ≥ 50%
+
+                  To view the report: open target/site/jacoco/index.html in a browser.
+                -->
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>0.8.13</version>
+                    <executions>
+                        <!-- Attach the JaCoCo agent before tests run -->
+                        <execution>
+                            <id>jacoco-prepare</id>
+                            <goals><goal>prepare-agent</goal></goals>
+                        </execution>
+                        <!-- Generate HTML/XML report after tests -->
+                        <execution>
+                            <id>jacoco-report</id>
+                            <phase>verify</phase>
+                            <goals><goal>report</goal></goals>
+                        </execution>
+                        <!-- Enforce minimum coverage thresholds -->
+                        <execution>
+                            <id>jacoco-check</id>
+                            <phase>verify</phase>
+                            <goals><goal>check</goal></goals>
+                            <configuration>
+                                <rules>
+                                    <rule>
+                                        <element>BUNDLE</element>
+                                        <limits>
+                                            <!-- Line coverage ≥ 60% -->
+                                            <limit>
+                                                <counter>LINE</counter>
+                                                <value>COVEREDRATIO</value>
+                                                <minimum>0.60</minimum>
+                                            </limit>
+                                            <!-- Branch coverage ≥ 50% -->
+                                            <limit>
+                                                <counter>BRANCH</counter>
+                                                <value>COVEREDRATIO</value>
+                                                <minimum>0.50</minimum>
+                                            </limit>
+                                        </limits>
+                                    </rule>
+                                </rules>
+                                <!-- Exclude generated code and test infrastructure from coverage -->
+                                <excludes>
+                                    <exclude>boxy/cli/**</exclude>
+                                    <exclude>boxy/core/it/**</exclude>
+                                </excludes>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <!--
+                  Maven Release Plugin: automates version bumping, tagging, and publishing.
+                  Section 1, item 67.
+
+                  Configure before first release:
+                    1. Set distributionManagement in this POM (GitHub Packages or Maven Central).
+                    2. Add scm section with Git URLs.
+                    3. Run: mvn release:prepare release:perform
+
+                  Currently configured for GitHub Packages. For Maven Central, replace the
+                  repository URL with the OSSRH staging URL and add nexus-staging-maven-plugin.
+                -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-release-plugin</artifactId>
+                    <version>3.1.1</version>
+                    <configuration>
+                        <tagNameFormat>v@{project.version}</tagNameFormat>
+                        <autoVersionSubmodules>true</autoVersionSubmodules>
+                        <!-- Use -DskipTests=false to run tests during release -->
+                        <releaseProfiles>release</releaseProfiles>
+                        <goals>deploy</goals>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
+
+    <!--
+      Distribution Management: GitHub Packages (Section 1, item 67).
+      To publish: mvn deploy -DskipTests
+      Requires GITHUB_TOKEN with write:packages permission.
+      Set in ~/.m2/settings.xml:
+        <server>
+          <id>github</id>
+          <username>YOUR_GITHUB_USERNAME</username>
+          <password>${env.GITHUB_TOKEN}</password>
+        </server>
+    -->
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages — boxy</name>
+            <url>https://maven.pkg.github.com/rbilleci/boxy</url>
+        </repository>
+    </distributionManagement>
+
+    <!--
+      SCM: required by maven-release-plugin (Section 1, item 67).
+    -->
+    <scm>
+        <connection>scm:git:https://github.com/rbilleci/boxy.git</connection>
+        <developerConnection>scm:git:https://github.com/rbilleci/boxy.git</developerConnection>
+        <url>https://github.com/rbilleci/boxy</url>
+        <tag>HEAD</tag>
+    </scm>
 
     <dependencyManagement>
         <dependencies>

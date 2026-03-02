@@ -1,0 +1,64 @@
+# EditorConfig — consistent code style across contributors (Section 1, item 70)
+# https://editorconfig.org
+# All major editors and IDEs support EditorConfig natively or via plugin.
+
+root = true
+
+# ── Defaults for all files ──────────────────────────────────────────────────
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# ── Java source files ────────────────────────────────────────────────────────
+[*.java]
+indent_style = space
+indent_size = 4
+max_line_length = 120
+
+# ── SQL files ────────────────────────────────────────────────────────────────
+[*.sql]
+indent_style = space
+indent_size = 4
+max_line_length = 120
+
+# ── XML (Maven POMs, Liquibase changelogs) ───────────────────────────────────
+[*.xml]
+indent_style = space
+indent_size = 4
+max_line_length = 120
+
+# ── YAML (GitHub Actions, Dependabot, Docker Compose) ───────────────────────
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+max_line_length = 120
+
+# ── Markdown ─────────────────────────────────────────────────────────────────
+[*.md]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = false   # trailing spaces are significant in Markdown
+
+# ── Shell scripts ─────────────────────────────────────────────────────────────
+[*.sh]
+indent_style = space
+indent_size = 2
+end_of_line = lf
+
+# ── JSON ──────────────────────────────────────────────────────────────────────
+[*.json]
+indent_style = space
+indent_size = 2
+
+# ── Properties ───────────────────────────────────────────────────────────────
+[*.properties]
+indent_style = space
+indent_size = 4
+
+# ── Makefiles require tabs ────────────────────────────────────────────────────
+[Makefile]
+indent_style = tab

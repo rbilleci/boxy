@@ -37,12 +37,21 @@ jobs:
       - name: Build (skip tests)
         run: mvn clean package -DskipTests -B
 
-      - name: Run integration tests
-        run: mvn test -B
+      - name: Run integration tests with coverage
+        # Uses `verify` instead of `test` so JaCoCo runs coverage checks (Section 1, item 69)
+        run: mvn verify -B
         env:
           # Testcontainers settings
           TESTCONTAINERS_RYUK_DISABLED: "false"
           # DB_TYPE defaults to mysql — no override needed for now
+
+      - name: Upload JaCoCo coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report-jdk${{ matrix.java }}
+          path: "**/target/site/jacoco/"
+          retention-days: 14
 
       - name: Upload Surefire reports on failure
         if: failure()
