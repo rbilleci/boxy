@@ -26,6 +26,7 @@ Tenant isolation is provided through a hierarchical namespace system.
     - [Commit Procedure](#commit-procedure)
     - [Deregistration Procedure](#deregistration-procedure)
   - [Lifecycle and state names](#lifecycle-and-state-names)
+- [Performance](#performance)
 - [Building the Project](#building-the-project)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
@@ -270,6 +271,47 @@ State transitions (client side)
 | deregister | `UNKNOWN_CONSUMER`                    | Ignore; consumer already deregistered             |
 
   
+## Performance
+
+Boxy is designed to sustain **1 million events/second** on production-grade hardware
+(db.r6g.2xlarge+ with io2 storage).  Key characteristics:
+
+| Metric | Typical value | Conditions |
+|---|---|---|
+| Publish throughput (batch) | 100K–1M events/sec | `sp_events__publish_multi` batch ≥ 10, `innodb_flush_log_at_trx_commit=2` |
+| Publish throughput (single) | 5K–20K events/sec | `sp_events__publish`, single-event path |
+| Sequencer drain rate | 500K–1M events/sec | `sp_sequence_loop_v2`, dynamic batch sizing |
+| Poll throughput | 10K–50K calls/sec | `sp_events__poll_v2`, default batch size 100 |
+| Poll latency p50 | < 1 ms | Single consumer, bench-local |
+| Poll latency p99 | < 5 ms | Single consumer, bench-local |
+| End-to-end latency (publish→poll) | < 10 ms | Single producer + consumer, active partition |
+
+> **Note:** Numbers above are targets for bench-cloud-prod (db.r6g.2xlarge+, io2).
+> Bench-local (Testcontainers + tmpfs) will show higher raw throughput due to
+> relaxed durability settings.  See [docs/benchmarks.md](docs/benchmarks.md) for
+> detailed methodology, hardware-specific baselines, and tuning recommendations.
+
+### Key Performance Requirements
+
+**Producer side:**
+- Use `publishBatch` (via `sp_events__publish_multi`) for batches ≥ 10 events.  Single-event
+  publish is 10–50× slower per event due to per-call round-trip overhead.
+- Set `innodb_autoinc_lock_mode=2` in `my.cnf` for full concurrency on multi-row INSERTs.
+- Set `innodb_flush_log_at_trx_commit=2` for throughput-critical deployments where losing
+  the last second of events on crash is acceptable.
+
+**Consumer side:**
+- Use adaptive polling: respect the `polling_probability` returned by `sp_events__poll`
+  to avoid thundering-herd effects with many consumers.
+- Commit in batches (every N events or every T ms) to reduce write pressure on `cursors`.
+- Deregister cleanly on shutdown; stranded leases block other consumers for up to
+  `heartbeat_deadline` seconds (typically 3–15 s depending on active consumer count).
+
+**Infrastructure:**
+- Enable the MySQL event scheduler (`event_scheduler=ON`) — required for the background
+  sequencer (`sp_sequence_loop`) and consumer GC (`consumer_gc`).
+- For full durability requirements, see [docs/configuration.md](docs/configuration.md).
+
 ## Building the Project
 
 Boxy uses Maven and requires Java 25+. From the root:

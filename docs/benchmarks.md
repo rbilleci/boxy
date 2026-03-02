@@ -24,6 +24,78 @@
 
 ## Methodology
 
+### How to Run Benchmarks (Item #64)
+
+```bash
+# Bench-local: fastest, uses Testcontainers + tmpfs, relaxed durability
+mvn test -Pbench-local -pl boxy-test
+
+# Bench-cloud-small: requires external MySQL on db.r6g.large / gp3 storage
+export DB_HOST=<host> DB_PORT=3306 DB_NAME=events_db DB_USER=boxy DB_PASSWORD=<pw>
+mvn test -Pbench-cloud-small -pl boxy-test
+
+# Bench-cloud-prod: requires external MySQL on db.r6g.2xlarge+ / io2 storage
+mvn test -Pbench-cloud-prod -pl boxy-test
+```
+
+Benchmark tests are tagged `*BenchmarkIT` and are excluded from the default test run
+(`mvn test`) to keep CI fast.  They are only executed when a bench profile is active.
+
+### Interpreting Benchmark Output
+
+Each benchmark test prints a structured report to stdout.  Example:
+
+```
+=== Pipeline Benchmark [4P-4C] ===
+  Producers/consumers : 4 / 4
+  Total events        : 2000
+  Total consumed      : 2000
+  Sequencer lag       : 1850 unprocessed after publish
+  Publish time        : 0.823 s  →  2430 events/sec
+  Sequence time       : 1.102 s
+  Consume time        : 0.445 s  →  4494 events/sec
+  End-to-end wall     : 2.370 s
+  --- Publish latency (ms) ---
+      p50=1.234  p99=5.678  p999=12.345
+  --- Poll latency    (ms) ---
+      p50=0.456  p99=2.345  p999=8.901
+```
+
+### What Constitutes a Regression (Item #64)
+
+A change is a **regression** if any of the following are true:
+
+| Metric | Regression threshold |
+|---|---|
+| Publish throughput | > 5% decrease from baseline |
+| Sequencer drain rate | > 5% decrease from baseline |
+| Poll throughput (calls/sec) | > 5% decrease from baseline |
+| Poll p99 latency | > 10% increase from baseline |
+| Poll p999 latency | > 20% increase from baseline |
+| End-to-end wall time | > 10% increase from baseline |
+
+Regressions **must not be merged** unless documented with justification in the PR and
+a compensating change is planned.
+
+### PR Gate Criteria
+
+Every PR that modifies a stored procedure, schema, or Java hot path MUST:
+
+1. Run all benchmark tests on at least `bench-local` hardware.
+2. Record the output numbers in the PR description.
+3. Compare against the v0 baseline (or the most recent committed baseline).
+4. Confirm no regression (see table above), or document justification.
+5. Update this file with a new baseline row if numbers change.
+
+### Warm-up and Statistical Significance
+
+- Bench-local: no explicit warm-up (Testcontainers starts fresh each run; JIT
+  warm-up is included in the first 200–500 ms of each benchmark).
+- For accurate latency numbers on cloud hardware: run each scenario 3× and
+  discard the first run.  Record min/median/max across the 3 runs.
+- HdrHistogram: max 10 seconds, 3 significant digits, nanosecond resolution.
+  Percentiles are reported in milliseconds with 3 decimal places.
+
 Every optimization change in Boxy follows a strict gate:
 
 1. **Establish baseline** — run all benchmark scenarios on unmodified code and record numbers in this file.
