@@ -13,7 +13,8 @@ Each entry maps to a numbered item in [PRODUCTION_READINESS.md](./PRODUCTION_REA
 ### Completed
 | Date | Item # | Description | Commit |
 |------|--------|-------------|--------|
-| 2026-03-02 | 122-129 | Section 9: Background event reliability — background_job_errors table, sp_sequencer__run + sp_consumers__gc__run wrappers (error capture to table), HealthCheck liveness (sequencer backlog + GC dead-consumer count), configurable intervals via boxy_config, 10-second event cadence, docs/background-jobs.md evaluation | TBD |
+| 2026-03-02 | 130-137 | Section 10: PostgreSQL support — pgsql.schema.sql (14 tables with BIGSERIAL/TIMESTAMPTZ/BYTEA/JSONB), 5 PL/pgSQL functions, 20 PL/pgSQL stored procedures, Liquibase pgsql.changelog-master.xml, pg_cron scheduling stubs, docs/postgresql.md (JDBC tuning + scheduling guide) | TBD |
+| 2026-03-02 | 122-129 | Section 9: Background event reliability — background_job_errors table, sp_sequencer__run + sp_consumers__gc__run wrappers (error capture to table), HealthCheck liveness (sequencer backlog + GC dead-consumer count), configurable intervals via boxy_config, 10-second event cadence, docs/background-jobs.md evaluation | b982228 |
 | 2026-03-02 | 114-121 | Section 8: Testing — fix PostgreSQL teardown bug (BaseIT), replace Thread.sleep with poll-based sequencer await, ErrorEdgeCaseIT (duplicate consumer/invalid topic/stale commit), ConcurrentConsumerIT (no-duplicate events under contention), EventOrderingIT (monotonic sequence within partition), LeaseExpirationIT (lease takeover after expiry), MapperTest (unit tests with fake ResultSet), StressIT (100 topics/100 consumers @Disabled) | 4baeb42 |
 | 2026-03-02 | 110-113 | Section 7: Java core resilience — DataAccessException.isRetryable() (MySQL error classification), RetryPolicy (exponential backoff + full jitter), CircuitBreaker (CLOSED/OPEN/HALF_OPEN state machine) | 9b2a38d |
 | 2026-03-02 | 105-109 | Section 6: Security & input validation — JsonUtils (RFC 8259 escaping), InputValidator (path/name/partition validation), ConsumerRepository+CursorRepository+EventRepository JSON refactor | b61b886 |
@@ -71,10 +72,10 @@ Each entry maps to a numbered item in [PRODUCTION_READINESS.md](./PRODUCTION_REA
 | Section 7: Java Resilience | 4 | 4 | 0 |
 | Section 8: Testing | 8 | 8 | 0 |
 | Section 9: Background Reliability | 8 | 8 | 0 |
-| Section 10: PostgreSQL | 8 | 0 | 8 |
+| Section 10: PostgreSQL | 8 | 8 | 0 |
 | Section 11: Docs & DX | 8 | 0 | 8 |
 | Section 12: Packaging | 4 | 0 | 4 |
 | Section 13: Branch Hygiene | 4 | 0 | 4 |
 | Section 14: Client SDKs | 6 | 0 | 6 |
 | Section 15: Core Enhancements | 8 | 0 | 8 |
-| **TOTAL** | **156** | **129** | **27** |
+| **TOTAL** | **156** | **137** | **19** |

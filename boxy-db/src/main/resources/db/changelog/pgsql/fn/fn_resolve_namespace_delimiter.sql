@@ -1,0 +1,8 @@
+CREATE OR REPLACE FUNCTION fn_resolve_namespace_delimiter()
+    RETURNS VARCHAR(10)
+    LANGUAGE SQL
+    IMMUTABLE
+    RETURNS NULL ON NULL INPUT
+AS $$
+  SELECT '/'::VARCHAR(10);
+$$;

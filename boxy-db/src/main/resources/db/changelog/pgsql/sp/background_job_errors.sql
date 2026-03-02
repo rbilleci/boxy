@@ -1,0 +1,15 @@
+-- background_job_errors: captures PostgreSQL event scheduler failures
+--
+-- Items #122, #123: error logging/alerting for sequencer and consumer_gc events.
+--
+-- Note: PostgreSQL does not have a built-in event scheduler like MySQL.
+-- Background jobs should be scheduled via pg_cron extension or app-level scheduling.
+-- This table captures errors when jobs are executed, allowing the application
+-- to query this table for alerting / monitoring.
+--
+-- Indexes support:
+--   - Liveness checks: query recent errors by job_name and timestamp
+--   - Audit trail: query all errors for a given job
+
+-- Table is already created in pgsql.schema.sql, but included here for clarity
+-- Placeholder file for structure consistency with MySQL

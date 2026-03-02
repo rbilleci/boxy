@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+      PostgreSQL Schema and Functions (items #93-#94)
+      - Complete port of MySQL schema to PostgreSQL DDL
+      - All 5 functions ported to PL/pgSQL
+      - All 16 stored procedures ported to PL/pgSQL
+    -->
+    <changeSet id="pgsql-1" author="boxy" dbms="postgresql">
+
+        <!-- SQL SCHEMA -->
+        <sqlFile path="pgsql.schema.sql" relativeToChangelogFile="true"/>
+
+        <!-- FUNCTIONS -->
+        <sqlFile path="fn/fn_resolve_namespace_delimiter.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="fn/fn_resolve_namespace_id.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="fn/fn_resolve_topic_id.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="fn/fn_resolve_partition_id.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="fn/fn_random_int.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+
+        <!-- SP: CONSUMERS -->
+        <sqlFile path="sp/sp_consumers__gc.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_consumers__register.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_consumers__deregister.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+
+        <!-- SP: NAMESPACES -->
+        <sqlFile path="sp/sp_namespaces__create.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_namespaces__rename.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_namespaces__move.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_namespaces__delete.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+
+        <!-- SP: SUBSCRIPTIONS -->
+        <sqlFile path="sp/sp_subscriptions__create.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_subscriptions__delete.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_subscriptions__subscribe.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_subscriptions__unsubscribe.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+
+        <!-- SP: TOPICS -->
+        <sqlFile path="sp/sp_topics__create.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_topics__delete.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_topics__cache_get.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+
+        <!-- SP: EVENTS -->
+        <sqlFile path="sp/sp_events__publish.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_events__publish_advanced.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_events__publish_multi.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_sequence_loop.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_events__poll.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+
+        <!-- CURSORS -->
+        <sqlFile path="sp/sp_cursors__commit.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+
+        <!-- CONFIGURATION -->
+        <sqlFile path="sp/boxy_config.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="true"
+                 stripComments="false"/>
+
+        <!-- BACKGROUND JOBS -->
+        <sqlFile path="sp/background_job_errors.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="true"
+                 stripComments="false"/>
+
+        <!-- SCHEDULING (pg_cron or app-level) -->
+        <sqlFile path="events/sequencer.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="events/consumer_gc.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+
+    </changeSet>
+
+</databaseChangeLog>
