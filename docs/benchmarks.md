@@ -311,6 +311,47 @@ to be active at the JDBC layer. No additional code changes required.
 
 ---
 
+## Commit Path Evaluation
+
+### Item #51: Commit Throughput Ceiling
+
+Benchmark gate: `BenchmarkIT.commit_throughput()` — measures `sp_cursors__commit` call rate
+using repeated idempotent commits of a single cursor. Expected ceiling on bench-local:
+
+| Scenario | Baseline | Target |
+|---|---|---|
+| Single-cursor commit, 2000 calls | TBD | > 5000 calls/sec |
+| p99 commit latency | TBD | < 2ms |
+
+Record results in the v0 Baseline Numbers table after first full run.
+
+### Item #52: Temp Table vs. Direct UPDATE Evaluation
+
+`sp_cursors__commit` uses a MEMORY-engine temp table to expand the JSON cursor map
+and JOIN-UPDATE the cursors table. For typical batch sizes of 1–5 cursors, the temp
+table creation overhead (~0.05–0.1ms per call) is measurable but not a bottleneck.
+
+**Evaluation finding:** The threshold approach (≤ 5 cursors → direct UPDATE, > 5 → temp table)
+is deferred. The added branching complexity is not justified until commit throughput
+falls below 10K calls/sec on bench-cloud-prod. Revisit after v0 baseline is established.
+
+### Item #53: Lease Release on Commit
+
+**Change:** `sp_cursors__commit_v2` now NULLs out `consumer_leases.locked_until` for all
+committed cursors owned by the committing consumer, immediately releasing the lease.
+
+**Before:** other consumers had to wait up to the full lock duration (~3s) before they
+could acquire a committed partition, even though the previous consumer was done with it.
+
+**After:** partitions are available for re-acquisition immediately after the commit
+call returns. This is especially beneficial for workloads with many consumers competing
+for a small number of active partitions.
+
+**Cost:** one additional `UPDATE consumer_leases JOIN tmp_cursor_updates` — the same index
+cardinality as the cursor UPDATE, with negligible latency overhead.
+
+---
+
 ## Interpreting Results
 
 **Sequencer lag** is the most important leading indicator of system health. If `unprocessed_events`

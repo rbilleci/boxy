@@ -215,4 +215,21 @@
                  stripComments="false"/>
     </changeSet>
 
+    <!--
+      Changeset 7: sp_cursors__commit v2 (items #51-#53).
+      - Release consumer_leases immediately on commit (item #53): NULL out
+        locked_until for the committing consumer's leases, allowing other
+        consumers to acquire those partitions without waiting for lease expiry.
+      - Document commit throughput benchmark gate (item #51): covered by
+        BenchmarkIT.commit_throughput().
+      - Document temp table evaluation for small batches (item #52): retained
+        temp table path; direct UPDATE threshold deferred to post-bench review.
+    -->
+    <changeSet id="7" author="richard.billeci" dbms="mysql">
+        <sqlFile path="sp/sp_cursors__commit_v2.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+    </changeSet>
+
 </databaseChangeLog>
