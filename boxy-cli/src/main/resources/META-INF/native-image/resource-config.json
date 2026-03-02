@@ -1,0 +1,10 @@
+{
+  "resources": {
+    "includes": [
+      {"pattern": "db/changelog/.*"},
+      {"pattern": "META-INF/services/.*"},
+      {"pattern": "logback.xml"},
+      {"pattern": "logback-spring.xml"}
+    ]
+  }
+}

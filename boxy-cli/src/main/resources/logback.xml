@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!--
+      CLI logging: INFO and above to stderr so stdout can be piped cleanly.
+      Set BOXY_LOG_LEVEL=DEBUG for verbose output.
+    -->
+    <appender name="STDERR" class="ch.qos.logback.core.ConsoleAppender">
+        <target>System.err</target>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="${BOXY_LOG_LEVEL:-INFO}">
+        <appender-ref ref="STDERR"/>
+    </root>
+</configuration>

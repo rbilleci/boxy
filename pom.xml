@@ -102,6 +102,18 @@
                 <version>4.32.0</version>
             </dependency>
 
+            <!-- CLI ARGUMENT PARSING (GraalVM native-image friendly) -->
+            <dependency>
+                <groupId>info.picocli</groupId>
+                <artifactId>picocli</artifactId>
+                <version>4.7.6</version>
+            </dependency>
+            <dependency>
+                <groupId>info.picocli</groupId>
+                <artifactId>picocli-codegen</artifactId>
+                <version>4.7.6</version>
+            </dependency>
+
             <!-- RUNTIME METRICS -->
             <dependency>
                 <groupId>org.hdrhistogram</groupId>

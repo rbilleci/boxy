@@ -11,11 +11,13 @@
 
     <artifactId>boxy-cli</artifactId>
     <description>Command-line interface for Boxy — schema management, event publishing, and event listening</description>
-    <!--
-      Native-image build targeting macOS ARM64 (aarch64) initially.
-      Cross-platform profiles will be added in Phase 0D.
-      Requires: GraalVM JDK 25 with native-image installed.
-    -->
+
+    <properties>
+        <picocli.version>4.7.6</picocli.version>
+        <graalvm.native.plugin.version>0.10.6</graalvm.native.plugin.version>
+        <!-- Default native image target; override with -P native-linux-x64 etc. -->
+        <native.image.name>boxy</native.image.name>
+    </properties>
 
     <dependencies>
         <dependency>
@@ -36,8 +38,25 @@
             <version>1.0-SNAPSHOT</version>
         </dependency>
 
-        <!-- CLI argument parsing (GraalVM native-image friendly) -->
-        <!-- picocli dependency will be added in Phase 0D item #26 -->
+        <!-- Liquibase (schema management) -->
+        <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+        </dependency>
+
+        <!-- CLI argument parsing — GraalVM native-image friendly -->
+        <dependency>
+            <groupId>info.picocli</groupId>
+            <artifactId>picocli</artifactId>
+            <version>${picocli.version}</version>
+        </dependency>
+        <!-- picocli annotation processor generates GraalVM reflect-config at compile time -->
+        <dependency>
+            <groupId>info.picocli</groupId>
+            <artifactId>picocli-codegen</artifactId>
+            <version>${picocli.version}</version>
+            <scope>provided</scope>
+        </dependency>
 
         <!-- LOGGING -->
         <dependency>
@@ -49,4 +68,222 @@
             <artifactId>logback-classic</artifactId>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Enable picocli annotation processor for native-image compatibility -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>info.picocli</groupId>
+                            <artifactId>picocli-codegen</artifactId>
+                            <version>${picocli.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                    <compilerArgs>
+                        <arg>-Aproject=${project.groupId}/${project.artifactId}</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+
+            <!-- Shade plugin: produce a fat jar for JVM execution -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.6.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals><goal>shade</goal></goals>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>boxy.cli.Boxy</mainClass>
+                                </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                            </transformers>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <!--
+          Native image profiles — one per target platform.
+          Usage: mvn package -P native-macos-arm64
+          Requires: GraalVM JDK 25 with native-image installed (gu install native-image).
+        -->
+        <profile>
+            <id>native-macos-arm64</id>
+            <activation>
+                <!-- Default active profile for macOS ARM; override via -P flag -->
+                <os>
+                    <name>Mac OS X</name>
+                    <arch>aarch64</arch>
+                </os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <version>${graalvm.native.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>build-native</id>
+                                <goals><goal>compile-no-fork</goal></goals>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <imageName>${native.image.name}</imageName>
+                            <mainClass>boxy.cli.Boxy</mainClass>
+                            <buildArgs>
+                                <arg>--no-fallback</arg>
+                                <arg>-H:+ReportExceptionStackTraces</arg>
+                                <arg>--initialize-at-build-time=org.slf4j</arg>
+                                <arg>-H:ConfigurationFileDirectories=${project.basedir}/src/main/resources/META-INF/native-image</arg>
+                            </buildArgs>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>native-macos-x64</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <version>${graalvm.native.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>build-native</id>
+                                <goals><goal>compile-no-fork</goal></goals>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <imageName>${native.image.name}</imageName>
+                            <mainClass>boxy.cli.Boxy</mainClass>
+                            <buildArgs>
+                                <arg>--no-fallback</arg>
+                                <arg>-H:+ReportExceptionStackTraces</arg>
+                                <arg>--initialize-at-build-time=org.slf4j</arg>
+                                <arg>-H:ConfigurationFileDirectories=${project.basedir}/src/main/resources/META-INF/native-image</arg>
+                            </buildArgs>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>native-linux-arm64</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <version>${graalvm.native.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>build-native</id>
+                                <goals><goal>compile-no-fork</goal></goals>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <imageName>${native.image.name}</imageName>
+                            <mainClass>boxy.cli.Boxy</mainClass>
+                            <buildArgs>
+                                <arg>--no-fallback</arg>
+                                <arg>-H:+ReportExceptionStackTraces</arg>
+                                <arg>--initialize-at-build-time=org.slf4j</arg>
+                                <arg>-H:ConfigurationFileDirectories=${project.basedir}/src/main/resources/META-INF/native-image</arg>
+                            </buildArgs>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>native-linux-x64</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <version>${graalvm.native.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>build-native</id>
+                                <goals><goal>compile-no-fork</goal></goals>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <imageName>${native.image.name}</imageName>
+                            <mainClass>boxy.cli.Boxy</mainClass>
+                            <buildArgs>
+                                <arg>--no-fallback</arg>
+                                <arg>-H:+ReportExceptionStackTraces</arg>
+                                <arg>--initialize-at-build-time=org.slf4j</arg>
+                                <arg>-H:ConfigurationFileDirectories=${project.basedir}/src/main/resources/META-INF/native-image</arg>
+                            </buildArgs>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>native-windows-x64</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <version>${graalvm.native.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>build-native</id>
+                                <goals><goal>compile-no-fork</goal></goals>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <imageName>${native.image.name}</imageName>
+                            <mainClass>boxy.cli.Boxy</mainClass>
+                            <buildArgs>
+                                <arg>--no-fallback</arg>
+                                <arg>-H:+ReportExceptionStackTraces</arg>
+                                <arg>--initialize-at-build-time=org.slf4j</arg>
+                                <arg>-H:ConfigurationFileDirectories=${project.basedir}/src/main/resources/META-INF/native-image</arg>
+                            </buildArgs>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
