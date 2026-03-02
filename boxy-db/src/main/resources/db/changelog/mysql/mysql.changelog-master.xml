@@ -407,4 +407,60 @@
                  splitStatements="false"
                  stripComments="false"/>
     </changeSet>
+
+    <!--
+      Changeset 13: Background job reliability and error observability (items #122-#129).
+      - Add background_job_errors table to capture MySQL event scheduler failures (items #122-123)
+      - Create sp_sequencer__run wrapper: error capture + configurable interval (items #122, #127)
+      - Create sp_consumers__gc__run wrapper: error capture + configurable interval (items #123, #128)
+      - Update sequencer event to EVERY 10 SECOND calling sp_sequencer__run (items #122, #127)
+      - Update consumer_gc event to EVERY 10 SECOND calling sp_consumers__gc__run (items #123, #128)
+      - Add configuration entries to boxy_config for interval control
+      - Enhance HealthCheck.java with sequencer and consumer_gc liveness checks (items #87-88)
+      - Add docs/background-jobs.md: evaluation of items #89-90 (separate threads)
+      
+      The MySQL event scheduler runs frequently (every 10 seconds), but wrapper procedures
+      enforce a configurable minimum interval between actual execution (default 60 seconds).
+      This allows runtime tuning without redeploying events or procedures.
+      
+      Any errors are logged to background_job_errors table, making failures observable
+      to the application (instead of silent MySQL error log entries).
+      
+      Items #89-90 are evaluation items: both recommend keeping the current inline approach
+      (tmp record deletion and lease cleanup as part of their respective jobs) rather than
+      moving to separate scheduled threads. See docs/background-jobs.md for reasoning.
+    -->
+    <changeSet id="13" author="richard.billeci" dbms="mysql">
+        <!-- Background job error logging table -->
+        <sqlFile path="sp/background_job_errors.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="true"
+                 stripComments="false"/>
+        
+        <!-- Wrapper procedures with error capture and configurable intervals -->
+        <sqlFile path="sp/sp_sequencer__run.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_consumers__gc__run.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        
+        <!-- Updated events to call wrapper procedures every 10 seconds -->
+        <sqlFile path="events/sequencer_v3.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="events/consumer_gc_v2.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        
+        <!-- Configuration entries for interval control -->
+        <sqlFile path="sp/boxy_config_v2.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="true"
+                 stripComments="false"/>
+    </changeSet>
 </databaseChangeLog>
