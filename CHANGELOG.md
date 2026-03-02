@@ -13,6 +13,10 @@ Each entry maps to a numbered item in [PRODUCTION_READINESS.md](./PRODUCTION_REA
 ### Completed
 | Date | Item # | Description | Commit |
 |------|--------|-------------|--------|
+| 2026-03-02 | 61-64 | Documentation: README performance section, docs/configuration.md, benchmark methodology + PR gate criteria | 27483e6 |
+| 2026-03-02 | 58-60 | Consumer GC v2: batched lease cleanup + consumer deletion (LIMIT 100), evaluation docs | 6c3e77a |
+| 2026-03-02 | 54-57 | Schema performance: covering indexes, innodb_autoinc_lock_mode=2, unprocessed_events + compression evaluation | d5d41fc |
+| 2026-03-02 | 51-53 | Commit path v2: release leases on commit, evaluation docs for temp table vs direct UPDATE | 22a3be3 |
 | 2026-03-02 | 43-50 | Poll path v2: adaptive polling_probability, IN p_batch_size param, subscription stats update, evaluation docs | 3ce7aa7 |
 | 2026-03-02 | 37-42 | Sequencer: sp_sequence v2 (ROW_NUMBER watermark), dynamic batch sizing, 1ms sleep, partition index | 74e8605 |
 | 2026-03-02 | 32-36 | Publish path: sp_events__publish_multi v2 (bulk INSERT), EventRepository.publishBatch, PublishRequest, evaluation docs | 9501300 |
@@ -45,10 +49,10 @@ Each entry maps to a numbered item in [PRODUCTION_READINESS.md](./PRODUCTION_REA
 | Phase 1B: Publish Path | 5 | 5 | 0 |
 | Phase 1C: Sequencer | 6 | 6 | 0 |
 | Phase 1D: Poll Path | 8 | 8 | 0 |
-| Phase 1E: Commit Path | 3 | 0 | 3 |
-| Phase 1F: Schema Performance | 4 | 0 | 4 |
-| Phase 1G: Consumer GC | 3 | 0 | 3 |
-| Phase 1H: Documentation | 4 | 0 | 4 |
+| Phase 1E: Commit Path | 3 | 3 | 0 |
+| Phase 1F: Schema Performance | 4 | 4 | 0 |
+| Phase 1G: Consumer GC | 3 | 3 | 0 |
+| Phase 1H: Documentation | 4 | 4 | 0 |
 | Section 1: CI/CD | 6 | 0 | 6 |
 | Section 2: SP Error Handling | 9 | 0 | 9 |
 | Section 3: Observability | 9 | 0 | 9 |
@@ -64,4 +68,4 @@ Each entry maps to a numbered item in [PRODUCTION_READINESS.md](./PRODUCTION_REA
 | Section 13: Branch Hygiene | 4 | 0 | 4 |
 | Section 14: Client SDKs | 6 | 0 | 6 |
 | Section 15: Core Enhancements | 8 | 0 | 8 |
-| **TOTAL** | **156** | **50** | **106** |
+| **TOTAL** | **156** | **64** | **92** |
