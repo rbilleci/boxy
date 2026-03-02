@@ -23,16 +23,27 @@
     <build>
         <pluginManagement>
             <plugins>
+                <!-- Compiler: targets JDK 25 with release flag -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.14.0</version>
                     <configuration>
                         <release>25</release>
-                        <!-- Enable preview features when needed (e.g. structured concurrency) -->
-                        <!-- <compilerArgs><arg>--enable-preview</arg></compilerArgs> -->
+                        <!--
+                          Uncomment to enable JDK 25 preview features (e.g. structured
+                          concurrency, string templates if still in preview).
+                          Also uncomment the matching argLine entry in surefire below.
+                        -->
+                        <!-- <compilerArgs><arg>- -enable-preview</arg></compilerArgs> -->
                     </configuration>
                 </plugin>
+
+                <!--
+                  Surefire 3.5.3: confirmed compatible with JDK 25.
+                  Integration tests live under src/test/java/boxy/core/it/ and follow
+                  the *IT naming convention; they require Docker for Testcontainers.
+                -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
@@ -41,7 +52,37 @@
                         <includes>
                             <include>**/it/**/*IT.java</include>
                         </includes>
+                        <!--
+                          JVM args for JDK 25: open reflective access packages required by
+                          HikariCP, Testcontainers, and Liquibase. Extend as needed.
+                          If preview features are enabled in the compiler plugin, also add:
+                            <arg>- -enable-preview</arg>
+                        -->
+                        <argLine>
+                            --add-opens java.base/java.lang=ALL-UNNAMED
+                            --add-opens java.base/java.util=ALL-UNNAMED
+                            --add-opens java.base/java.nio=ALL-UNNAMED
+                        </argLine>
                     </configuration>
+                </plugin>
+
+                <!-- Javadoc: generate API docs with JDK 25 javadoc tool -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>3.11.2</version>
+                    <configuration>
+                        <release>25</release>
+                        <quiet>true</quiet>
+                        <failOnError>true</failOnError>
+                    </configuration>
+                </plugin>
+
+                <!-- Sources: attach source jars for IDE and repository publishing -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>3.3.1</version>
                 </plugin>
             </plugins>
         </pluginManagement>
