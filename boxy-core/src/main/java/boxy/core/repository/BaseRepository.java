@@ -132,7 +132,7 @@ public abstract class BaseRepository {
         } catch (SQLException e) {
             log.warn("SQL failed: sql='{}' sqlState='{}' errorCode={} message='{}'",
                     sql, e.getSQLState(), e.getErrorCode(), e.getMessage());
-            throw new DataAccessException(e);
+            throw new DataAccessException(e, sql, parameters.length);
         }
     }
 

@@ -13,6 +13,7 @@ Each entry maps to a numbered item in [PRODUCTION_READINESS.md](./PRODUCTION_REA
 ### Completed
 | Date | Item # | Description | Commit |
 |------|--------|-------------|--------|
+| 2026-03-02 | 105-109 | Section 6: Security & input validation — JsonUtils (RFC 8259 escaping), InputValidator (path/name/partition validation), ConsumerRepository+CursorRepository+EventRepository JSON refactor | b61b886 |
 | 2026-03-02 | 95-104 | Section 5: Schema & data management — events.created_at, cleanup SP, payload/batch validation, schema evaluation docs | bf39c68 |
 | 2026-03-02 | 89-94 | Section 4: Configuration externalization — BOXY_POOL_SIZE env vars, boxy_config table, sp_events__poll_v4 (configurable lease lock), sp_sequence_loop_v4 (configurable batch), sp_subscriptions__subscribe_v3 (configurable heartbeat interval) | fdf5ed6 |
 | 2026-03-02 | 80-88 | Section 3: Observability — BoxyMeterRegistry, Micrometer timers (publish/commit), HikariCP metrics, BaseRepository SQL logging, logback.xml JSON format, HealthCheck utility, docs/monitoring.md | 1676ac0 |
@@ -63,7 +64,7 @@ Each entry maps to a numbered item in [PRODUCTION_READINESS.md](./PRODUCTION_REA
 | Section 3: Observability | 9 | 9 | 0 |
 | Section 4: Configuration | 6 | 6 | 0 |
 | Section 5: Schema & Data | 10 | 10 | 0 |
-| Section 6: Security | 5 | 0 | 5 |
+| Section 6: Security | 5 | 5 | 0 |
 | Section 7: Java Resilience | 4 | 0 | 4 |
 | Section 8: Testing | 8 | 0 | 8 |
 | Section 9: Background Reliability | 8 | 0 | 8 |
@@ -73,4 +74,4 @@ Each entry maps to a numbered item in [PRODUCTION_READINESS.md](./PRODUCTION_REA
 | Section 13: Branch Hygiene | 4 | 0 | 4 |
 | Section 14: Client SDKs | 6 | 0 | 6 |
 | Section 15: Core Enhancements | 8 | 0 | 8 |
-| **TOTAL** | **156** | **104** | **52** |
+| **TOTAL** | **156** | **109** | **47** |
