@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Logback configuration for boxy-mysql library.
+  
+  Items #82/#83: Structured logging with JSON formatter for production environments.
+  
+  Format selection is controlled by the BOXY_LOG_FORMAT environment variable:
+    text (default): human-readable pattern suitable for development / local testing
+    json:           structured JSON lines for log aggregators (e.g. Elasticsearch, Splunk)
+  
+  Log level is controlled by BOXY_LOG_LEVEL (default: INFO).
+  Set BOXY_LOG_LEVEL=DEBUG to trace all SQL executions.
+-->
+<configuration>
+
+    <!-- Text appender: human-readable pattern for development -->
+    <appender name="TEXT" class="ch.qos.logback.core.ConsoleAppender">
+        <target>System.err</target>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- JSON appender: structured output for production log aggregators -->
+    <appender name="JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <target>System.err</target>
+        <encoder>
+            <!--
+              Minimal JSON lines format (no extra library required).
+              Fields: ts, level, thread, logger, msg
+              For full JSON structured logging with MDC, stack traces, etc.,
+              replace with logstash-logback-encoder from:
+                https://github.com/logfellow/logstash-logback-encoder
+            -->
+            <pattern>{"ts":"%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}","level":"%level","thread":"%thread","logger":"%logger{36}","msg":"%msg"}%n</pattern>
+        </encoder>
+    </appender>
+
+    <!--
+      If/Else on BOXY_LOG_FORMAT: use JSON appender when set to "json",
+      otherwise default to TEXT.  Uses Logback's Janino-based conditional.
+    -->
+    <if condition='property("BOXY_LOG_FORMAT").equalsIgnoreCase("json")'>
+        <then>
+            <root level="${BOXY_LOG_LEVEL:-INFO}">
+                <appender-ref ref="JSON"/>
+            </root>
+        </then>
+        <else>
+            <root level="${BOXY_LOG_LEVEL:-INFO}">
+                <appender-ref ref="TEXT"/>
+            </root>
+        </else>
+    </if>
+
+    <!-- Reduce HikariCP noise below WARN unless debug is requested -->
+    <logger name="com.zaxxer.hikari" level="${BOXY_HIKARI_LOG_LEVEL:-WARN}"/>
+
+    <!-- SQL tracing: set BOXY_LOG_LEVEL=DEBUG or configure explicitly -->
+    <logger name="boxy.core.repository" level="${BOXY_SQL_LOG_LEVEL:-INFO}"/>
+
+</configuration>

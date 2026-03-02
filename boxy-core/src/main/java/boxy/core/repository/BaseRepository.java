@@ -2,6 +2,8 @@ package boxy.core.repository;
 
 import boxy.core.DataAccessException;
 import boxy.core.mapper.RowMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -21,8 +23,13 @@ import java.util.Optional;
  * {@link DataAccessException#getVendorCode()}, and
  * {@link DataAccessException#hasErrorCode(String)} to distinguish stored-procedure error
  * signals from infrastructure failures.
+ *
+ * <p>SQL execution is logged at {@code DEBUG} level with the SQL text and parameter count.
+ * Enable debug logging for {@code boxy.core.repository} to trace all database calls.
  */
 public abstract class BaseRepository {
+
+    private static final Logger log = LoggerFactory.getLogger(BaseRepository.class);
 
     /**
      * Functional interface for operations applied to a {@link PreparedStatement} that may
@@ -101,6 +108,10 @@ public abstract class BaseRepository {
      * Core execution helper: obtains a connection, prepares the statement, binds parameters,
      * delegates to {@code fn}, and closes all resources.
      *
+     * <p>Logs each invocation at {@code DEBUG} level with the SQL text and parameter count.
+     * Errors are logged at {@code WARN} level with the SQL state before being wrapped and
+     * re-thrown as {@link DataAccessException}.
+     *
      * @param <T>        the return type of {@code fn}
      * @param sql        the SQL string to prepare
      * @param fn         the operation to apply to the prepared statement
@@ -109,13 +120,18 @@ public abstract class BaseRepository {
      * @throws DataAccessException wrapping any {@link SQLException} thrown
      */
     private <T> T execute(final String sql, final SQLFunction<PreparedStatement, T> fn, final Object... parameters) {
+        log.debug("Executing SQL: sql='{}' params={}", sql, parameters.length);
         try (final var connection = ds.getConnection();
              final var statement = connection.prepareStatement(sql)) {
             for (var i = 0; i < parameters.length; i++) {
                 statement.setObject(i + 1, parameters[i]);
             }
-            return fn.apply(statement);
+            final T result = fn.apply(statement);
+            log.debug("SQL completed: sql='{}'", sql);
+            return result;
         } catch (SQLException e) {
+            log.warn("SQL failed: sql='{}' sqlState='{}' errorCode={} message='{}'",
+                    sql, e.getSQLState(), e.getErrorCode(), e.getMessage());
             throw new DataAccessException(e);
         }
     }

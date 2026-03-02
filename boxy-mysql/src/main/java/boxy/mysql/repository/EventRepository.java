@@ -2,6 +2,10 @@ package boxy.mysql.repository;
 
 import boxy.core.domain.PublishRequest;
 import boxy.core.repository.BaseRepository;
+import boxy.mysql.metrics.BoxyMeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.util.List;
@@ -24,6 +28,8 @@ import java.util.stream.Collectors;
  */
 public final class EventRepository extends BaseRepository {
 
+    private static final Logger log = LoggerFactory.getLogger(EventRepository.class);
+
     public EventRepository(final DataSource ds) {
         super(ds);
     }
@@ -41,7 +47,11 @@ public final class EventRepository extends BaseRepository {
      * @param data  event payload
      */
     public void publish(final String path, final String topic, final String key, final String data) {
-        update("{CALL sp_events__publish(?,?,?,?)}", path, topic, key, data);
+        log.debug("Publishing event: path={} topic={} key={}", path, topic, key);
+        Timer.builder(BoxyMeterRegistry.PUBLISH_LATENCY)
+             .description("Latency of sp_events__publish stored procedure calls")
+             .register(BoxyMeterRegistry.get())
+             .record(() -> update("{CALL sp_events__publish(?,?,?,?)}", path, topic, key, data));
     }
 
     /**
@@ -56,7 +66,12 @@ public final class EventRepository extends BaseRepository {
      * @param data        event payload
      */
     public void publish(final long partitionId, final String data) {
-        update("{CALL sp_events__publish_advanced(?,?)}", partitionId, data);
+        log.debug("Publishing event (advanced): partitionId={}", partitionId);
+        Timer.builder(BoxyMeterRegistry.PUBLISH_LATENCY)
+             .description("Latency of sp_events__publish_advanced stored procedure calls")
+             .tag("variant", "advanced")
+             .register(BoxyMeterRegistry.get())
+             .record(() -> update("{CALL sp_events__publish_advanced(?,?)}", partitionId, data));
     }
 
     /**
@@ -76,7 +91,11 @@ public final class EventRepository extends BaseRepository {
         if (events.isEmpty()) {
             throw new IllegalArgumentException("publishBatch requires at least one event");
         }
-        update("{CALL sp_events__publish_multi(?)}", toJsonArray(events));
+        log.debug("Publishing batch: count={}", events.size());
+        Timer.builder(BoxyMeterRegistry.PUBLISH_BATCH_LATENCY)
+             .description("Latency of sp_events__publish_multi stored procedure calls")
+             .register(BoxyMeterRegistry.get())
+             .record(() -> update("{CALL sp_events__publish_multi(?)}", toJsonArray(events)));
     }
 
     // -------------------------------------------------------------------------

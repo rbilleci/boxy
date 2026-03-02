@@ -1,5 +1,6 @@
 package boxy.mysql;
 
+import boxy.mysql.metrics.BoxyMeterRegistry;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
@@ -102,6 +103,13 @@ public class DataSourceProvider {
         config.setMaxLifetime(Duration.ofMinutes(30).toMillis());
         config.setLeakDetectionThreshold(Duration.ofSeconds(2).toMillis());
         config.setRegisterMbeans(true);
+
+        // Expose HikariCP connection pool metrics via Micrometer (item #86).
+        // When BoxyMeterRegistry has been configured with a real registry
+        // (e.g. Prometheus), HikariCP automatically registers pool gauges:
+        //   hikaricp.connections, hikaricp.connections.active,
+        //   hikaricp.connections.idle, hikaricp.connections.pending
+        config.setMetricRegistry(BoxyMeterRegistry.get());
 
         log.info("Creating HikariCP pool: db_type={} host={} db={}", dbType, host, name);
         return new HikariDataSource(config);

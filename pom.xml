@@ -240,6 +240,25 @@
                 <version>2.2.2</version>
             </dependency>
 
+            <!-- OBSERVABILITY: Micrometer core metrics abstraction (items #80-#86) -->
+            <dependency>
+                <groupId>io.micrometer</groupId>
+                <artifactId>micrometer-core</artifactId>
+                <version>1.14.5</version>
+            </dependency>
+            <dependency>
+                <groupId>io.micrometer</groupId>
+                <artifactId>micrometer-registry-prometheus</artifactId>
+                <version>1.14.5</version>
+            </dependency>
+
+            <!-- Janino for conditional logback config (BOXY_LOG_FORMAT selection) -->
+            <dependency>
+                <groupId>org.codehaus.janino</groupId>
+                <artifactId>janino</artifactId>
+                <version>3.1.12</version>
+            </dependency>
+
             <!-- LOGGING DEPENDENCIES -->
             <dependency>
                 <groupId>org.slf4j</groupId>
