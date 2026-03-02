@@ -263,4 +263,80 @@
                  stripComments="false"/>
     </changeSet>
 
+
+    <!--
+      Changeset 10: Stored procedure error handling — EXIT HANDLER FOR SQLEXCEPTION
+      (items #71-#79).
+      Every stored procedure now declares an EXIT HANDLER FOR SQLEXCEPTION that:
+        - ROLLBACKs the active transaction (where a transaction is open), and
+        - DROPs any session-scoped temporary tables (cleanup on error), and
+        - RESIGNALs the original SQL exception to the caller.
+      This ensures that errors surface visibly rather than being swallowed, and
+      that partial writes cannot persist after an unexpected failure.
+
+      Files in this changeset (one DROP+CREATE per file):
+        - sp_events__publish_v2       (item #71)
+        - sp_events__publish_advanced_v2  (item #72)
+        - sp_events__publish_multi_v3 (item #73)
+        - sp_sequence_v3              (item #74)
+        - sp_sequence_loop_v3         (item #75)
+        - sp_consumers__gc_v3         (item #76)
+        - sp_subscriptions__create_v2 (item #77)
+        - sp_subscriptions__delete_v2 (item #77)
+        - sp_subscriptions__subscribe_v2   (item #77)
+        - sp_subscriptions__unsubscribe_v2 (item #77)
+        - sp_topics__delete_v2        (item #78)
+        - sp_events__poll_v3          (item #79)
+    -->
+    <changeSet id="10" author="richard.billeci" dbms="mysql">
+        <sqlFile path="sp/sp_events__publish_v2.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_events__publish_advanced_v2.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_events__publish_multi_v3.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_sequence_v3.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_sequence_loop_v3.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_consumers__gc_v3.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_subscriptions__create_v2.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_subscriptions__delete_v2.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_subscriptions__subscribe_v2.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_subscriptions__unsubscribe_v2.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_topics__delete_v2.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+        <sqlFile path="sp/sp_events__poll_v3.sql"
+                 relativeToChangelogFile="true"
+                 splitStatements="false"
+                 stripComments="false"/>
+    </changeSet>
+
 </databaseChangeLog>
