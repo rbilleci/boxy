@@ -100,9 +100,10 @@ public final class InputValidator {
     }
 
     private static void requireMaxLength(final String value, final int max, final String field) {
-        if (value.length() > max) {
+        int byteLength = value.getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
+        if (byteLength > max) {
             throw new IllegalArgumentException(
-                    field + " must not exceed " + max + " characters (got " + value.length() + ")");
+                    field + " must not exceed " + max + " bytes (got " + byteLength + ")");
         }
     }
 

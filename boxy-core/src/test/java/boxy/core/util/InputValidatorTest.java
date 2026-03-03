@@ -161,4 +161,42 @@ class InputValidatorTest {
         assertThatCode(() -> InputValidator.requireValidName("events-🚀", "topic"))
                 .doesNotThrowAnyException();
     }
+
+    // -------------------------------------------------------------------------
+    // Byte-length enforcement (not character-length)
+    // -------------------------------------------------------------------------
+
+    @Test
+    void requireValidName_enforcesBytes_notChars() {
+        // "á" is 2 bytes in UTF-8; repeat to fill exactly MAX_NAME_LENGTH bytes
+        // 250 copies of "á" (2 bytes each) = 500 bytes = MAX_NAME_LENGTH → should pass
+        String atLimit = "á".repeat(InputValidator.MAX_NAME_LENGTH / 2);
+        assertThat(atLimit.getBytes(java.nio.charset.StandardCharsets.UTF_8).length)
+                .isEqualTo(InputValidator.MAX_NAME_LENGTH);
+        assertThatCode(() -> InputValidator.requireValidName(atLimit, "name"))
+                .doesNotThrowAnyException();
+
+        // One more "á" → 502 bytes → should fail
+        String overLimit = atLimit + "á";
+        assertThatThrownBy(() -> InputValidator.requireValidName(overLimit, "name"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("bytes");
+    }
+
+    @Test
+    void requireValidPath_enforcesBytes_notChars() {
+        // 4-byte emoji: 🚀 is 4 bytes in UTF-8
+        // MAX_PATH_LENGTH / 4 = 1000 emojis = 4000 bytes → should pass
+        String atLimit = "🚀".repeat(InputValidator.MAX_PATH_LENGTH / 4);
+        assertThat(atLimit.getBytes(java.nio.charset.StandardCharsets.UTF_8).length)
+                .isEqualTo(InputValidator.MAX_PATH_LENGTH);
+        assertThatCode(() -> InputValidator.requireValidPath(atLimit))
+                .doesNotThrowAnyException();
+
+        // One more emoji → 4004 bytes → should fail
+        String overLimit = atLimit + "🚀";
+        assertThatThrownBy(() -> InputValidator.requireValidPath(overLimit))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("bytes");
+    }
 }
