@@ -136,6 +136,24 @@ public class WorkerConfig {
             if (topic == null || topic.isBlank()) {
                 throw new IllegalArgumentException("topic is required");
             }
+            if (path == null || path.isBlank()) {
+                throw new IllegalArgumentException("path is required");
+            }
+            if (maxBatchSize < 1) {
+                throw new IllegalArgumentException("maxBatchSize must be >= 1 (got " + maxBatchSize + ")");
+            }
+            if (maxBatchSize > 10_000) {
+                throw new IllegalArgumentException("maxBatchSize must be <= 10000 (got " + maxBatchSize + ")");
+            }
+            if (maxConcurrentPollers < 1) {
+                throw new IllegalArgumentException("maxConcurrentPollers must be >= 1 (got " + maxConcurrentPollers + ")");
+            }
+            if (pollTimeout == null || pollTimeout.isNegative() || pollTimeout.isZero()) {
+                throw new IllegalArgumentException("pollTimeout must be positive (got " + pollTimeout + ")");
+            }
+            if (shutdownTimeout == null || shutdownTimeout.isNegative()) {
+                throw new IllegalArgumentException("shutdownTimeout must not be negative (got " + shutdownTimeout + ")");
+            }
             return new WorkerConfig(this);
         }
     }
