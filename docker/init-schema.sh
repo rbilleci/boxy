@@ -1,19 +1,40 @@
 #!/bin/bash
-# Initialize Boxy database schema using Liquibase
-# This script is run during Docker container startup
+# Initialize Boxy stored procedures, functions, and events.
+# This runs after mysql.schema.sql (01-schema.sql) has created the tables.
+#
+# Note: For full Liquibase-managed initialization, use docker-compose.yml
+# which runs the official Liquibase image. This script is a fallback for
+# the standalone Dockerfile that loads SPs directly via mysql client.
 
 set -e
 
-echo "Waiting for MySQL to be ready..."
-until mysqladmin ping -h localhost -u root -p"${MYSQL_ROOT_PASSWORD}" &>/dev/null; do
-    echo "MySQL is unavailable - sleeping..."
-    sleep 1
+MYSQL_CMD="mysql -u root -p${MYSQL_ROOT_PASSWORD} ${MYSQL_DATABASE}"
+
+echo "[boxy] Loading stored procedures and functions..."
+
+# Load functions first (SPs may depend on them)
+for f in /docker-entrypoint-initdb.d/mysql/fn/*.sql; do
+    if [ -f "$f" ]; then
+        echo "[boxy]   Loading function: $(basename "$f")"
+        $MYSQL_CMD < "$f"
+    fi
 done
-echo "MySQL is up and ready!"
 
-# Note: Actual Liquibase migrations are applied via the SQL files
-# in /docker-entrypoint-initdb.d/ (mounted from boxy-db/src/main/resources/db/changelog/)
-# Docker MySQL automatically runs all *.sql files in that directory
-# in lexicographical order.
+# Load stored procedures
+for f in /docker-entrypoint-initdb.d/mysql/sp/*.sql; do
+    if [ -f "$f" ]; then
+        echo "[boxy]   Loading procedure: $(basename "$f")"
+        # SPs use DELIMITER // convention; strip it for mysql client
+        sed 's|^DELIMITER //$||; s|^//$||; s|^DELIMITER ;$||' "$f" | $MYSQL_CMD
+    fi
+done
 
-echo "Schema initialization complete. Boxy is ready!"
+# Load scheduled events
+for f in /docker-entrypoint-initdb.d/mysql/events/*.sql; do
+    if [ -f "$f" ]; then
+        echo "[boxy]   Loading event: $(basename "$f")"
+        sed 's|^DELIMITER //$||; s|^//$||; s|^DELIMITER ;$||' "$f" | $MYSQL_CMD
+    fi
+done
+
+echo "[boxy] Schema initialization complete."

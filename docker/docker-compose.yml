@@ -1,41 +1,118 @@
 # Docker Compose for Boxy evaluation environment
-# Includes MySQL 8.0 with pre-initialized Boxy schema
-# Usage: docker-compose up -d
-#        mysql -h 127.0.0.1 -u boxy -pboxy -D boxy
-
-version: '3.8'
+#
+# Starts MySQL 8.0 and runs Liquibase migrations to initialize the schema.
+# Usage:
+#   cd docker && docker-compose up -d
+#   mysql -h 127.0.0.1 -u boxy -pboxy -D boxy
+#
+# To also start PostgreSQL:
+#   docker-compose --profile postgres up -d
 
 services:
+
+  # ---------------------------------------------------------------------------
+  # MySQL 8.0 — primary evaluation database
+  # ---------------------------------------------------------------------------
   mysql:
-    image: mysql:8.0.36-debian
+    image: mysql:8.0.43
     container_name: boxy-mysql
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: boxy
       MYSQL_USER: boxy
       MYSQL_PASSWORD: boxy
-      # MySQL performance tuning for evaluation
-      # (relax durability for faster iteration; don't use in production)
-      MYSQL_INITDB_SKIP_TZINFO: "yes"
+    command: >
+      mysqld
+      --log-bin-trust-function-creators=1
+      --event_scheduler=ON
+      --innodb_flush_log_at_trx_commit=0
+      --sync_binlog=0
+      --innodb_autoinc_lock_mode=2
     volumes:
-      # Mount Liquibase migrations for schema initialization
-      - ./boxy-db/src/main/resources/db/changelog:/docker-entrypoint-initdb.d
-      # Persist data between container restarts
-      - boxy-data:/var/lib/mysql
+      - boxy-mysql-data:/var/lib/mysql
     ports:
       - "3306:3306"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 5s
+      timeout: 3s
+      retries: 10
     networks:
       - boxy-network
 
-  # Optional: phpmyadmin for visual inspection of data
+  # ---------------------------------------------------------------------------
+  # Liquibase migration runner (MySQL)
+  # ---------------------------------------------------------------------------
+  liquibase-mysql:
+    image: liquibase/liquibase:4.31
+    container_name: boxy-liquibase-mysql
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ../boxy-db/src/main/resources/db/changelog:/liquibase/changelog
+    command: >
+      --changelog-file=db.changelog-master.xml
+      --url=jdbc:mysql://mysql:3306/boxy
+      --username=boxy
+      --password=boxy
+      --search-path=/liquibase/changelog
+      update
+    networks:
+      - boxy-network
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL 16 — optional, activated with: --profile postgres
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16
+    container_name: boxy-postgres
+    profiles: ["postgres"]
+    environment:
+      POSTGRES_DB: boxy
+      POSTGRES_USER: boxy
+      POSTGRES_PASSWORD: boxy
+    volumes:
+      - boxy-pg-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U boxy -d boxy"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - boxy-network
+
+  # ---------------------------------------------------------------------------
+  # Liquibase migration runner (PostgreSQL) — activated with: --profile postgres
+  # ---------------------------------------------------------------------------
+  liquibase-postgres:
+    image: liquibase/liquibase:4.31
+    container_name: boxy-liquibase-postgres
+    profiles: ["postgres"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ../boxy-db/src/main/resources/db/changelog:/liquibase/changelog
+    command: >
+      --changelog-file=db.changelog-master.xml
+      --url=jdbc:postgresql://postgres:5432/boxy
+      --username=boxy
+      --password=boxy
+      --search-path=/liquibase/changelog
+      update
+    networks:
+      - boxy-network
+
+  # ---------------------------------------------------------------------------
+  # phpMyAdmin — optional visual inspection
+  # ---------------------------------------------------------------------------
   phpmyadmin:
     image: phpmyadmin:latest
     container_name: boxy-phpmyadmin
+    profiles: ["admin"]
     depends_on:
       mysql:
         condition: service_healthy
@@ -43,15 +120,14 @@ services:
       PMA_HOST: mysql
       PMA_USER: boxy
       PMA_PASSWORD: boxy
-      PMA_DB: boxy
     ports:
       - "8080:80"
     networks:
       - boxy-network
 
 volumes:
-  boxy-data:
-    driver: local
+  boxy-mysql-data:
+  boxy-pg-data:
 
 networks:
   boxy-network:
