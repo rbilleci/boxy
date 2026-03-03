@@ -39,6 +39,13 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- POSTGRESQL DRIVER -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- OBSERVABILITY -->
         <dependency>
             <groupId>io.micrometer</groupId>

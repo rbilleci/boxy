@@ -370,6 +370,13 @@
                 <version>8.4.0</version>
             </dependency>
 
+            <!-- DATABASE DRIVERS (POSTGRESQL) -->
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>42.7.5</version>
+            </dependency>
+
             <!-- TESTING -->
             <dependency>
                 <groupId>org.assertj</groupId>
@@ -403,6 +410,12 @@
             <dependency>
                 <groupId>org.testcontainers</groupId>
                 <artifactId>junit-jupiter</artifactId>
+                <version>1.21.4</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>postgresql</artifactId>
                 <version>1.21.4</version>
                 <scope>test</scope>
             </dependency>

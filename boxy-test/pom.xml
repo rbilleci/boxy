@@ -60,7 +60,17 @@
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
+        </dependency>
+
+        <!-- POSTGRESQL DRIVER (needed at runtime for PG integration tests) -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
         </dependency>
 
         <!-- METRICS (benchmarks) -->
