@@ -96,7 +96,7 @@ SELECT * FROM background_job_errors
 
 ## Health Checks and Liveness Monitoring (Items #87-88)
 
-The `HealthCheck` class in `boxy-mysql/src/main/java/boxy/mysql/metrics/HealthCheck.java`
+The `HealthCheck` class in `boxy-core/src/main/java/boxy/core/metrics/HealthCheck.java`
 provides three independent checks:
 
 ### Check 1: Database Connectivity

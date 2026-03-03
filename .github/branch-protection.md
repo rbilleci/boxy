@@ -49,8 +49,8 @@ These GitHub Actions must pass:
 
   # Specific areas (optional)
   boxy-core/ @rbilleci
-  boxy-mysql/ @rbilleci
   boxy-db/ @rbilleci
+  boxy-cli/ @rbilleci
   docs/ @rbilleci
   ```
 

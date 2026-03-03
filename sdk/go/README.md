@@ -89,6 +89,6 @@ docker-compose down
 
 ## See Also
 
-- [Boxy MySQL Driver](../../boxy-mysql/)
+- [Boxy Core](../../boxy-core/)
 - [Boxy Architecture](../../docs/)
 - [Release Process](../../docs/release-process.md)

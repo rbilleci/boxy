@@ -1,6 +1,6 @@
-package boxy.mysql;
+package boxy.core;
 
-import boxy.mysql.metrics.BoxyMeterRegistry;
+import boxy.core.metrics.BoxyMeterRegistry;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;

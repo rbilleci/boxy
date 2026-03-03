@@ -46,20 +46,20 @@ docker-compose down -v
 To build the Dockerfile directly (without Docker Compose):
 
 ```bash
-docker build -t boxy-mysql:latest .
+docker build -t boxy-core:latest .
 ```
 
 Then run it:
 
 ```bash
 docker run \
-  --name boxy-mysql \
+  --name boxy-core \
   -e MYSQL_ROOT_PASSWORD=root \
   -e MYSQL_DATABASE=boxy \
   -e MYSQL_USER=boxy \
   -e MYSQL_PASSWORD=boxy \
   -p 3306:3306 \
-  boxy-mysql:latest
+  boxy-core:latest
 ```
 
 ## Evaluate Boxy in Docker
@@ -192,7 +192,7 @@ command: >
 docker-compose down
 
 # Remove images
-docker rmi boxy-mysql:latest
+docker rmi boxy-core:latest
 
 # Remove all Boxy-related volumes
 docker volume prune

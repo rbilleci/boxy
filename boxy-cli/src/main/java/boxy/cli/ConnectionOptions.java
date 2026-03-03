@@ -1,6 +1,6 @@
 package boxy.cli;
 
-import boxy.mysql.DataSourceProvider;
+import boxy.core.DataSourceProvider;
 import picocli.CommandLine.Option;
 
 import javax.sql.DataSource;

@@ -44,11 +44,10 @@ The current two-module layout (`boxy-core`, `boxy-db`) conflates concerns. Restr
 
 | # | Sev | Item | Issue |
 |---|-----|------|-------|
-| 11 | 🔴 | Restructure into proper Maven modules: `boxy-db` (Liquibase migrations and SQL, as today), `boxy-core` (domain records, repository interfaces, `DataAccessException` — no DB driver dependency), `boxy-mysql` (MySQL-specific repository implementations, `DataSourceProvider`, MySQL driver), `boxy-pgsql` (PostgreSQL-specific implementations, placeholder initially), `boxy-cli` (native CLI application), `boxy-test` (shared test infrastructure, `BaseIT`, `TestData`) | [#38](https://github.com/rbilleci/boxy/issues/38) |
-| 12 | 🟠 | Extract `DataSourceProvider` from `boxy-core` into database-specific modules (`boxy-mysql`, `boxy-pgsql`) | — |
-| 13 | 🟠 | Define repository interfaces in `boxy-core` with implementations in `boxy-mysql` (current code) so the core module has no driver dependency | — |
-| 14 | 🟠 | Move integration test infrastructure (`BaseIT`, `TestData`) into `boxy-test` shared test module | — |
-| 15 | 🟡 | Establish consistent package naming convention across all modules: `boxy.core.*`, `boxy.mysql.*`, `boxy.pgsql.*`, `boxy.cli.*` | — |
+| 11 | 🔴 | Restructure into proper Maven modules: `boxy-db` (Liquibase migrations and SQL), `boxy-core` (domain records, repositories, `DataSourceProvider`, MySQL/PostgreSQL implementations), `boxy-cli` (native CLI application), `boxy-test` (shared test infrastructure, `BaseIT`, `TestData`) | [#38](https://github.com/rbilleci/boxy/issues/38) |
+| 12 | 🟠 | Ensure `boxy-core` supports both MySQL and PostgreSQL through unified repository implementations | — |
+| 13 | 🟠 | Move integration test infrastructure (`BaseIT`, `TestData`) into `boxy-test` shared test module | — |
+| 14 | 🟡 | Establish consistent package naming convention: `boxy.core.*` for all implementations, with database-specific SQL in `boxy-db` | — |
 
 ### 0D. CLI Implementation
 
@@ -380,7 +379,7 @@ The plan is structured in two phases of foundational work, followed by parallel 
 
 1. **Phase 0A: Agent optimization** — Create `CLAUDE.md`, `AGENTS.md`, `CONTRIBUTING.md` so that every subsequent task done by an agent (or a human) starts from a clear foundation.
 2. **Phase 0B: JDK 25 upgrade** — Upgrade compiler targets and validate dependencies before writing new code.
-3. **Phase 0C: Module restructuring** — Split `boxy-core` into `boxy-core` (interfaces), `boxy-mysql` (implementations), `boxy-pgsql` (placeholder), `boxy-test` (shared test infra). Create `boxy-cli` module shell.
+3. **Phase 0C: Module restructuring** — Consolidate into `boxy-core` (all implementations), `boxy-db` (migrations), `boxy-cli` (CLI), `boxy-test` (shared test infra).
 4. **Phase 0D: CLI implementation** — Build out `boxy-cli` with GraalVM native-image, targeting macOS ARM first. Validates the module boundaries from 0C.
 5. **Phase 1A: Benchmark infrastructure** — Build end-to-end and component benchmarks. Establish baseline numbers on all hardware profiles. _This must be done before any performance optimization._
 6. **Phase 1B–1G: Performance optimization** — Work through publish, sequencer, poll, commit, schema, and GC optimizations. Each change requires a benchmark gate. Can be parallelized across contributors but each PR must include benchmark results.
@@ -402,20 +401,22 @@ Every PR that touches a performance-sensitive path must include:
 ```
 boxy/
 ├── pom.xml                          # Parent POM (JDK 25, dependency management)
-├── boxy-db/                         # Liquibase migrations + SQL (unchanged)
-│   └── src/main/resources/db/
-├── boxy-core/                       # Domain records, repository interfaces, exceptions
+├── boxy-db/                         # Liquibase migrations + SQL
+│   └── src/main/resources/db/changelog/
+│       ├── mysql/                   # MySQL DDL and stored procedures
+│       └── pgsql/                   # PostgreSQL DDL and stored procedures
+├── boxy-core/                       # Domain records, repositories, implementations
 │   └── src/main/java/boxy/core/
 │       ├── domain/                  # Consumer, Cursor, Event, Namespace, etc.
-│       ├── repository/              # Repository interfaces (no implementations)
-│       └── DataAccessException.java
-├── boxy-mysql/                      # MySQL repository implementations
-│   └── src/main/java/boxy/mysql/
-│       ├── repository/              # MySQL-specific repository impls
+│       ├── repository/              # JDBC repositories (MySQL/PostgreSQL support)
 │       ├── mapper/                  # ResultSet mappers
-│       └── MysqlDataSourceProvider.java
-├── boxy-pgsql/                      # PostgreSQL implementations (placeholder)
-│   └── src/main/java/boxy/pgsql/
+│       ├── metrics/                 # BoxyMeterRegistry, HealthCheck
+│       ├── retry/                   # RetryPolicy, CircuitBreaker
+│       ├── security/                # InputValidator
+│       ├── util/                    # JsonUtils
+│       ├── worker/                  # Worker, WorkerConfig, EventHandler
+│       ├── DataSourceProvider.java  # HikariCP pool factory
+│       └── DataAccessException.java
 ├── boxy-cli/                        # Native CLI (GraalVM)
 │   └── src/main/java/boxy/cli/
 │       ├── BoxyCommand.java         # Main entry point (picocli)
@@ -424,10 +425,10 @@ boxy/
 │       ├── namespace/               # boxy namespace create|delete|rename|move
 │       ├── topic/                   # boxy topic create|delete
 │       └── subscription/            # boxy subscription create|delete|subscribe|unsubscribe
-├── boxy-test/                       # Shared test infrastructure
-│   └── src/main/java/boxy/test/
-│       ├── BaseIT.java
-│       └── TestData.java
+└── boxy-test/                       # Shared test infrastructure
+    └── src/main/java/boxy/test/
+        ├── BaseIT.java
+        └── TestData.java
 ├── CLAUDE.md                        # Agent context file
 ├── AGENTS.md                        # Agent workflow guide
 ├── CONTRIBUTING.md                  # Contributor guide

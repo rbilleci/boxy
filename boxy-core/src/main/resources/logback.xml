@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Logback configuration for boxy-mysql library.
+  Logback configuration for boxy-core library.
   
   Items #82/#83: Structured logging with JSON formatter for production environments.
   

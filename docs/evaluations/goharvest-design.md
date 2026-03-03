@@ -121,7 +121,7 @@ Implement adaptive batching that:
 
 ### Implementation Plan
 
-1. **Create Harvester class** in `boxy-mysql/worker/`:
+1. **Create Harvester class** in `boxy-core/worker/`:
    ```java
    public class AdaptiveHarvester<T> {
        private final EventBatch buffer;

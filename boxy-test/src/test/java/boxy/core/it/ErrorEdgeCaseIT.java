@@ -1,10 +1,10 @@
 package boxy.core.it;
 
 import boxy.core.DataAccessException;
-import boxy.mysql.repository.ConsumerRepository;
-import boxy.mysql.repository.CursorRepository;
-import boxy.mysql.repository.EventRepository;
-import boxy.mysql.repository.PartitionRepository;
+import boxy.core.repository.ConsumerRepository;
+import boxy.core.repository.CursorRepository;
+import boxy.core.repository.EventRepository;
+import boxy.core.repository.PartitionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Testcontainers;

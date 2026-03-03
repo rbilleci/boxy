@@ -1,13 +1,13 @@
 package boxy.core.it;
 
 import boxy.core.domain.PublishRequest;
-import boxy.mysql.repository.ConsumerRepository;
-import boxy.mysql.repository.CursorRepository;
-import boxy.mysql.repository.EventRepository;
-import boxy.mysql.repository.PartitionRepository;
-import boxy.mysql.repository.SubscriptionRepository;
-import boxy.mysql.repository.TopicRepository;
-import boxy.mysql.repository.NamespaceRepository;
+import boxy.core.repository.ConsumerRepository;
+import boxy.core.repository.CursorRepository;
+import boxy.core.repository.EventRepository;
+import boxy.core.repository.PartitionRepository;
+import boxy.core.repository.SubscriptionRepository;
+import boxy.core.repository.TopicRepository;
+import boxy.core.repository.NamespaceRepository;
 import org.HdrHistogram.Histogram;
 import org.HdrHistogram.Recorder;
 import org.junit.jupiter.api.BeforeEach;

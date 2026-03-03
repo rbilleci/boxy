@@ -1,7 +1,7 @@
 package boxy.cli.cmd;
 
 import boxy.cli.ConnectionOptions;
-import boxy.mysql.repository.NamespaceRepository;
+import boxy.core.repository.NamespaceRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;

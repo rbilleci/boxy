@@ -1,4 +1,4 @@
-package boxy.mysql.worker;
+package boxy.core.worker;
 
 /**
  * Represents a single event polled from Boxy.

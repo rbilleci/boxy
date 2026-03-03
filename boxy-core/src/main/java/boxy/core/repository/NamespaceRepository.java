@@ -1,4 +1,4 @@
-package boxy.mysql.repository;
+package boxy.core.repository;
 
 import boxy.core.domain.Namespace;
 import boxy.core.mapper.IdMapper;

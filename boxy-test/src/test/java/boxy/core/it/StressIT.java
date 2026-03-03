@@ -1,10 +1,10 @@
 package boxy.core.it;
 
-import boxy.mysql.repository.ConsumerRepository;
-import boxy.mysql.repository.EventRepository;
-import boxy.mysql.repository.PartitionRepository;
-import boxy.mysql.repository.NamespaceRepository;
-import boxy.mysql.repository.TopicRepository;
+import boxy.core.repository.ConsumerRepository;
+import boxy.core.repository.EventRepository;
+import boxy.core.repository.PartitionRepository;
+import boxy.core.repository.NamespaceRepository;
+import boxy.core.repository.TopicRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -74,8 +74,8 @@ class StressIT extends BaseIT {
         System.out.printf("Created %d topics with %d partitions each%n", topicCount, partitionsPerTopic);
 
         // Create subscription and register consumers
-        final boxy.mysql.repository.SubscriptionRepository subRepo =
-                new boxy.mysql.repository.SubscriptionRepository(dataSource);
+        final boxy.core.repository.SubscriptionRepository subRepo =
+                new boxy.core.repository.SubscriptionRepository(dataSource);
         final String subscriptionName = "stress-subscription";
         subRepo.create(subscriptionName);
 

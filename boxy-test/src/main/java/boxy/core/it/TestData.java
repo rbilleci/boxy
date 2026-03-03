@@ -1,6 +1,6 @@
 package boxy.core.it;
 
-import boxy.mysql.repository.*;
+import boxy.core.repository.*;
 import boxy.core.domain.*;
 
 import javax.sql.DataSource;

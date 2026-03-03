@@ -1,4 +1,4 @@
-package boxy.mysql.metrics;
+package boxy.core.metrics;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

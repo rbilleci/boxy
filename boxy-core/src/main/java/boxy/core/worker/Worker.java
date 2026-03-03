@@ -1,4 +1,4 @@
-package boxy.mysql.worker;
+package boxy.core.worker;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tag;

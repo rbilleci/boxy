@@ -1,8 +1,8 @@
 package boxy.core.it;
 
-import boxy.mysql.repository.ConsumerRepository;
-import boxy.mysql.repository.EventRepository;
-import boxy.mysql.repository.PartitionRepository;
+import boxy.core.repository.ConsumerRepository;
+import boxy.core.repository.EventRepository;
+import boxy.core.repository.PartitionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -134,7 +134,7 @@ class EventOrderingIT extends BaseIT {
             final Map<Long, Long> cursorCommit = Map.of(lastEvent.cursorId(), lastEvent.sequence());
             
             try {
-                var cursorRepository = new boxy.mysql.repository.CursorRepository(dataSource);
+                var cursorRepository = new boxy.core.repository.CursorRepository(dataSource);
                 cursorRepository.commit(consumerId, cursorCommit);
             } catch (Exception e) {
                 // Commit might fail if consumer lost lease, which is OK for this test

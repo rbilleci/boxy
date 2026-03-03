@@ -17,7 +17,7 @@ Add the following to your Maven `pom.xml`:
 ```xml
 <dependency>
     <groupId>com.example.boxy</groupId>
-    <artifactId>boxy-mysql</artifactId>
+    <artifactId>boxy-core</artifactId>
     <version>1.0.0</version>
 </dependency>
 
@@ -88,8 +88,8 @@ SQL
 Here's a complete example of publishing events:
 
 ```java
-import boxy.mysql.DataSourceProvider;
-import boxy.mysql.repository.EventRepository;
+import boxy.core.DataSourceProvider;
+import boxy.core.repository.EventRepository;
 import boxy.core.domain.PublishRequest;
 
 public class OrderProducer {
@@ -122,8 +122,8 @@ public class OrderProducer {
 **Build and run**:
 
 ```bash
-javac -cp "boxy-mysql-1.0.0.jar:..." OrderProducer.java
-java -cp ".:boxy-mysql-1.0.0.jar:..." OrderProducer
+javac -cp "boxy-core-1.0.0.jar:..." OrderProducer.java
+java -cp ".:boxy-core-1.0.0.jar:..." OrderProducer
 ```
 
 ## Consumer: Poll and Commit
@@ -131,10 +131,10 @@ java -cp ".:boxy-mysql-1.0.0.jar:..." OrderProducer
 Here's a complete consumer example:
 
 ```java
-import boxy.mysql.DataSourceProvider;
-import boxy.mysql.repository.ConsumerRepository;
-import boxy.mysql.repository.CursorRepository;
-import boxy.mysql.repository.SubscriptionRepository;
+import boxy.core.DataSourceProvider;
+import boxy.core.repository.ConsumerRepository;
+import boxy.core.repository.CursorRepository;
+import boxy.core.repository.SubscriptionRepository;
 import boxy.core.domain.Event;
 import java.util.Map;
 
@@ -196,8 +196,8 @@ public class OrderConsumer {
 **Build and run**:
 
 ```bash
-javac -cp "boxy-mysql-1.0.0.jar:..." OrderConsumer.java
-java -cp ".:boxy-mysql-1.0.0.jar:..." OrderConsumer
+javac -cp "boxy-core-1.0.0.jar:..." OrderConsumer.java
+java -cp ".:boxy-core-1.0.0.jar:..." OrderConsumer
 ```
 
 ## End-to-End Example
@@ -205,8 +205,8 @@ java -cp ".:boxy-mysql-1.0.0.jar:..." OrderConsumer
 Here's a self-contained example that sets up and runs both producer and consumer:
 
 ```java
-import boxy.mysql.DataSourceProvider;
-import boxy.mysql.repository.*;
+import boxy.core.DataSourceProvider;
+import boxy.core.repository.*;
 import boxy.core.domain.PublishRequest;
 import java.util.*;
 import java.util.concurrent.*;
@@ -330,7 +330,7 @@ Enable Prometheus metrics:
 ```java
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.micrometer.prometheus.PrometheusConfig;
-import boxy.mysql.metrics.BoxyMeterRegistry;
+import boxy.core.metrics.BoxyMeterRegistry;
 
 public class MetricsSetup {
     public static void main(String[] args) {

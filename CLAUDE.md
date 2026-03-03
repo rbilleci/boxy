@@ -24,13 +24,15 @@ can implement the consumer protocol by calling four stored procedures: `register
 
 ```
 boxy/
-├── boxy-db/          # Liquibase schema migrations + all SQL (stored procs, functions, events)
-├── boxy-core/        # Java domain records, repository implementations, DataSourceProvider
+├── boxy-db/                 # Liquibase schema migrations + SQL (mysql/, pgsql/)
+├── boxy-core/               # Java core: domain, repositories, metrics, worker, retry, security
+├── boxy-cli/                # Native CLI application (GraalVM)
+├── boxy-test/               # Shared test infrastructure (BaseIT, TestData)
 ├── PRODUCTION_READINESS.md  # Master plan — read before picking up any task
-├── CHANGELOG.md      # Implementation log — update after every completed item
-├── CLAUDE.md         # This file
-├── AGENTS.md         # Agent-specific workflow rules
-└── CONTRIBUTING.md   # Human + agent contributor guide
+├── CHANGELOG.md             # Implementation log — update after every completed item
+├── CLAUDE.md                # This file
+├── AGENTS.md                # Agent-specific workflow rules
+└── CONTRIBUTING.md          # Human + agent contributor guide
 ```
 
 ### boxy-db structure
@@ -55,6 +57,11 @@ boxy-core/src/main/java/boxy/core/
 ├── mapper/           # RowMapper implementations for each domain record
 ├── repository/       # JDBC repositories: one class per domain entity
 │   └── BaseRepository.java   # Shared execute/query/update helpers
+├── metrics/          # BoxyMeterRegistry, HealthCheck
+├── retry/            # RetryPolicy, CircuitBreaker
+├── security/         # InputValidator
+├── util/             # JsonUtils
+├── worker/           # Worker, WorkerConfig, EventHandler, PolledEvent
 ├── DataSourceProvider.java   # HikariCP pool factory (env-var configured)
 └── DataAccessException.java  # Runtime wrapper around SQLException
 ```
@@ -131,7 +138,7 @@ mvn clean package -pl boxy-core -DskipTests
 - **Records for domain** — all domain objects in `boxy.core.domain` are immutable Java records
 - **No Spring** — the library has no framework dependencies; HikariCP and SLF4J only
 - **Checked exceptions** — catch `SQLException`, wrap in `DataAccessException` (unchecked)
-- **Package structure** — `boxy.core.*` for core, `boxy.mysql.*` for MySQL impl, `boxy.pgsql.*` for PG
+- **Package structure** — `boxy.core.*` for core, `boxy.cli.*` for CLI, `boxy.test.*` for shared test infrastructure
 - **Naming** — repositories are `XxxRepository`, mappers are `XxxMapper`, domains are `Xxx`
 
 ### SQL / Stored Procedures

@@ -1,4 +1,4 @@
-package boxy.mysql.worker;
+package boxy.core.worker;
 
 import java.time.Duration;
 

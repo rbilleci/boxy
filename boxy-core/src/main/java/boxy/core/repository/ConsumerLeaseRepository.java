@@ -1,4 +1,4 @@
-package boxy.mysql.repository;
+package boxy.core.repository;
 
 import boxy.core.domain.ConsumerLease;
 import boxy.core.mapper.ConsumerLeaseMapper;

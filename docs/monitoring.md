@@ -73,7 +73,7 @@ Gauge.builder(BoxyMeterRegistry.SEQUENCER_LAG, dataSource, ds -> {
 ## Logging Configuration
 
 Boxy uses [SLF4J](https://www.slf4j.org/) for logging with Logback as the default
-implementation in `boxy-mysql`.
+implementation in `boxy-core`.
 
 ### Environment Variables
 

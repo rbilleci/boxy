@@ -1,4 +1,4 @@
-package boxy.mysql.metrics;
+package boxy.core.metrics;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;

@@ -1,6 +1,6 @@
 package boxy.core.it;
 
-import boxy.mysql.DataSourceProvider;
+import boxy.core.DataSourceProvider;
 import liquibase.Liquibase;
 import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;

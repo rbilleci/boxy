@@ -42,8 +42,6 @@
 
     <modules>
         <module>boxy-core</module>
-        <module>boxy-mysql</module>
-        <module>boxy-pgsql</module>
         <module>boxy-test</module>
         <module>boxy-cli</module>
         <module>boxy-db</module>

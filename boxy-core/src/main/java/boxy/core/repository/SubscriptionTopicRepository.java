@@ -1,4 +1,4 @@
-package boxy.mysql.repository;
+package boxy.core.repository;
 
 import boxy.core.mapper.SubscriptionTopicMapper;
 import boxy.core.domain.SubscriptionTopic;

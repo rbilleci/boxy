@@ -10,6 +10,11 @@ Each entry maps to a numbered item in [PRODUCTION_READINESS.md](./PRODUCTION_REA
 ### In Progress
 <!-- Items currently being worked on -->
 
+### Post-Audit Refactoring
+| Date | Step | Description | Commit |
+|------|------|-------------|--------|
+| 2026-03-03 | 1/9 | Merge boxy-mysql into boxy-core, delete boxy-pgsql — moved 16 Java files, renamed packages boxy.mysql→boxy.core, merged dependencies, updated 13 docs, updated boxy-cli + boxy-test imports | pending |
+
 ### Completed
 | Date | Item # | Description | Commit |
 |------|--------|-------------|--------|

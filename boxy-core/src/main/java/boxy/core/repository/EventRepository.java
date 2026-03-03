@@ -1,9 +1,9 @@
-package boxy.mysql.repository;
+package boxy.core.repository;
 
 import boxy.core.domain.PublishRequest;
 import boxy.core.repository.BaseRepository;
 import boxy.core.util.JsonUtils;
-import boxy.mysql.metrics.BoxyMeterRegistry;
+import boxy.core.metrics.BoxyMeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
