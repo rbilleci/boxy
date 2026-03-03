@@ -312,6 +312,53 @@ Boxy is designed to sustain **1 million events/second** on production-grade hard
   sequencer (`sp_sequence_loop`) and consumer GC (`consumer_gc`).
 - For full durability requirements, see [docs/configuration.md](docs/configuration.md).
 
+## Java Worker API
+
+Boxy includes a Java Worker API in `boxy-core` that implements the full consumer protocol
+(register → poll → handle → commit → deregister) as a managed background service:
+
+```java
+var config = WorkerConfig.builder()
+    .subscriptionName("my-group")
+    .path("/tenant-a/payments")
+    .topic("orders")
+    .maxBatchSize(100)
+    .maxConcurrentPollers(4)
+    .build();
+
+var worker = new Worker<>(
+    config,
+    dataSource,
+    events -> {
+        for (var event : events) {
+            processOrder(event.payload());
+        }
+        return true; // commit cursors
+    },
+    payload -> payload,  // deserializer (identity for String)
+    meterRegistry        // optional, null for no metrics
+);
+
+worker.start();  // registers consumer, begins polling
+// ...
+worker.stop();   // graceful shutdown, deregisters consumer
+```
+
+The Worker manages consumer lifecycle (UUIDv4 registration/deregistration), calls
+`sp_events__poll` for event retrieval, and commits cursors via `sp_cursors__commit`
+after successful processing. It supports multiple concurrent pollers for partition-level
+parallelism and exposes Micrometer metrics for events processed and error counts.
+
+## Module Structure
+
+```
+boxy/
+├── boxy-core/  — Java library: domain records, repositories, Worker API, metrics, utilities
+├── boxy-db/    — Liquibase schema migrations (MySQL + PostgreSQL)
+├── boxy-cli/   — picocli CLI tool for namespace/topic/event management
+└── boxy-test/  — Testcontainers integration tests (MySQL + PostgreSQL)
+```
+
 ## Building the Project
 
 Boxy uses Maven and requires Java 25+. From the root:
@@ -320,7 +367,7 @@ Boxy uses Maven and requires Java 25+. From the root:
 mvn clean package
 ```
 
-Integration tests use Testcontainers with MySQL (default) or Postgres. Configure via env vars:
+Integration tests use Testcontainers with MySQL (default) or PostgreSQL. Configure via env vars:
 
 | Variable      | Default       | Description           |
 | ------------- | ------------- | --------------------- |
@@ -341,6 +388,17 @@ Integration tests use Testcontainers with MySQL (default) or Postgres. Configure
 4. Docker 20+ (required for integration tests via Testcontainers)
 
 ### Database Setup
+
+**Option A: Docker Compose (Recommended)**
+
+```bash
+cd docker && docker compose up -d
+```
+
+This starts MySQL 8.0 and runs Liquibase migrations automatically. See [docs/docker.md](docs/docker.md)
+for PostgreSQL setup and details.
+
+**Option B: Manual Setup**
 
 1. Create a database for Boxy:
 

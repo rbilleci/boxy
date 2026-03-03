@@ -13,7 +13,15 @@ Each entry maps to a numbered item in [PRODUCTION_READINESS.md](./PRODUCTION_REA
 ### Post-Audit Refactoring
 | Date | Step | Description | Commit |
 |------|------|-------------|--------|
-| 2026-03-03 | 1/9 | Merge boxy-mysql into boxy-core, delete boxy-pgsql — moved 16 Java files, renamed packages boxy.mysql→boxy.core, merged dependencies, updated 13 docs, updated boxy-cli + boxy-test imports | pending |
+| 2026-03-03 | 9/9 | Update README with Worker API section, module structure, Docker Compose setup; update CHANGELOG with all post-audit entries | pending |
+| 2026-03-03 | 8/9 | Add WorkerConfig bounds validation — path/maxBatchSize/maxConcurrentPollers/pollTimeout/shutdownTimeout; 16 unit tests | f43b12e |
+| 2026-03-03 | 7/9 | Remove unused SQLException import from CircuitBreaker (static analysis cleanup) | 94fc990 |
+| 2026-03-03 | 6/9 | Fix Docker evaluation environment — Liquibase sidecar in docker-compose, rewrite init-schema.sh, optional PostgreSQL + phpMyAdmin profiles | 21451e4 |
+| 2026-03-03 | 5/9 | Add PostgreSQL integration test profile — dual-container BaseIT via DB_TYPE, PG JDBC driver + testcontainers deps | 4e7de5f |
+| 2026-03-03 | 4/9 | Fix InputValidator to enforce byte length (UTF-8) not character length — prevents multi-byte bypass of MySQL VARCHAR limits | 4e4cf52 |
+| 2026-03-03 | 3/9 | Add unit tests for CircuitBreaker (10), RetryPolicy (10), InputValidator (14), JsonUtils (16) — 50 new tests total | 5a700f3 |
+| 2026-03-03 | 2/9 | Implement Worker API with real JDBC database calls — consumer register/deregister, sp_events__poll, sp_cursors__commit, PolledEvent cursorId fix | 4e5cc5d |
+| 2026-03-03 | 1/9 | Merge boxy-mysql into boxy-core, delete boxy-pgsql — moved 16 Java files, renamed packages boxy.mysql→boxy.core, merged dependencies, updated 13 docs | 00ae4ae |
 
 ### Completed
 | Date | Item # | Description | Commit |
